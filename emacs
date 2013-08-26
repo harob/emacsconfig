@@ -8,24 +8,31 @@
 (when (not package-archive-contents)
   (package-refresh-contents))
 
-(defvar my-packages '(clojure-mode
+(defvar my-packages '(color-theme-sanityinc-tomorrow
+                      clojure-mode
                       clojure-test-mode
                       elscreen
                       evil
                       evil-leader
                       evil-nerd-commenter
-                      flx ; Fuzzy matching for ido, which improves the UX of Projectile.
+                      flx-ido ; Fuzzy matching for ido, which improves the UX of Projectile.
                       goto-last-change
                       ido-ubiquitous ; Make ido completions work everywhere.
                       ido-vertical-mode ; Show ido results vertically.
                       markdown-mode
                       midje-mode
                       projectile ; Find file in project (ala CTRL-P).
+                      rainbow-delimiters
+                      smartparens
                       ))
 
 (dolist (p my-packages)
   (when (not (package-installed-p p))
     (package-install p)))
+
+; Packages not on melpa:
+(add-to-list 'load-path "~/.emacs.d/plugins/evil-surround")
+(add-to-list 'load-path "~/.emacs.d/plugins/evil-org-mode")
 
 ;;
 ;; General
@@ -60,7 +67,7 @@
 (load custom-file t)
 
 ;; Colorscheme
-(load-theme 'tangotango t) ; A reasonable color scheme which lives in my .emacs.d.
+(load-theme 'sanityinc-tomorrow-night t)
 (set-face-attribute 'default nil :family "Consolas" :height 150)
 
 ;; Whitespace
@@ -99,8 +106,10 @@
 (require 'evil-leader) ; Provide configuration functions for assigning actions to a Vim leader key.
 (require 'evil-nerd-commenter)
 (require 'goto-last-change)
+(require 'surround)
 (evil-mode t)
 (global-evil-leader-mode)
+(global-surround-mode 1)
 
 (evil-leader/set-key
   "h" 'help
@@ -111,7 +120,7 @@
   "ex" 'eval-surrounding-sexp
   ; "v" is a mnemonic prefix for "view X".
   "vo" (lambda () (interactive) (find-file "~/Dropbox/tasks.org"))
-  "ve" (lambda () (interactive) (find-file "~/.emacs")))
+  "ve" (lambda () (interactive) (find-file "~/.emacs.d/emacs")))
 
 (eval-after-load 'evil
   '(progn (setq evil-leader/leader ",")))
@@ -168,7 +177,7 @@
 
 (defvar osx-keys-minor-mode-map (make-keymap) "osx-keys-minor-mode-keymap")
 (define-key osx-keys-minor-mode-map (kbd "M-`") 'other-frame)
-(define-key osx-keys-minor-mode-map (kbd "M-w") 'delete-frame)
+(define-key osx-keys-minor-mode-map (kbd "M-w") 'vimlike-quit)
 (define-key osx-keys-minor-mode-map (kbd "M-q") 'save-buffers-kill-terminal)
 (define-key osx-keys-minor-mode-map (kbd "M-N") 'new-frame)
 (define-key osx-keys-minor-mode-map (kbd "M-s") 'save-buffer)
@@ -192,28 +201,28 @@
 ; Closes the current elscreen, or if there's only one screen, use the ":q" Evil
 ; command. This simulates the ":q" behavior of Vim when used with tabs.
 ; http://zuttobenkyou.wordpress.com/2012/06/15/emacs-vimlike-tabwindow-navigation/
-;; (defun vimlike-quit ()
-;;   "Vimlike ':q' behavior: close current window if there are split windows;
-;;    otherwise, close current tab (elscreen)."
-;;   (interactive)
-;;   (let ((one-elscreen (elscreen-one-screen-p))
-;;         (one-window (one-window-p)))
-;;     (cond
-;;      if current tab has split windows in it, close the current live window
-;;      ((not one-window)
-;;       (delete-window) ; delete the current window
-;;       (balance-windows) ; balance remaining windows
-;;       nil)
-;;      if there are multiple elscreens (tabs), close the current elscreen
-;;      ((not one-elscreen)
-;;       (elscreen-kill)
-;;       nil)
-;;      if there is only one elscreen, just try to quit (calling elscreen-kill
-;;      will not work, because elscreen-kill fails if there is only one
-;;      elscreen)
-;;      (one-elscreen
-;;       (evil-quit)
-;;       nil))))
+(defun vimlike-quit ()
+  "Vimlike ':q' behavior: close current window if there are split windows;
+   otherwise, close current tab (elscreen)."
+  (interactive)
+  (let ((one-elscreen (elscreen-one-screen-p))
+        (one-window (one-window-p)))
+    (cond
+     ; if current tab has split windows in it, close the current live window
+     ((not one-window)
+      (delete-window) ; delete the current window
+      (balance-windows) ; balance remaining windows
+      nil)
+     ; if there are multiple elscreens (tabs), close the current elscreen
+     ((not one-elscreen)
+      (elscreen-kill)
+      nil)
+     ; if there is only one elscreen, just try to quit (calling elscreen-kill
+     ; will not work, because elscreen-kill fails if there is only one
+     ; elscreen)
+     (one-elscreen
+      (evil-quit)
+      nil))))
 
 ;;
 ;; Filename completions (CTRL-P / CMD+T)
@@ -231,7 +240,6 @@
 ;; Org mode, for TODOs and note taking.
 ;;
 (require 'org)
-(add-to-list 'load-path "~/.emacs.d/plugins/evil-org-mode")
 (require 'evil-org)
 (eval-after-load 'org
   '(progn
@@ -251,6 +259,9 @@
            org-archive-location)))
     ad-do-it))
 
+(setq org-default-notes-file "~/Dropbox/tasks.org")
+(define-key global-map "\C-cc" 'org-capture)
+
 ;;
 ;; Projectile (find file from the root of the current project).
 ;;
@@ -259,10 +270,10 @@
 ;;
 ;; elscreen (tabs on the window).
 ;;
-;; (elscreen-start)
-;; (define-key evil-normal-state-map (kbd "M-S-]") 'elscreen-next)
-;; (define-key evil-normal-state-map (kbd "M-S-[") 'elscreen-previous)
-;; (define-key evil-normal-state-map (kbd "M-t") 'elscreen-create)
+(elscreen-start)
+(define-key evil-normal-state-map (kbd "M-}") 'elscreen-next)
+(define-key evil-normal-state-map (kbd "M-{") 'elscreen-previous)
+(define-key evil-normal-state-map (kbd "M-t") 'elscreen-create)
 
 
 
@@ -291,6 +302,10 @@
 
 (setq split-window-preferred-function 'split-window-sensibly-reverse)
 
+(eval-after-load 'paren
+  '(setq show-paren-delay 0))
+(show-paren-mode t)
+
 
 ;; All new!
 
@@ -298,6 +313,9 @@
 (define-key evil-normal-state-map (kbd "C-j") 'evil-window-down)
 (define-key evil-normal-state-map (kbd "C-k") 'evil-window-up)
 (define-key evil-normal-state-map (kbd "C-l") 'evil-window-right)
+
+(define-key evil-normal-state-map (kbd "H") 'evil-first-non-blank)
+(define-key evil-normal-state-map (kbd "L") 'evil-end-of-line)
 
 (define-key evil-normal-state-map (kbd ";") 'evil-ex)
 
@@ -307,5 +325,18 @@
      (define-key evil-visual-state-map ",c " 'evilnc-comment-operator)))
 
 (evil-leader/set-key
-  "|" 'split-window-horizontally
-  "-" 'split-window-vertically)
+  "|" (lambda () (interactive)(split-window-horizontally) (other-window 1))
+  "-" (lambda () (interactive)(split-window-vertically) (other-window 1)))
+
+(dolist (n (number-sequence 1 9))
+  (global-set-key (kbd (concat "M-" (number-to-string n)))
+                  (lambda () (interactive) (elscreen-goto (- n 1)))))
+
+(require 'smartparens)
+(smartparens-global-mode t)
+
+
+;; Clojure related
+
+(require 'rainbow-delimiters)
+(add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
