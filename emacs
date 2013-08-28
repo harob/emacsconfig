@@ -8,9 +8,11 @@
 (when (not package-archive-contents)
   (package-refresh-contents))
 
-(defvar my-packages '(color-theme-sanityinc-tomorrow
+(defvar my-packages '(ac-nrepl
+                      auto-complete
                       clojure-mode
                       clojure-test-mode
+                      color-theme-sanityinc-tomorrow
                       elscreen
                       evil
                       evil-leader
@@ -21,9 +23,12 @@
                       ido-vertical-mode ; Show ido results vertically.
                       markdown-mode
                       midje-mode
+                      nrepl
                       projectile ; Find file in project (ala CTRL-P).
                       rainbow-delimiters
                       smartparens
+                      smex
+                      undo-tree
                       ))
 
 (dolist (p my-packages)
@@ -279,6 +284,42 @@
 
 ;; From Dmac - https://github.com/dmacdougall/dotfiles/blob/master/.emacs
 
+(setq lazy-highlight-initial-delay 0)
+(setq split-height-threshold 40)
+(setq split-width-threshold 200)
+(setq split-window-preferred-function 'split-window-sensibly-reverse)
+(setq vc-follow-symlinks t)
+
+(global-undo-tree-mode t)
+(global-font-lock-mode t)
+(global-hl-line-mode t)
+(global-linum-mode t)
+;; (line-number-mode 1)
+(column-number-mode 1)
+
+(global-set-key (kbd "M-x") 'smex)
+(global-set-key (kbd "M-X") 'smex-major-mode-commands)
+
+;; Include path information in duplicate buffer names (e.g. a/foo.txt b/foo.txt)
+(require 'uniquify)
+(setq uniquify-buffer-name-style 'forward)
+
+(eval-after-load 'paren
+  '(setq show-paren-delay 0))
+(show-paren-mode t)
+
+;; Count hyphens, etc. as word characters in lisps
+(add-hook 'clojure-mode-hook (lambda () (modify-syntax-entry ?- "w")))
+(add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w")))
+
+(require 'auto-complete)
+(add-hook 'prog-mode-hook 'auto-complete-mode)
+(define-key ac-complete-mode-map "\C-n" 'ac-next)
+(define-key ac-complete-mode-map "\C-p" 'ac-previous)
+(setq ac-auto-start nil)
+(ac-set-trigger-key "TAB")
+(ac-linum-workaround)
+
 (defun split-window-sensibly-reverse (&optional window)
   "Identical to the built-in function split-window-sensibly, but prefers horizontal splits over vertical splits."
   (let ((window (or window (selected-window))))
@@ -299,12 +340,6 @@
          (when (window-splittable-p window)
      (with-selected-window window
        (split-window-below))))))))
-
-(setq split-window-preferred-function 'split-window-sensibly-reverse)
-
-(eval-after-load 'paren
-  '(setq show-paren-delay 0))
-(show-paren-mode t)
 
 
 ;; All new!
@@ -328,15 +363,52 @@
   "|" (lambda () (interactive)(split-window-horizontally) (other-window 1))
   "-" (lambda () (interactive)(split-window-vertically) (other-window 1)))
 
-(dolist (n (number-sequence 1 9))
-  (global-set-key (kbd (concat "M-" (number-to-string n)))
-                  (lambda () (interactive) (elscreen-goto (- n 1)))))
+(require 'cl)
+(dolist (i (number-sequence 1 9))
+  (lexical-let ((tab-index (- i 1)))
+    (global-set-key (kbd (concat "M-" (number-to-string i)))
+                    (lambda () (interactive) (elscreen-goto tab-index)))))
 
 (require 'smartparens)
 (smartparens-global-mode t)
+
+;; fix the PATH variable - from http://clojure-doc.org/articles/tutorials/emacs.html
+(defun set-exec-path-from-shell-PATH ()
+  (let ((path-from-shell (shell-command-to-string "$SHELL -i -c 'echo $PATH'")))
+    (setenv "PATH" path-from-shell)
+    (setq exec-path (split-string path-from-shell path-separator))))
+
+(when window-system (set-exec-path-from-shell-PATH))
 
 
 ;; Clojure related
 
 (require 'rainbow-delimiters)
 (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+
+(evil-leader/set-key-for-mode 'clojure-mode
+  "eb" 'nrepl-load-current-buffer
+  "es" 'nrepl-eval-last-expression)
+
+(add-hook 'clojure-mode-hook 'clojure-test-mode)
+(eval-after-load 'clojure-mode
+  '(define-key clojure-mode-map "\C-c\M-r" 'nrepl-switch-to-repl-buffer))
+
+;; Clojure indentation rules
+(eval-after-load 'clojure-mode
+  '(define-clojure-indent
+     (send-off 1)                                              ; Core
+     (GET 2) (POST 2) (PUT 2) (PATCH 2) (DELETE 2) (context 2) ; Compojure
+     (select 1) (insert 1) (update 1) (delete 1) (upsert 1)    ; Korma
+     (clone-for 1)                                             ; Enlive
+     (up 1) (down 1) (alter 1) (table 1)                       ; Lobos
+     ))
+
+;; Autocompletion in nrepl
+(require 'ac-nrepl)
+(add-hook 'nrepl-mode-hook 'ac-nrepl-setup)
+(add-hook 'nrepl-mode-hook 'auto-complete-mode)
+(add-hook 'nrepl-interaction-mode-hook 'ac-nrepl-setup)
+(add-hook 'nrepl-interaction-mode-hook 'auto-complete-mode)
+(add-hook 'nrepl-interaction-mode-hook 'nrepl-turn-on-eldoc-mode)
+(eval-after-load 'auto-complete '(add-to-list 'ac-modes 'nrepl-mode))
