@@ -9,21 +9,25 @@
   (package-refresh-contents))
 
 (defvar my-packages '(ac-nrepl
+                      ack-and-a-half
                       auto-complete
                       clojure-mode
                       clojure-test-mode
+                      column-marker
                       color-theme-sanityinc-tomorrow
                       elscreen
                       evil
                       evil-leader
                       evil-nerd-commenter
                       flx-ido ; Fuzzy matching for ido, which improves the UX of Projectile.
+                      framemove
                       goto-last-change
                       ido-ubiquitous ; Make ido completions work everywhere.
                       ido-vertical-mode ; Show ido results vertically.
                       markdown-mode
                       midje-mode
                       nrepl
+                      powerline
                       projectile ; Find file in project (ala CTRL-P).
                       rainbow-delimiters
                       smartparens
@@ -125,7 +129,8 @@
   "ex" 'eval-surrounding-sexp
   ; "v" is a mnemonic prefix for "view X".
   "vo" (lambda () (interactive) (find-file "~/Dropbox/tasks.org"))
-  "ve" (lambda () (interactive) (find-file "~/.emacs.d/emacs")))
+  "ve" (lambda () (interactive) (find-file "~/.emacs.d/emacs"))
+  "vh" (lambda () (interactive) (find-file "~/workspace/hmp_repos/hmp/haggler/src/haggler/handler.clj")))
 
 (eval-after-load 'evil
   '(progn (setq evil-leader/leader ",")))
@@ -184,7 +189,7 @@
 (define-key osx-keys-minor-mode-map (kbd "M-`") 'other-frame)
 (define-key osx-keys-minor-mode-map (kbd "M-w") 'vimlike-quit)
 (define-key osx-keys-minor-mode-map (kbd "M-q") 'save-buffers-kill-terminal)
-(define-key osx-keys-minor-mode-map (kbd "M-N") 'new-frame)
+(define-key osx-keys-minor-mode-map (kbd "M-n") 'new-frame)
 (define-key osx-keys-minor-mode-map (kbd "M-s") 'save-buffer)
 (define-key osx-keys-minor-mode-map (kbd "M-v") 'clipboard-yank)
 (define-key osx-keys-minor-mode-map (kbd "M-c") 'clipboard-kill-ring-save)
@@ -297,6 +302,7 @@
 ;; (line-number-mode 1)
 (column-number-mode 1)
 
+(global-set-key (kbd "RET") 'comment-indent-new-line)
 (global-set-key (kbd "M-x") 'smex)
 (global-set-key (kbd "M-X") 'smex-major-mode-commands)
 
@@ -344,6 +350,9 @@
 
 ;; All new!
 
+;; Switch across both windows (i.e. panes/splits) and frames (i.e. OS windows)!
+(require 'framemove)
+(setq framemove-hook-into-windmove t)
 (define-key evil-normal-state-map (kbd "C-h") 'evil-window-left)
 (define-key evil-normal-state-map (kbd "C-j") 'evil-window-down)
 (define-key evil-normal-state-map (kbd "C-k") 'evil-window-up)
@@ -361,7 +370,9 @@
 
 (evil-leader/set-key
   "|" (lambda () (interactive)(split-window-horizontally) (other-window 1))
-  "-" (lambda () (interactive)(split-window-vertically) (other-window 1)))
+  "-" (lambda () (interactive)(split-window-vertically) (other-window 1))
+  "a" 'projectile-ack
+  "d" 'projectile-dired)
 
 (require 'cl)
 (dolist (i (number-sequence 1 9))
@@ -379,6 +390,17 @@
     (setq exec-path (split-string path-from-shell path-separator))))
 
 (when window-system (set-exec-path-from-shell-PATH))
+
+;; TODO(harry) Get column-marker working
+;; (require 'column-marker)
+;; (add-hook 'prog-mode-hook (lambda () (interactive) (column-marker-1 110)))
+
+(require 'powerline)
+(powerline-default-theme)
+
+(define-key osx-keys-minor-mode-map (kbd "M-=") 'text-scale-increase)
+(define-key osx-keys-minor-mode-map (kbd "M--") 'text-scale-decrease)
+(define-key osx-keys-minor-mode-map (kbd "M-0") (lambda () (interactive) (text-scale-increase 0)))
 
 
 ;; Clojure related
