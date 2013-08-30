@@ -33,6 +33,7 @@
                       smartparens
                       smex
                       undo-tree
+                      yasnippet
                       ))
 
 (dolist (p my-packages)
@@ -76,7 +77,7 @@
 (load custom-file t)
 
 ;; Colorscheme
-(load-theme 'sanityinc-tomorrow-night t)
+(load-theme 'sanityinc-tomorrow-bright t)
 (set-face-attribute 'default nil :family "Consolas" :height 150)
 
 ;; Whitespace
@@ -86,7 +87,8 @@
      (setq whitespace-line-column 110) ; When text flows past 110 chars, highlight it.
      ; whitespace mode by default marks all whitespace. Show only tabs, trailing space, and trailing lines.
      (setq whitespace-style '(face empty trailing tabs tab-mark lines-tail))))
-(add-hook 'before-save-hook 'delete-trailing-whitespace)
+;; (add-hook 'before-save-hook 'delete-trailing-whitespace)
+(setq-default mode-require-final-newline nil)
 (setq-default tab-width 2)
 (setq-default evil-shift-width 2)
 
@@ -285,6 +287,14 @@
 (define-key evil-normal-state-map (kbd "M-{") 'elscreen-previous)
 (define-key evil-normal-state-map (kbd "M-t") 'elscreen-create)
 
+;;
+;; Snippets
+;;
+;; Ignore the default snippets that come with yasnippet. My own are all I need, and I don't want any
+;; conflicts.
+(setq yas-snippet-dirs '("~/.emacs.d/snippets"))
+(require 'yasnippet)
+(yas-global-mode 1)
 
 
 ;; From Dmac - https://github.com/dmacdougall/dotfiles/blob/master/.emacs
@@ -402,6 +412,19 @@
 (define-key osx-keys-minor-mode-map (kbd "M--") 'text-scale-decrease)
 (define-key osx-keys-minor-mode-map (kbd "M-0") (lambda () (interactive) (text-scale-increase 0)))
 
+(define-key evil-normal-state-map (kbd "s") 'newline-and-indent)
+
+
+;; Ruby related
+
+(add-to-list 'auto-mode-alist '("\\.rake$" . ruby-mode))
+(add-to-list 'auto-mode-alist '("\\.gemspec$" . ruby-mode))
+(add-to-list 'auto-mode-alist '("\\.ru$" . ruby-mode))
+(add-to-list 'auto-mode-alist '("Rakefile$" . ruby-mode))
+(add-to-list 'auto-mode-alist '("Gemfile$" . ruby-mode))
+(add-to-list 'auto-mode-alist '("Capfile$" . ruby-mode))
+(add-to-list 'auto-mode-alist '("Vagrantfile$" . ruby-mode))
+
 
 ;; Clojure related
 
@@ -434,3 +457,5 @@
 (add-hook 'nrepl-interaction-mode-hook 'auto-complete-mode)
 (add-hook 'nrepl-interaction-mode-hook 'nrepl-turn-on-eldoc-mode)
 (eval-after-load 'auto-complete '(add-to-list 'ac-modes 'nrepl-mode))
+
+(evil-define-key 'normal clojure-mode-map "K" 'nrepl-doc)
