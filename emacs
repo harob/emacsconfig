@@ -61,6 +61,7 @@
 (setq mac-option-modifier 'alt)
 (setq mac-command-modifier 'meta)
 (setq make-backup-files nil)
+(setq auto-save-default nil)
 
 (savehist-mode t) ; Save your minibuffer history across Emacs sessions. UX win!
 
@@ -87,8 +88,9 @@
      (setq whitespace-line-column 110) ; When text flows past 110 chars, highlight it.
      ; whitespace mode by default marks all whitespace. Show only tabs, trailing space, and trailing lines.
      (setq whitespace-style '(face empty trailing tabs tab-mark lines-tail))))
-;; (add-hook 'before-save-hook 'delete-trailing-whitespace)
-(setq-default mode-require-final-newline nil)
+;; NOTE(harry) Flip the following two settings for editing snippets
+(add-hook 'before-save-hook 'delete-trailing-whitespace)
+;; (setq-default mode-require-final-newline nil)
 (setq-default tab-width 2)
 (setq-default evil-shift-width 2)
 
@@ -413,6 +415,12 @@
 (define-key osx-keys-minor-mode-map (kbd "M-0") (lambda () (interactive) (text-scale-increase 0)))
 
 (define-key evil-normal-state-map (kbd "s") 'newline-and-indent)
+(define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
+(define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
+
+;; TODO(harry) I couldn't get this working
+;; (require 'git-gutter-fringe+)
+;; (setq git-gutter+-hide-gutter t)
 
 
 ;; Ruby related
@@ -430,6 +438,7 @@
 
 (require 'rainbow-delimiters)
 (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+(add-hook 'nrepl-mode-hook 'rainbow-delimiters-mode)
 
 (evil-leader/set-key-for-mode 'clojure-mode
   "eb" 'nrepl-load-current-buffer
@@ -456,6 +465,8 @@
 (add-hook 'nrepl-interaction-mode-hook 'ac-nrepl-setup)
 (add-hook 'nrepl-interaction-mode-hook 'auto-complete-mode)
 (add-hook 'nrepl-interaction-mode-hook 'nrepl-turn-on-eldoc-mode)
+(setq nrepl-hide-special-buffers t)
 (eval-after-load 'auto-complete '(add-to-list 'ac-modes 'nrepl-mode))
 
 (evil-define-key 'normal clojure-mode-map "K" 'nrepl-doc)
+(evil-define-key 'normal clojure-mode-map "gf" 'nrepl-jump)
