@@ -507,4 +507,3 @@
 
 (evil-define-key 'normal clojure-mode-map "K" 'nrepl-doc)
 (evil-define-key 'normal clojure-mode-map "gf" 'nrepl-jump)
-(put 'dired-find-alternate-file 'disabled nil)
