@@ -9,6 +9,7 @@
   (package-refresh-contents))
 
 (defvar my-packages '(ac-nrepl
+                      ace-jump-mode
                       ack-and-a-half
                       auto-complete
                       clojure-mode
@@ -27,6 +28,7 @@
                       markdown-mode
                       midje-mode
                       nrepl
+                      org
                       powerline
                       projectile ; Find file in project (ala CTRL-P).
                       rainbow-delimiters
@@ -129,19 +131,20 @@
   "b" 'ido-switch-buffer
   "t" 'projectile-find-file
   "eb" 'eval-buffer
-  "es" 'eval-last-sexp
-  "ex" 'eval-surrounding-sexp
+  "es" 'eval-surrounding-sexp
   ; "v" is a mnemonic prefix for "view X".
   "vo" (lambda () (interactive) (find-file "~/Dropbox/tasks.org"))
   "ve" (lambda () (interactive) (find-file "~/.emacs.d/emacs"))
-  "vh" (lambda () (interactive) (find-file "~/workspace/hmp_repos/hmp/haggler/src/haggler/handler.clj")))
+  "vh" (lambda () (interactive) (find-file "~/workspace/hmp_repos/liftoff/haggler/src/haggler/handler.clj"))
+  "vt" (lambda () (interactive) (find-file "~/workspace/hmp_repos/liftoff/zdocs/text_scratchpad.txt")))
 
 (eval-after-load 'evil
-  '(progn (setq evil-leader/leader ",")))
+  '(progn
+     (setq evil-leader/leader ",")
+     (setq evil-default-cursor t)
      ;; Unbind these keys in evil so they can instead be used for code navigation.
-     ;; TODO(philc): Will I need these?
-     ; (define-key evil-normal-state-map (kbd "M-,") nil)
-     ; (define-key evil-normal-state-map (kbd "M-.") nil)))
+     (define-key evil-normal-state-map (kbd "M-,") nil)
+     (define-key evil-normal-state-map (kbd "M-.") nil)))
 
 (defun eval-surrounding-sexp (levels)
   (interactive "p")
@@ -302,6 +305,8 @@
 ;; From Dmac - https://github.com/dmacdougall/dotfiles/blob/master/.emacs
 
 (setq lazy-highlight-initial-delay 0)
+(setq lazy-highlight-cleanup nil)
+(setq lazy-highlight-max-at-a-time nil)
 (setq split-height-threshold 40)
 (setq split-width-threshold 200)
 (setq split-window-preferred-function 'split-window-sensibly-reverse)
@@ -382,6 +387,7 @@
 
 (evil-leader/set-key
   "|" (lambda () (interactive)(split-window-horizontally) (other-window 1))
+  "\\" (lambda () (interactive)(split-window-horizontally) (other-window 1))
   "-" (lambda () (interactive)(split-window-vertically) (other-window 1))
   "a" 'projectile-ack
   "d" 'projectile-dired)
@@ -394,6 +400,7 @@
 
 (require 'smartparens)
 (smartparens-global-mode t)
+(sp-pair "'" nil :actions :rem)
 
 ;; fix the PATH variable - from http://clojure-doc.org/articles/tutorials/emacs.html
 (defun set-exec-path-from-shell-PATH ()
@@ -418,9 +425,38 @@
 (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
 (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
 
+(defun copy-to-end-of-line ()
+  (interactive)
+  (evil-yank (point) (point-at-eol)))
+(define-key evil-normal-state-map "Y" 'copy-to-end-of-line)
+
+(require 'ace-jump-mode)
+(define-key evil-normal-state-map (kbd "SPC") 'ace-jump-word-mode)
+
 ;; TODO(harry) I couldn't get this working
 ;; (require 'git-gutter-fringe+)
 ;; (setq git-gutter+-hide-gutter t)
+
+
+;; Dired related
+
+(setq dired-recursive-copies (quote always))
+(setq dired-recursive-deletes (quote top))
+
+;; "go to dired, then call split-window-vertically, then go to another dired dir. Now, when you press C to
+;; copy, the other dir in the split pane will be default destination. Same for R (rename; move)."
+(setq dired-dwim-target t)
+
+; Use same buffer for going into and up directories
+(add-hook 'dired-mode-hook
+ (lambda ()
+  (define-key dired-mode-map (kbd "<return>")
+    'dired-find-alternate-file) ; was dired-advertised-find-file
+  (define-key dired-mode-map (kbd "^")
+    (lambda () (interactive) (find-alternate-file ".."))) ; was dired-up-directory
+ ))
+
+(evil-define-key 'normal dired-mode-map "H" (lambda () (interactive) (find-alternate-file "..")))
 
 
 ;; Ruby related
@@ -442,7 +478,8 @@
 
 (evil-leader/set-key-for-mode 'clojure-mode
   "eb" 'nrepl-load-current-buffer
-  "es" 'nrepl-eval-last-expression)
+  "es" 'nrepl-eval-expression-at-point
+  "er" 'nrepl-eval-region)
 
 (add-hook 'clojure-mode-hook 'clojure-test-mode)
 (eval-after-load 'clojure-mode
@@ -470,3 +507,4 @@
 
 (evil-define-key 'normal clojure-mode-map "K" 'nrepl-doc)
 (evil-define-key 'normal clojure-mode-map "gf" 'nrepl-jump)
+(put 'dired-find-alternate-file 'disabled nil)
