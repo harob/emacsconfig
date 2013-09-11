@@ -20,6 +20,8 @@
                       evil
                       evil-leader
                       evil-nerd-commenter
+                      fill-column-indicator
+                      fiplr
                       flx-ido ; Fuzzy matching for ido, which improves the UX of Projectile.
                       framemove
                       goto-last-change
@@ -87,9 +89,9 @@
 (global-whitespace-mode t)
 (eval-after-load 'whitespace
   '(progn
-     (setq whitespace-line-column 110) ; When text flows past 110 chars, highlight it.
+     ;; (setq whitespace-line-column 110) ; When text flows past 110 chars, highlight it.
      ; whitespace mode by default marks all whitespace. Show only tabs, trailing space, and trailing lines.
-     (setq whitespace-style '(face empty trailing tabs tab-mark lines-tail))))
+     (setq whitespace-style '(face empty trailing tabs tab-mark))))
 ;; NOTE(harry) Flip the following two settings for editing snippets
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 ;; (setq-default mode-require-final-newline nil)
@@ -129,7 +131,7 @@
 (evil-leader/set-key
   "h" 'help
   "b" 'ido-switch-buffer
-  "t" 'projectile-find-file
+  "t" 'fiplr-find-file ;; 'projectile-find-file
   "eb" 'eval-buffer
   "es" 'eval-surrounding-sexp
   ; "v" is a mnemonic prefix for "view X".
@@ -164,10 +166,6 @@
 (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
 (global-set-key (kbd "C-h") 'backward-delete-char) ; C-h in Emacs is the prefix for help functions.
 
-;; Moving between Emacs windows (splits).
-(global-set-key (kbd "M-J") 'windmove-down)
-(global-set-key (kbd "M-K") 'windmove-up)
-
 ;; Make it so Esc means quit, no matter the context.
 ;; http://stackoverflow.com/a/10166400/46237
 (defun minibuffer-keyboard-quit ()
@@ -200,6 +198,7 @@
 (define-key osx-keys-minor-mode-map (kbd "M-s") 'save-buffer)
 (define-key osx-keys-minor-mode-map (kbd "M-v") 'clipboard-yank)
 (define-key osx-keys-minor-mode-map (kbd "M-c") 'clipboard-kill-ring-save)
+(define-key osx-keys-minor-mode-map (kbd "M-a") 'mark-whole-buffer)
 
 (define-minor-mode osx-keys-minor-mode
   "A minor-mode for emulating osx keyboard shortcuts."
@@ -277,7 +276,7 @@
     ad-do-it))
 
 (setq org-default-notes-file "~/Dropbox/tasks.org")
-(define-key global-map "\C-cc" 'org-capture)
+(define-key org-mode-map "\C-cc" 'org-capture)
 
 ;;
 ;; Projectile (find file from the root of the current project).
@@ -410,10 +409,6 @@
 
 (when window-system (set-exec-path-from-shell-PATH))
 
-;; TODO(harry) Get column-marker working
-;; (require 'column-marker)
-;; (add-hook 'prog-mode-hook (lambda () (interactive) (column-marker-1 110)))
-
 (require 'powerline)
 (powerline-default-theme)
 
@@ -432,6 +427,9 @@
 
 (require 'ace-jump-mode)
 (define-key evil-normal-state-map (kbd "SPC") 'ace-jump-word-mode)
+
+(require 'fill-column-indicator)
+(add-hook 'after-change-major-mode-hook 'fci-mode)
 
 ;; TODO(harry) I couldn't get this working
 ;; (require 'git-gutter-fringe+)
@@ -458,6 +456,16 @@
 
 (evil-define-key 'normal dired-mode-map "H" (lambda () (interactive) (find-alternate-file "..")))
 
+;; tweak projectile to not us git ls-files
+(require 'projectile)
+(defun projectile-project-vcs ()
+  "Determine the VCS used by the project if any."
+  'none)
+
+(eval-after-load 'fiplr
+  '(setq fiplr-ignored-globs '((directories (".git" ".svn" "target" "log" ".sass-cache" "Build"))
+                               (files (".#*" "*.so" ".DS_Store" ".class")))))
+
 
 ;; Ruby related
 
@@ -469,6 +477,10 @@
 (add-to-list 'auto-mode-alist '("Capfile$" . ruby-mode))
 (add-to-list 'auto-mode-alist '("Vagrantfile$" . ruby-mode))
 
+(eval-after-load 'fiplr
+  '(setq fiplr-ignored-globs '((directories (".git" ".svn" "target" "log" ".sass-cache" "Build"))
+                               (files (".#*" "*.so" ".DS_Store" ".class")))))
+
 
 ;; Clojure related
 
@@ -479,7 +491,12 @@
 (evil-leader/set-key-for-mode 'clojure-mode
   "eb" 'nrepl-load-current-buffer
   "es" 'nrepl-eval-expression-at-point
-  "er" 'nrepl-eval-region)
+  "er" 'nrepl-eval-region
+  "nj" 'nrepl-jack-in
+  "nn" 'nrepl-set-ns
+  ;; This command sets and pulls up the appropriate nREPL for the current buffer. Useful when you have
+  ;; multiple REPLs going.
+  "nb" 'nrepl-switch-to-repl-buffer)
 
 (add-hook 'clojure-mode-hook 'clojure-test-mode)
 (eval-after-load 'clojure-mode
