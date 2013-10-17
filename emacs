@@ -16,6 +16,8 @@
                       clojure-test-mode
                       column-marker
                       color-theme-sanityinc-tomorrow
+                      diminish
+                      elisp-slime-nav
                       elscreen
                       evil
                       evil-leader
@@ -118,6 +120,7 @@
 ;;
 ;; Evil mode -- Vim keybindings for Emacs.
 ;;
+
 (setq evil-want-C-u-scroll t)
 (require 'evil)
 (require 'evil-leader) ; Provide configuration functions for assigning actions to a Vim leader key.
@@ -138,7 +141,8 @@
   "vo" (lambda () (interactive) (find-file "~/Dropbox/tasks.org"))
   "ve" (lambda () (interactive) (find-file "~/.emacs.d/emacs"))
   "vh" (lambda () (interactive) (find-file "~/workspace/hmp_repos/liftoff/haggler/src/haggler/handler.clj"))
-  "vt" (lambda () (interactive) (find-file "~/workspace/hmp_repos/liftoff/zdocs/text_scratchpad.txt")))
+  "vt" (lambda () (interactive) (find-file "~/workspace/hmp_repos/liftoff/zdocs/text_scratchpad.txt"))
+  "vl" (lambda () (interactive) (find-file "~/.lein/profiles.clj")))
 
 (eval-after-load 'evil
   '(progn
@@ -184,6 +188,20 @@
 (define-key minibuffer-local-must-match-map [escape] 'minibuffer-keyboard-quit)
 (define-key minibuffer-local-isearch-map [escape] 'minibuffer-keyboard-quit)
 (global-set-key [escape] 'evil-exit-emacs-state)
+
+;; The poorly-named winner mode saves the history of your window splits, so you can undo and redo changes to
+;; your window configuration.
+(winner-mode t)
+
+;; Evil's window map is the set of keys which control window functions. All of its keys are prefixed with
+;; <C-w>.
+;; Undo the last change you made to your window configuration. Very handy as a method for temporarily
+;; maximizing a window: first invoke delete-other-windows, and then invoke winner-undo..
+(define-key evil-window-map (kbd "b") 'winner-undo)
+
+
+
+
 
 ;;
 ;; OS X keybindings minor mode. Make it so the OSX keybindings you're used to always work.
@@ -255,6 +273,7 @@
 ;;
 ;; Org mode, for TODOs and note taking.
 ;;
+
 (require 'org)
 (require 'evil-org)
 (eval-after-load 'org
@@ -281,19 +300,28 @@
 ;;
 ;; Projectile (find file from the root of the current project).
 ;;
+
 (projectile-global-mode)
 
 ;;
 ;; elscreen (tabs on the window).
 ;;
+
 (elscreen-start)
 (define-key evil-normal-state-map (kbd "M-}") 'elscreen-next)
 (define-key evil-normal-state-map (kbd "M-{") 'elscreen-previous)
-(define-key evil-normal-state-map (kbd "M-t") 'elscreen-create)
+(define-key evil-normal-state-map (kbd "M-t") 'open-new-tab-with-current-buffer)
+
+(defun open-new-tab-with-current-buffer ()
+  (interactive)
+  (elscreen-clone)
+  (delete-other-windows))
+
 
 ;;
 ;; Snippets
 ;;
+
 ;; Ignore the default snippets that come with yasnippet. My own are all I need, and I don't want any
 ;; conflicts.
 (setq yas-snippet-dirs '("~/.emacs.d/snippets"))
@@ -301,7 +329,9 @@
 (yas-global-mode 1)
 
 
+;;
 ;; From Dmac - https://github.com/dmacdougall/dotfiles/blob/master/.emacs
+;;
 
 (setq lazy-highlight-initial-delay 0)
 (setq lazy-highlight-cleanup nil)
@@ -363,8 +393,36 @@
      (with-selected-window window
        (split-window-below))))))))
 
+(defun lisp-indent-line-single-semicolon-fix (&optional whole-exp)
+  "Identical to the built-in function lisp-indent-line,
+but doesn't treat single semicolons as right-hand-side comments."
+  (interactive "P")
+  (let ((indent (calculate-lisp-indent)) shift-amt end
+        (pos (- (point-max) (point)))
+        (beg (progn (beginning-of-line) (point))))
+    (skip-chars-forward " \t")
+    (if (or (null indent) (looking-at "\\s<\\s<\\s<"))
+        ;; Don't alter indentation of a ;;; comment line
+        ;; or a line that starts in a string.
+        ;; FIXME: inconsistency: comment-indent moves ;;; to column 0.
+        (goto-char (- (point-max) pos))
+      (if (listp indent) (setq indent (car indent)))
+      (setq shift-amt (- indent (current-column)))
+      (if (zerop shift-amt)
+          nil
+        (delete-region beg (point))
+        (indent-to indent)))
+    ;; If initial point was within line's indentation,
+    ;; position after the indentation.  Else stay at same point in text.
+    (if (> (- (point-max) pos) (point))
+        (goto-char (- (point-max) pos)))))
 
+(add-hook 'clojure-mode-hook '(lambda () (setq indent-line-function 'lisp-indent-line-single-semicolon-fix)))
+
+
+;;
 ;; All new!
+;;
 
 ;; Switch across both windows (i.e. panes/splits) and frames (i.e. OS windows)!
 (require 'framemove)
@@ -375,9 +433,12 @@
 (define-key evil-normal-state-map (kbd "C-l") 'evil-window-right)
 
 (define-key evil-normal-state-map (kbd "H") 'evil-first-non-blank)
+(define-key evil-visual-state-map (kbd "H") 'evil-first-non-blank)
 (define-key evil-normal-state-map (kbd "L") 'evil-end-of-line)
+(define-key evil-visual-state-map (kbd "L") 'evil-end-of-line)
 
 (define-key evil-normal-state-map (kbd ";") 'evil-ex)
+(define-key evil-visual-state-map (kbd ";") 'evil-ex)
 
 (eval-after-load 'evil
   '(progn
@@ -400,6 +461,7 @@
 (require 'smartparens)
 (smartparens-global-mode t)
 (sp-pair "'" nil :actions :rem)
+(setq sp-autoescape-string-quote nil)
 
 ;; fix the PATH variable - from http://clojure-doc.org/articles/tutorials/emacs.html
 (defun set-exec-path-from-shell-PATH ()
@@ -426,7 +488,7 @@
 (define-key evil-normal-state-map "Y" 'copy-to-end-of-line)
 
 (require 'ace-jump-mode)
-(define-key evil-normal-state-map (kbd "SPC") 'ace-jump-word-mode)
+(define-key evil-normal-state-map (kbd "SPC") 'evil-ace-jump-word-mode)
 
 (require 'fill-column-indicator)
 (add-hook 'after-change-major-mode-hook 'fci-mode)
@@ -436,7 +498,9 @@
 ;; (setq git-gutter+-hide-gutter t)
 
 
+;;
 ;; Dired related
+;;
 
 (setq dired-recursive-copies (quote always))
 (setq dired-recursive-deletes (quote top))
@@ -466,8 +530,28 @@
   '(setq fiplr-ignored-globs '((directories (".git" ".svn" "target" "log" ".sass-cache" "Build"))
                                (files (".#*" "*.so" ".DS_Store" ".class")))))
 
+; Diminish modeline clutter - http://whattheemacsd.com/init.el-04.html
+(require 'diminish)
+;; TODO(harry) These calls should only be made after that mode is loaded.
+;; (diminish 'clojure-test-mode)
+;; (diminish 'nrepl-mode)
+;; (diminish 'projectile-mode)
+;; (diminish 'osx-keys-minor-mode)
+;; (diminish 'undo-tree-mode)
+;; (diminish 'eldoc-mode)
+;; (diminish 'smartparens-mode)
+;; (diminish 'auto-complete-mode)
+;; (diminish 'global-whitespace-mode)
 
+; Elisp go-to-definition with M-. and back again with M-,
+(autoload 'elisp-slime-nav-mode "elisp-slime-nav")
+(add-hook 'emacs-lisp-mode-hook (lambda () (elisp-slime-nav-mode t)))
+(eval-after-load 'elisp-slime-nav '(diminish 'elisp-slime-nav-mode))
+
+
+;;
 ;; Ruby related
+;;
 
 (add-to-list 'auto-mode-alist '("\\.rake$" . ruby-mode))
 (add-to-list 'auto-mode-alist '("\\.gemspec$" . ruby-mode))
@@ -477,12 +561,10 @@
 (add-to-list 'auto-mode-alist '("Capfile$" . ruby-mode))
 (add-to-list 'auto-mode-alist '("Vagrantfile$" . ruby-mode))
 
-(eval-after-load 'fiplr
-  '(setq fiplr-ignored-globs '((directories (".git" ".svn" "target" "log" ".sass-cache" "Build"))
-                               (files (".#*" "*.so" ".DS_Store" ".class")))))
 
-
+;;
 ;; Clojure related
+;;
 
 (require 'rainbow-delimiters)
 (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
@@ -503,6 +585,7 @@
   '(define-key clojure-mode-map "\C-c\M-r" 'nrepl-switch-to-repl-buffer))
 
 ;; Clojure indentation rules
+;; (add-hook 'clojure-mode-hook (lambda () (setq lisp-indent-offset 2)))
 (eval-after-load 'clojure-mode
   '(define-clojure-indent
      (send-off 1)                                              ; Core
@@ -524,3 +607,4 @@
 
 (evil-define-key 'normal clojure-mode-map "K" 'nrepl-doc)
 (evil-define-key 'normal clojure-mode-map "gf" 'nrepl-jump)
+(put 'dired-find-alternate-file 'disabled nil)
