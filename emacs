@@ -1,3 +1,5 @@
+;; Largely "inspired" by philc's .emacs: https://github.com/philc/emacs-config/blob/master/.emacs
+
 ;;
 ;; Package management
 ;;
@@ -8,15 +10,20 @@
 (when (not package-archive-contents)
   (package-refresh-contents))
 
-(defvar my-packages '(ac-nrepl
+(defvar my-packages '(
+                      ac-nrepl
                       ace-jump-mode
                       ack-and-a-half
                       auto-complete
+                      buffer-move
+                      cider
+                      cider-tracing
                       clojure-mode
                       clojure-test-mode
                       column-marker
                       color-theme-sanityinc-tomorrow
                       diminish
+                      dired-details+ ; Hides all of the unnecessary file details in dired mode.
                       elisp-slime-nav
                       elscreen
                       evil
@@ -26,19 +33,22 @@
                       fiplr
                       flx-ido ; Fuzzy matching for ido, which improves the UX of Projectile.
                       framemove
+                      go-mode
                       goto-last-change
                       ido-ubiquitous ; Make ido completions work everywhere.
                       ido-vertical-mode ; Show ido results vertically.
+                      magit
                       markdown-mode
                       midje-mode
-                      nrepl
                       org
                       powerline
                       projectile ; Find file in project (ala CTRL-P).
                       rainbow-delimiters
                       smartparens
                       smex
+                      surround
                       undo-tree
+                      yaml-mode
                       yasnippet
                       ))
 
@@ -47,17 +57,31 @@
     (package-install p)))
 
 ; Packages not on melpa:
-(add-to-list 'load-path "~/.emacs.d/plugins/evil-surround")
 (add-to-list 'load-path "~/.emacs.d/plugins/evil-org-mode")
 
 ;;
 ;; General
 ;;
 
+(require 'cl)
+
+;; Anecdotally, this reduces the amount of display flicker on some Emacs startup.
+(setq redisplay-dont-pause t)
+
 ;; Turn off graphical toolbars.
 (if (display-graphic-p) (menu-bar-mode 1) (menu-bar-mode -1))
 (when (and (fboundp 'tool-bar-mode) tool-bar-mode) (tool-bar-mode -1))
 (when (and (fboundp 'scroll-bar-mode) scroll-bar-mode) (scroll-bar-mode -1))
+
+(setq initial-scratch-message "") ; When opening a new buffer, don't show the scratch message.
+
+;; Use the same PATH variable as your shell does. From http://clojure-doc.org/articles/tutorials/emacs.html
+(defun set-exec-path-from-shell-PATH ()
+  (let ((path-from-shell (shell-command-to-string "$SHELL -i -c 'echo $PATH'")))
+    (setenv "PATH" path-from-shell)
+    (setq exec-path (split-string path-from-shell path-separator))))
+
+(when window-system (set-exec-path-from-shell-PATH))
 
 (global-auto-revert-mode t) ; Reload an open file from disk if it is changed outside of Emacs.
 
@@ -66,18 +90,27 @@
 (setq ring-bell-function 'ignore)
 (setq mac-option-modifier 'alt)
 (setq mac-command-modifier 'meta)
+;; Require typing only "y" or"n" instead of the full "yes" to confirm destructive actions.
+(defalias 'yes-or-no-p 'y-or-n-p)
+
 (setq make-backup-files nil)
 (setq auto-save-default nil)
 
+(setq vc-follow-symlinks t) ; Don't ask confirmation to follow symlinks to edit files.
+
 (savehist-mode t) ; Save your minibuffer history across Emacs sessions. UX win!
+
+;; Include path information in duplicate buffer names (e.g. a/foo.txt b/foo.txt)
+(require 'uniquify)
+(setq uniquify-buffer-name-style 'forward)
 
 ;; Start scrolling the window when the cursor reaches its edge.
 ;; http://stackoverflow.com/questions/3631220/fix-to-get-smooth-scrolling-in-emacs
-(setq redisplay-dont-pause t
-  scroll-margin 5
-  scroll-step 1
-  scroll-conservatively 10000
-  scroll-preserve-screen-position 1)
+(setq scroll-margin 7
+      scroll-step 1
+      scroll-conservatively 10000
+      scroll-preserve-screen-position 1
+      mouse-wheel-scroll-amount '(0.01))
 
 ;; The preference file for Emac's "Customize" system. `M-x customize` to access it.
 (setq custom-file (expand-file-name "~/.emacs.d/custom.el"))
@@ -99,6 +132,8 @@
 ;; (setq-default mode-require-final-newline nil)
 (setq-default tab-width 2)
 (setq-default evil-shift-width 2)
+; Some modes have their own tab-width variables.
+(setq-default css-indent-offset 2)
 
 (setq-default fill-column 110) ; When wrapping with the Emacs fill commands, wrap at 110 chars.
 (auto-fill-mode t) ; When typing across the fill-column, hard-wrap the line as you type.
@@ -117,6 +152,61 @@
                 (untabify (point-min) (point-max)))
             nil))
 
+;; RecentF mode is the Emacs minor mode used when opening files via C-x C-f.
+(require 'recentf)
+(define-key recentf-mode-map (kbd "C-w") 'backward-kill-word)
+(define-key recentf-mode-map (kbd "C-h") 'backward-delete-char)
+
+;; Settings for window splits.
+(setq split-height-threshold 40)
+(setq split-width-threshold 200)
+(setq split-window-preferred-function 'split-window-sensibly-reverse)
+;; Ensure these open in the selected window, not a new popup.
+(setq same-window-buffer-names '("*magit-log*"))
+
+;; "I manage my windows in a 4x4 grid. I want ephemeral or status-based buffers to always show in the
+;; lower-right or right window, in that order of preference."
+(setq special-display-buffer-names '("*Help*" "*compilation*" "COMMIT_EDITMSG" "*Messages*"
+                                     "*magit-process*" "*magit-commit*" "*Compile-Log*" "*Gofmt Errors*"))
+(setq special-display-regexps '("*cider.*"))
+(setq special-display-function 'show-ephemeral-buffer-in-a-sensible-window)
+
+;; A list of "special" (ephemeral) buffer names which should be focused after they are shown. Used by
+;; show-ephemeral-buffer-in-a-sensible-window
+(setq special-display-auto-focused-buffers '())
+
+;; References, for context:
+;; http://snarfed.org/emacs_special-display-function_prefer-other-visible-frame
+;; http://stackoverflow.com/questions/1002091/how-to-force-emacs-not-to-display-buffer-in-a-specific-window
+;; The implementation of this function is based on `special-display-popup-frame` in window.el.
+(defun show-ephemeral-buffer-in-a-sensible-window (buffer &optional buffer-data)
+  "Given a buffer, shows the window in a right-side split."
+  (let* ((original-window (selected-window))
+         (create-new-window (one-window-p))
+         (window (if create-new-window
+                     (split-window-sensibly-reverse)
+                   (save-excursion (switch-to-lower-right) (selected-window)))))
+    (display-buffer-record-window (if create-new-window 'window 'reuse) window buffer)
+    (set-window-buffer window buffer)
+    (when create-new-window (set-window-prev-buffers window nil))
+    (select-window original-window)
+    (when (member (buffer-name buffer) special-display-auto-focused-buffers)
+      (select-window window))
+    window))
+
+(defun dismiss-ephemeral-windows ()
+  "Dismisses any visible windows in the current frame identifiedy by `special-display-buffer-names` and
+   `special-display-regexps`. I use this to quickly dismiss help windows, compile output, etc."
+  (interactive)
+  (save-excursion
+    (let ((original-window (selected-window)))
+      (dolist (window (window-list))
+        (let ((buffer (window-buffer window)))
+          (when (special-display-p (buffer-name buffer))
+            (quit-window nil window))))
+      (select-window original-window))))
+
+
 ;;
 ;; Evil mode -- Vim keybindings for Emacs.
 ;;
@@ -130,27 +220,64 @@
 (evil-mode t)
 (global-evil-leader-mode)
 (global-surround-mode 1)
+;; Note that there is a bug where Evil-leader isn't properly bound to the initial buffers Emacs opens
+;; with. We work around this by killing them. See https://github.com/cofi/evil-leader/issues/10.
+(kill-buffer "*Messages*")
+
+;; When opening new lines, indent according to the previous line.
+(setq evil-auto-indent t)
+
+(define-key evil-normal-state-map (kbd "K") 'info-lookup-symbol)
+
+; Some help keybindings which conflict with nothing else, so you can pull up help in any context.
+(global-set-key (kbd "C-A-M-h") 'help) ; Here we clobber C-h, which accesses Emacs's help.
+(global-set-key (kbd "C-A-M-b") 'describe-bindings)
 
 (evil-leader/set-key
   "h" 'help
   "b" 'ido-switch-buffer
   "t" 'fiplr-find-file ;; 'projectile-find-file
+  "a" 'projectile-ack
+  "d" 'projectile-dired
+  "|" (lambda () (interactive)(split-window-horizontally) (other-window 1))
+  "\\" (lambda () (interactive)(split-window-horizontally) (other-window 1))
+  "-" (lambda () (interactive)(split-window-vertically) (other-window 1))
   "eb" 'eval-buffer
   "es" 'eval-surrounding-sexp
+  "gs" 'magit-status-and-focus-unstaged
+  "gl" 'magit-log
   ; "v" is a mnemonic prefix for "view X".
-  "vo" (lambda () (interactive) (find-file "~/Dropbox/tasks.org"))
+  "vt" (lambda () (interactive) (find-file "~/Dropbox/tasks.org"))
+  "vn" (lambda () (interactive) (find-file "~/Dropbox/notes.org"))
   "ve" (lambda () (interactive) (find-file "~/.emacs.d/emacs"))
   "vh" (lambda () (interactive) (find-file "~/workspace/hmp_repos/liftoff/haggler/src/haggler/handler.clj"))
-  "vt" (lambda () (interactive) (find-file "~/workspace/hmp_repos/liftoff/zdocs/text_scratchpad.txt"))
   "vl" (lambda () (interactive) (find-file "~/.lein/profiles.clj")))
 
 (eval-after-load 'evil
   '(progn
-     (setq evil-leader/leader ",")
      (setq evil-default-cursor t)
      ;; Unbind these keys in evil so they can instead be used for code navigation.
      (define-key evil-normal-state-map (kbd "M-,") nil)
      (define-key evil-normal-state-map (kbd "M-.") nil)))
+
+(setq evil-leader/leader ",")
+
+;; Ensure we evil-leader works in non-editing modes like magit. This is referenced from evil-leader's README.
+(setq evil-leader/no-prefix-mode-rx '("magit-.*-mode"))
+
+(defun evil-shift-paragraph-left (beg end)
+  "Shifts a paragraph left."
+  (interactive "r")
+  (let ((region (evil-inner-paragraph)))
+    (save-excursion
+      (evil-shift-left (first region) (second region)))))
+
+(defun evil-shift-paragraph-right (beg end)
+  "Shifts a paragraph right."
+  (interactive "r")
+  (let ((region (evil-inner-paragraph)))
+    (save-excursion
+      (evil-shift-right (first region) (second region)))))
 
 (defun eval-surrounding-sexp (levels)
   (interactive "p")
@@ -169,6 +296,43 @@
 (define-key evil-insert-state-map (kbd "C-u") 'backward-kill-line)
 (define-key evil-insert-state-map (kbd "C-d") 'delete-char)
 (global-set-key (kbd "C-h") 'backward-delete-char) ; C-h in Emacs is the prefix for help functions.
+
+(defun split-window-sensibly-reverse (&optional window)
+  "Identical to the built-in function split-window-sensibly, but prefers horizontal splits over vertical splits."
+  (let ((window (or window (selected-window))))
+    (or (and (window-splittable-p window t)
+       ;; Split window horizontally.
+       (with-selected-window window
+         (split-window-right)))
+  (and (window-splittable-p window)
+       ;; Split window vertically.(column-marker-1 80)
+       (with-selected-window window
+         (split-window-below)))
+  (and (eq window (frame-root-window (window-frame window)))
+       (not (window-minibuffer-p window))
+       ;; If WINDOW is the only window on its frame and is not the
+       ;; minibuffer window, try to split it vertically disregarding
+       ;; the value of `split-height-threshold'.
+       (let ((split-height-threshold 0))
+         (when (window-splittable-p window)
+     (with-selected-window window
+       (split-window-below))))))))
+
+;; Save buffers whenever they lose focus.
+;; This obviates the need to hit the Save key thousands of times a day. Inspired by http://goo.gl/2z0g5O.
+(defun save-buffer-if-dirty ()
+  (when (and buffer-file-name (buffer-modified-p))
+    (save-buffer)))
+
+(defadvice switch-to-buffer (before save-buffer-now activate) (save-buffer-if-dirty))
+(defadvice other-window (before other-window-now activate) (save-buffer-if-dirty))
+(defadvice windmove-up (before other-window-now activate) (save-buffer-if-dirty))
+(defadvice windmove-down (before other-window-now activate) (save-buffer-if-dirty))
+(defadvice windmove-left (before other-window-now activate) (save-buffer-if-dirty))
+(defadvice windmove-right (before other-window-now activate) (save-buffer-if-dirty))
+;; This hasn't been a problem yet, but advising "select-window" may cause problems. For instance, it's called
+;; every time a character is typed in isearch mode.
+(defadvice select-window (before select-window activate) (save-buffer-if-dirty))
 
 ;; Make it so Esc means quit, no matter the context.
 ;; http://stackoverflow.com/a/10166400/46237
@@ -198,9 +362,65 @@
 ;; Undo the last change you made to your window configuration. Very handy as a method for temporarily
 ;; maximizing a window: first invoke delete-other-windows, and then invoke winner-undo..
 (define-key evil-window-map (kbd "b") 'winner-undo)
+(define-key evil-window-map (kbd "SPC") 'dismiss-ephemeral-windows)
 
 
+;;
+;; Incremental search (isearch)
+;;
 
+;; Make highlighting during incremental search feel snappier.
+(setq case-fold-search t) ; Make searches case insensitive.
+(setq lazy-highlight-initial-delay 0)
+(setq lazy-highlight-max-at-a-time nil)
+;; Hitting escape aborts the search, restoring your cursor to the original position, as it does in Vim.
+(define-key isearch-mode-map (kbd "<escape>") 'isearch-abort)
+;; Make C-h act the same as backspace.
+(define-key isearch-mode-map (kbd "C-h") 'isearch-delete-char)
+;; Make M-v paste the clipboard's text into the search ring.
+(define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
+(define-key isearch-mode-map (kbd "C-w") 'isearch-del-word)
+
+(defun trim-last-word-of-string (string)
+  "Removes the last word from the given string. Word separators are -, _ and spaces. This is designed to
+  perform the same function as kill-word, but on a string argument."
+  (lexical-let ((i 0))
+    (while (and (< i (length string))
+                (string-match "[-_ ]+" string i))
+      (setq i (second (match-data))))
+    (if (= i 0)
+      ""
+      (substring string 0 (dec i)))))
+
+(defun isearch-del-word (&optional arg)
+  "Delete word from end of search string and search again. If search string is empty, just beep.
+  This function definition is based on isearch-del-char, from isearch.el."
+  (interactive "p")
+  (if (= 0 (length isearch-string))
+    (ding)
+    (setq isearch-string (trim-last-word-of-string isearch-string)
+          isearch-message (mapconcat 'isearch-text-char-description
+                                     isearch-string "")))
+  ;; Use the isearch-other-end as new starting point to be able
+  ;; to find the remaining part of the search string again.
+  (when isearch-other-end (goto-char isearch-other-end))
+  (isearch-search)
+  (isearch-push-state)
+  (isearch-update))
+
+;; When pressing enter to confirm a search, or jumping to the next result, scroll the result to the center of
+;; the window. This solves the UX problem of the result appearing at the bottom of the screen, with little
+;; context.
+;; (defadvice evil-search-next (after isearch-recenter activate) (recenter-no-redraw))
+;; (defadvice evil-search-previous (after isearch-recenter activate) (recenter-no-redraw))
+;; (defadvice isearch-exit (before isearch-recenter activate) (recenter-no-redraw))
+
+;; Taken from https://groups.google.com/forum/#!topic/gnu.emacs.help/vASrP0P-tXM
+(defun recenter-no-redraw (&optional arg)
+  "Centers the viewport around the cursor."
+  (interactive "P")
+  (let ((recenter-redisplay nil))
+    (recenter arg)))
 
 
 ;;
@@ -210,13 +430,15 @@
 
 (defvar osx-keys-minor-mode-map (make-keymap) "osx-keys-minor-mode-keymap")
 (define-key osx-keys-minor-mode-map (kbd "M-`") 'other-frame)
+(define-key osx-keys-minor-mode-map (kbd "M-~") '(lambda () (interactive) (other-frame -1)))
 (define-key osx-keys-minor-mode-map (kbd "M-w") 'vimlike-quit)
 (define-key osx-keys-minor-mode-map (kbd "M-q") 'save-buffers-kill-terminal)
 (define-key osx-keys-minor-mode-map (kbd "M-n") 'new-frame)
+(define-key osx-keys-minor-mode-map (kbd "M-a") 'mark-whole-buffer)
 (define-key osx-keys-minor-mode-map (kbd "M-s") 'save-buffer)
 (define-key osx-keys-minor-mode-map (kbd "M-v") 'clipboard-yank)
 (define-key osx-keys-minor-mode-map (kbd "M-c") 'clipboard-kill-ring-save)
-(define-key osx-keys-minor-mode-map (kbd "M-a") 'mark-whole-buffer)
+(define-key osx-keys-minor-mode-map (kbd "M-W") 'evil-quit) ; Close all tabs in the current frame..
 
 (define-minor-mode osx-keys-minor-mode
   "A minor-mode for emulating osx keyboard shortcuts."
@@ -258,6 +480,7 @@
       (evil-quit)
       nil))))
 
+
 ;;
 ;; Filename completions (CTRL-P / CMD+T)
 ;;
@@ -269,6 +492,59 @@
      (setq ido-enable-flex-matching t)
      (setq ido-use-virtual-buffers t)
      (setq ido-everywhere t)))
+
+
+;;
+;; Dired related
+;;
+
+(require 'dired-details+)
+(setq dired-recursive-copies (quote always))
+(setq dired-recursive-deletes (quote top))
+(put 'dired-find-alternate-file 'disabled nil)
+
+;; "go to dired, then call split-window-vertically, then go to another dired dir. Now, when you press C to
+;; copy, the other dir in the split pane will be default destination. Same for R (rename; move)."
+(setq dired-dwim-target t)
+
+;; Use the same buffer for going into and up directories.
+(evil-define-key 'normal dired-mode-map (kbd "gu") (lambda () (interactive) (find-alternate-file "..")))
+(evil-define-key 'normal dired-mode-map "H" (lambda () (interactive) (find-alternate-file "..")))
+(evil-define-key 'normal dired-mode-map (kbd "<return>")
+  'dired-find-alternate-file) ; was dired-advertised-find-file
+
+(evil-define-key 'normal dired-mode-map "," nil) ; Ensure my evil-leader key works unhindered.
+(evil-define-key 'normal dired-mode-map "cd" 'dired-create-directory)
+(evil-define-key 'normal dired-mode-map "cf" 'dired-create-file)
+;; (evil-define-key 'normal dired-mode-map "x" 'dired-mark)
+(evil-define-key 'normal dired-mode-map "v" 'dired-details-toggle)
+;; The "e" prefix is for execute.
+(evil-define-key 'normal dired-mode-map "ed" 'dired-do-flagged-delete)
+(evil-define-key 'normal dired-mode-map "em" 'dired-do-rename)
+
+;; Taken from http://stackoverflow.com/a/18885461/46237.
+(defun dired-create-file (file)
+  "Create a file called FILE, and recursively create any parent directories.
+  If FILE already exists, signal an error."
+  (interactive
+   (list (read-file-name "Create file: " (dired-current-directory))))
+  (let* ((expanded (expand-file-name file))
+         (try expanded)
+         (dir (directory-file-name (file-name-directory expanded)))
+         new)
+    (if (file-exists-p expanded)
+        (error "Cannot create file %s: file exists" expanded))
+    ;; Find the topmost nonexistent parent dir (variable `new')
+    (while (and try (not (file-exists-p try)) (not (equal new try)))
+      (setq new try
+            try (directory-file-name (file-name-directory try))))
+    (when (not (file-exists-p dir))
+      (make-directory dir t))
+    (write-region "" nil expanded t)
+    (when new
+      (dired-add-file new)
+      (dired-move-to-filename))))
+
 
 ;;
 ;; Org mode, for TODOs and note taking.
@@ -297,11 +573,13 @@
 (setq org-default-notes-file "~/Dropbox/tasks.org")
 (define-key org-mode-map "\C-cc" 'org-capture)
 
+
 ;;
 ;; Projectile (find file from the root of the current project).
 ;;
 
 (projectile-global-mode)
+
 
 ;;
 ;; elscreen (tabs on the window).
@@ -314,84 +592,291 @@
 
 (defun open-new-tab-with-current-buffer ()
   (interactive)
+  (evil-change-to-initial-state)
   (elscreen-clone)
   (delete-other-windows))
 
 
 ;;
+;; Markdown
+;;
+
+(defun markdown-insert-list-item-below ()
+  "Inserts a new list item under the current one. markdown-insert-list-item inserts above, by default."
+  (interactive)
+  (end-of-line)
+  (call-interactively 'markdown-insert-list-item)
+  (evil-append nil))
+
+(add-to-list 'auto-mode-alist '("\\.markdown$" . gfm-mode))
+(add-to-list 'auto-mode-alist '("\\.md$" . gfm-mode))
+
+
+(eval-after-load 'markdown-mode
+  '(progn
+     (evil-define-key 'normal markdown-mode-map
+       (kbd "M-h") 'evil-shift-paragraph-left
+       (kbd "M-l") 'evil-shift-paragraph-right)
+     ;; Note that while in insert mode, using "evil-shift-paragraph-right" while the cursor is at the end of a
+     ;; line will shift the paragraph incorrectly. That's why we jump to normal mode first, as a workaround.
+     (evil-define-key 'insert markdown-mode-map
+       (kbd "M-h") '(lambda ()
+                        (interactive)
+                        (evil-change-to-initial-state)
+                        (call-interactively 'evil-shift-paragraph-left)
+                        (evil-append nil))
+       (kbd "M-l") '(lambda ()
+                        (interactive)
+                        (evil-change-to-initial-state)
+                        (call-interactively 'evil-shift-paragraph-right)
+                        (evil-append nil)))
+     (mapc (lambda (state)
+             (evil-define-key state markdown-mode-map
+               (kbd "M-k") 'markdown-move-up
+               (kbd "M-j") 'markdown-move-down
+               ;; M-return creates a new todo item and enters insert mode.
+               (kbd "<M-return>") 'markdown-insert-list-item-below))
+           '(normal insert))))
+;;
 ;; Snippets
 ;;
 
-;; Ignore the default snippets that come with yasnippet. My own are all I need, and I don't want any
-;; conflicts.
+;; "Ignore the default snippets that come with yasnippet. My own are all I need, and I don't want any
+;; conflicts."
 (setq yas-snippet-dirs '("~/.emacs.d/snippets"))
 (require 'yasnippet)
 (yas-global-mode 1)
+(define-key yas-keymap (kbd "ESC") 'yas-abort-snippet)
 
 
 ;;
-;; From Dmac - https://github.com/dmacdougall/dotfiles/blob/master/.emacs
+;; Diminish - hide or shorten the names of minor modes in your modeline.
+;; To see which minor modes you have loaded and what their modeline strings are: (message minor-mode-alist)
 ;;
 
-(setq lazy-highlight-initial-delay 0)
-(setq lazy-highlight-cleanup nil)
-(setq lazy-highlight-max-at-a-time nil)
-(setq split-height-threshold 40)
-(setq split-width-threshold 200)
-(setq split-window-preferred-function 'split-window-sensibly-reverse)
-(setq vc-follow-symlinks t)
+(require 'diminish)
+(diminish 'visual-line-mode "")
+(diminish 'global-whitespace-mode "")
+(diminish 'global-visual-line-mode "")
+(diminish 'auto-fill-function "")
+(diminish 'projectile-mode " p")
+(diminish 'yas-minor-mode "yas")
+(diminish 'osx-keys-minor-mode "")
+(diminish 'undo-tree-mode "")
 
-(global-undo-tree-mode t)
-(global-font-lock-mode t)
-(global-hl-line-mode t)
-(global-linum-mode t)
-;; (line-number-mode 1)
-(column-number-mode 1)
 
-(global-set-key (kbd "RET") 'comment-indent-new-line)
-(global-set-key (kbd "M-x") 'smex)
-(global-set-key (kbd "M-X") 'smex-major-mode-commands)
+;;
+;; Powerline: improve the appearance & density of the Emacs status bar (mode line).
+;;
 
-;; Include path information in duplicate buffer names (e.g. a/foo.txt b/foo.txt)
-(require 'uniquify)
-(setq uniquify-buffer-name-style 'forward)
+(require 'powerline)
 
-(eval-after-load 'paren
-  '(setq show-paren-delay 0))
-(show-paren-mode t)
+(defface powerline-white-face
+  '((t (:background "#e0e0e0" :foreground "black" :inherit mode-line)))
+    "Face for powerline")
+(defface powerline-black-face
+  '((t (:background "#191919" :inherit mode-line)))
+  "Face for powerline")
+
+(defun powerline-projectile-project-name (&optional face padding)
+  "Returns a string describing the projectile project for the current buffer. Takes the same arguments as
+   powerline-raw."
+  (powerline-raw (concat "(" (projectile-project-name) ")") face padding))
+
+(defun powerline-personal-theme ()
+  "My customized powerline, copied and slightly modified from the default theme."
+  (interactive)
+  (setq-default mode-line-format
+                '("%e"
+                  (:eval
+                   (let* ((active (powerline-selected-window-active))
+                          (mode-line (if active 'mode-line 'mode-line-inactive))
+                          (face1 (if active 'powerline-active1 'powerline-inactive1))
+                          (face2 (if active 'powerline-active2 'powerline-inactive2))
+                          (separator-left (intern (format "powerline-%s-%s"
+                                                          powerline-default-separator
+                                                          (car powerline-default-separator-dir))))
+                          (separator-right (intern (format "powerline-%s-%s"
+                                                           powerline-default-separator
+                                                           (cdr powerline-default-separator-dir))))
+                          (lhs (list (powerline-raw "%*" 'powerline-black-face 'l)
+                                     (powerline-buffer-id 'powerline-black-face 'l)
+                                     (powerline-raw " " 'powerline-black-face)
+                                     (powerline-projectile-project-name 'powerline-black-face 'l)
+                                     (powerline-raw " " 'powerline-black-face)
+                                     (funcall separator-left mode-line face1)
+                                     (powerline-major-mode face1 'l)
+                                     (powerline-process face1)
+                                     (powerline-minor-modes face1 'l)
+                                     (powerline-narrow face1 'l)
+                                     (powerline-raw " " face1)))
+                          (rhs (list (powerline-raw global-mode-string face2 'r)
+                                     ;; "Version control" - show the modeline of any active VC mode.
+                                     (powerline-vc face1 'r)
+                                     (powerline-raw "%4l" face1 'l) ; Current line number
+                                     (powerline-raw ":" face1 'l)
+                                     (powerline-raw "%3c" face1 'r) ; Current column number
+                                     (powerline-raw " " face1)
+                                     ;; A visual scrollbar shown inside 1x1 char
+                                     (powerline-hud 'powerline-white-face face1))))
+                     (concat (powerline-render lhs)
+                             (powerline-fill face1 (powerline-width rhs))
+                             (powerline-render rhs)))))))
+
+;; (powerline-default-theme)
+(powerline-personal-theme)
+
+
+;;
+;; Misc languages
+;;
+
+;; CSS
+(add-hook 'css-mode-hook (lambda ()
+                           (autopair-mode 1) ; Auto-insert matching delimiters.
+                           ;; Properly unindent a closing brace after you type it and hit enter.
+                           (eletric-indent-mode)))
+
+;; HTML
+(add-to-list 'auto-mode-alist '("\\.erb$" . html-mode))
+
+;; SCSS
+(setq scss-compile-at-save nil)
+(add-to-list 'auto-mode-alist '("\\.scss\\'" . scss-mode))
+
+;; YAML
+(require 'yaml-mode)
+(add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode))
+
+
+;;
+;; Coffeescript
+;;
+
+(setq coffee-tab-width 2)
+(evil-leader/set-key-for-mode 'coffee-mode
+  "c" nil ; Establishes "c" as a "prefix key". I found this trick here: http://www.emacswiki.org/emacs/Evil
+  "cf" (lambda ()
+         (interactive)
+         (save-buffer)
+         (coffee-compile-file))
+  ;; The mnemonic for this is "compile & preview".
+  "cp" 'coffee-compile-buffer)
+
+;; Make return and open-line indent the cursor properly.
+(evil-define-key 'insert coffee-mode-map (kbd "RET") 'coffee-newline-and-indent)
+(evil-define-key 'normal coffee-mode-map "o" '(lambda ()
+                                                (interactive)
+                                                (end-of-line)
+                                                (evil-append nil)
+                                                (coffee-newline-and-indent)))
+
+
+;;
+;; Ruby
+;;
+
+(add-to-list 'auto-mode-alist '("\\.rake$" . ruby-mode))
+(add-to-list 'auto-mode-alist '("\\.gemspec$" . ruby-mode))
+(add-to-list 'auto-mode-alist '("\\.ru$" . ruby-mode))
+(add-to-list 'auto-mode-alist '("Rakefile$" . ruby-mode))
+(add-to-list 'auto-mode-alist '("Gemfile$" . ruby-mode))
+(add-to-list 'auto-mode-alist '("Capfile$" . ruby-mode))
+(add-to-list 'auto-mode-alist '("Vagrantfile$" . ruby-mode))
+
+;; Insert matching delimiters; unindent end blocks after you type them.
+(add-hook 'ruby-mode-hook (lambda () (ruby-electric)))
+
+
+;;
+;; Emacs Lisp (elisp)
+;;
+
+(add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w" emacs-lisp-mode-syntax-table)))
+(evil-define-key 'normal emacs-lisp-mode-map
+  "K"'(lambda ()
+        (interactive)
+        ;; Run `describe-function` and show its output in a help
+        ;; window. Inspired from help-fns.el.
+        (with-help-window "*Help*"
+          (describe-function (intern (current-word))))))
+
+(defun current-sexp ()
+  "Returns the text content of the sexp list around the cursor."
+  (let ((position (bounds-of-thing-at-point 'list)))
+    (buffer-substring-no-properties (car position) (cdr position))))
+
+(defun elisp-eval-current-sexp ()
+  (interactive)
+  (print (eval (read (current-sexp)))))
+
+(evil-leader/set-key-for-mode 'emacs-lisp-mode
+  "eb" (lambda() (interactive) (save-buffer) (eval-buffer))
+  "es" 'elisp-eval-current-sexp
+  "ex" 'eval-defun)
+
+
+;;
+;; Clojure
+;;
 
 ;; Count hyphens, etc. as word characters in lisps
-(add-hook 'clojure-mode-hook (lambda () (modify-syntax-entry ?- "w")))
-(add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w")))
+(add-hook 'clojure-mode-hook (lambda () (modify-syntax-entry ?- "w" clojure-mode-syntax-table)))
+(add-hook 'clojure-mode-hook (lambda ()
+                               (setq indent-line-function 'lisp-indent-line-single-semicolon-fix)
+                               ;; Comment lines using only one semi-colon instead of two.
+                               (setq comment-add 0)))
 
-(require 'auto-complete)
-(add-hook 'prog-mode-hook 'auto-complete-mode)
-(define-key ac-complete-mode-map "\C-n" 'ac-next)
-(define-key ac-complete-mode-map "\C-p" 'ac-previous)
-(setq ac-auto-start nil)
-(ac-set-trigger-key "TAB")
-(ac-linum-workaround)
+(evil-define-key 'normal clojure-mode-map "K"
+  (lambda () (interactive) (preserve-selected-window (lambda () (call-interactively 'cider-doc)))))
 
-(defun split-window-sensibly-reverse (&optional window)
-  "Identical to the built-in function split-window-sensibly, but prefers horizontal splits over vertical splits."
-  (let ((window (or window (selected-window))))
-    (or (and (window-splittable-p window t)
-       ;; Split window horizontally.
-       (with-selected-window window
-         (split-window-right)))
-  (and (window-splittable-p window)
-       ;; Split window vertically.(column-marker-1 80)
-       (with-selected-window window
-         (split-window-below)))
-  (and (eq window (frame-root-window (window-frame window)))
-       (not (window-minibuffer-p window))
-       ;; If WINDOW is the only window on its frame and is not the
-       ;; minibuffer window, try to split it vertically disregarding
-       ;; the value of `split-height-threshold'.
-       (let ((split-height-threshold 0))
-         (when (window-splittable-p window)
-     (with-selected-window window
-       (split-window-below))))))))
+(evil-define-key 'normal clojure-mode-map "gf" 'cider-jump)
+
+;; Hide the uninteresting nrepl-connection and nrepl-server buffers from the buffer list.
+(setq nrepl-hide-special-buffers t)
+
+;; Don't ask confirmation for closing any open nrepl connections when exiting Emacs.
+;; http://stackoverflow.com/q/2706527/46237
+(defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
+  "Prevent annoying \"Active processes exist\" query when you quit Emacs."
+  (flet ((process-list ())) ad-do-it))
+
+(evil-leader/set-key-for-mode 'clojure-mode
+  "eb" 'cider-load-current-buffer
+  "es" 'cider-eval-expression-at-point
+  "er" 'cider-eval-region
+  "nj" 'cider-jack-in
+  "nn" 'cider-repl-set-ns
+  ;; This command sets and pulls up the appropriate nREPL for the current buffer. Useful when you have
+  ;; multiple REPLs going.
+  "nb" 'cider-switch-to-repl-buffer
+  "nt" 'cider-toggle-trace)
+(add-hook 'cider-mode-hook 'cider-turn-on-eldoc-mode)
+(setq nrepl-hide-special-buffers t)
+(setq cider-repl-popup-stacktraces t)
+(setq cider-repl-print-length 100)
+(setq cider-repl-use-clojure-font-lock t)
+(setq cider-repl-result-prefix ";; => ")
+
+(require 'rainbow-delimiters)
+(add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+(add-hook 'cider-mode-hook 'rainbow-delimiters-mode)
+(add-hook 'cider-repl-mode-hook 'rainbow-delimiters-mode)
+
+;; Clojure indentation rules
+;; (add-hook 'clojure-mode-hook (lambda () (setq lisp-indent-offset 2)))
+(eval-after-load 'clojure-mode
+  '(define-clojure-indent
+     (send-off 1) (cli 1) (go-loop 1)                                  ; Core
+     (ANY 2) (GET 2) (POST 2) (PUT 2) (PATCH 2) (DELETE 2) (context 2) ; Compojure
+     (select 1) (insert 1) (update 1) (where 1) (set-fields 1)         ; Korma
+     (values 1) (delete 1) (upsert 1) (subselect 1)
+     (clone-for 1)                                                     ; Enlive
+     (up 1) (down 1) (alter 1) (table 1) (create 1)                    ; Lobos
+     (checker 1)                                                       ; Midje
+     (with-eligible-values 1) (when-eligible 1) (check 4)              ; Personal
+     (url-of-form 1)                                                   ; Personal
+     ))
 
 (defun lisp-indent-line-single-semicolon-fix (&optional whole-exp)
   "Identical to the built-in function lisp-indent-line,
@@ -417,7 +902,44 @@ but doesn't treat single semicolons as right-hand-side comments."
     (if (> (- (point-max) pos) (point))
         (goto-char (- (point-max) pos)))))
 
-(add-hook 'clojure-mode-hook '(lambda () (setq indent-line-function 'lisp-indent-line-single-semicolon-fix)))
+(add-hook 'clojure-mode-hook 'clojure-test-mode)
+
+;; Autocompletion in nrepl
+(require 'ac-nrepl)
+(add-hook 'cider-mode-hook 'ac-nrepl-setup)
+(add-hook 'cider-mode-hook 'auto-complete-mode)
+(eval-after-load 'auto-complete '(add-to-list 'ac-modes 'cider-mode))
+
+
+;;
+;; From Dmac - https://github.com/dmacdougall/dotfiles/blob/master/.emacs
+;;
+
+(setq lazy-highlight-initial-delay 0)
+(setq lazy-highlight-cleanup nil)
+(setq lazy-highlight-max-at-a-time nil)
+(global-undo-tree-mode t)
+(global-font-lock-mode t)
+(global-hl-line-mode t)
+(global-linum-mode t)
+;; (line-number-mode 1)
+(column-number-mode 1)
+
+(global-set-key (kbd "RET") 'comment-indent-new-line)
+(global-set-key (kbd "M-x") 'smex)
+(global-set-key (kbd "M-X") 'smex-major-mode-commands)
+
+(eval-after-load 'paren
+  '(setq show-paren-delay 0))
+(show-paren-mode t)
+
+(require 'auto-complete)
+(add-hook 'prog-mode-hook 'auto-complete-mode)
+(define-key ac-complete-mode-map "\C-n" 'ac-next)
+(define-key ac-complete-mode-map "\C-p" 'ac-previous)
+(setq ac-auto-start nil)
+(ac-set-trigger-key "TAB")
+(ac-linum-workaround)
 
 
 ;;
@@ -432,6 +954,12 @@ but doesn't treat single semicolons as right-hand-side comments."
 (define-key evil-normal-state-map (kbd "C-k") 'evil-window-up)
 (define-key evil-normal-state-map (kbd "C-l") 'evil-window-right)
 
+(require 'buffer-move)
+(global-set-key (kbd "C-S-k") 'buf-move-up)
+(global-set-key (kbd "C-S-j") 'buf-move-down)
+(global-set-key (kbd "C-S-h") 'buf-move-left)
+(global-set-key (kbd "C-S-l") 'buf-move-right)
+
 (define-key evil-normal-state-map (kbd "H") 'evil-first-non-blank)
 (define-key evil-visual-state-map (kbd "H") 'evil-first-non-blank)
 (define-key evil-normal-state-map (kbd "L") 'evil-end-of-line)
@@ -445,34 +973,16 @@ but doesn't treat single semicolons as right-hand-side comments."
      (define-key evil-normal-state-map ",c " 'evilnc-comment-or-uncomment-lines)
      (define-key evil-visual-state-map ",c " 'evilnc-comment-operator)))
 
-(evil-leader/set-key
-  "|" (lambda () (interactive)(split-window-horizontally) (other-window 1))
-  "\\" (lambda () (interactive)(split-window-horizontally) (other-window 1))
-  "-" (lambda () (interactive)(split-window-vertically) (other-window 1))
-  "a" 'projectile-ack
-  "d" 'projectile-dired)
-
-(require 'cl)
 (dolist (i (number-sequence 1 9))
   (lexical-let ((tab-index (- i 1)))
     (global-set-key (kbd (concat "M-" (number-to-string i)))
                     (lambda () (interactive) (elscreen-goto tab-index)))))
 
 (require 'smartparens)
+(require 'smartparens-config)
 (smartparens-global-mode t)
 (sp-pair "'" nil :actions :rem)
 (setq sp-autoescape-string-quote nil)
-
-;; fix the PATH variable - from http://clojure-doc.org/articles/tutorials/emacs.html
-(defun set-exec-path-from-shell-PATH ()
-  (let ((path-from-shell (shell-command-to-string "$SHELL -i -c 'echo $PATH'")))
-    (setenv "PATH" path-from-shell)
-    (setq exec-path (split-string path-from-shell path-separator))))
-
-(when window-system (set-exec-path-from-shell-PATH))
-
-(require 'powerline)
-(powerline-default-theme)
 
 (define-key osx-keys-minor-mode-map (kbd "M-=") 'text-scale-increase)
 (define-key osx-keys-minor-mode-map (kbd "M--") 'text-scale-decrease)
@@ -498,28 +1008,6 @@ but doesn't treat single semicolons as right-hand-side comments."
 ;; (setq git-gutter+-hide-gutter t)
 
 
-;;
-;; Dired related
-;;
-
-(setq dired-recursive-copies (quote always))
-(setq dired-recursive-deletes (quote top))
-
-;; "go to dired, then call split-window-vertically, then go to another dired dir. Now, when you press C to
-;; copy, the other dir in the split pane will be default destination. Same for R (rename; move)."
-(setq dired-dwim-target t)
-
-; Use same buffer for going into and up directories
-(add-hook 'dired-mode-hook
- (lambda ()
-  (define-key dired-mode-map (kbd "<return>")
-    'dired-find-alternate-file) ; was dired-advertised-find-file
-  (define-key dired-mode-map (kbd "^")
-    (lambda () (interactive) (find-alternate-file ".."))) ; was dired-up-directory
- ))
-
-(evil-define-key 'normal dired-mode-map "H" (lambda () (interactive) (find-alternate-file "..")))
-
 ;; tweak projectile to not us git ls-files
 (require 'projectile)
 (defun projectile-project-vcs ()
@@ -530,81 +1018,7 @@ but doesn't treat single semicolons as right-hand-side comments."
   '(setq fiplr-ignored-globs '((directories (".git" ".svn" "target" "log" ".sass-cache" "Build"))
                                (files (".#*" "*.so" ".DS_Store" ".class")))))
 
-; Diminish modeline clutter - http://whattheemacsd.com/init.el-04.html
-(require 'diminish)
-;; TODO(harry) These calls should only be made after that mode is loaded.
-;; (diminish 'clojure-test-mode)
-;; (diminish 'nrepl-mode)
-;; (diminish 'projectile-mode)
-;; (diminish 'osx-keys-minor-mode)
-;; (diminish 'undo-tree-mode)
-;; (diminish 'eldoc-mode)
-;; (diminish 'smartparens-mode)
-;; (diminish 'auto-complete-mode)
-;; (diminish 'global-whitespace-mode)
-
 ; Elisp go-to-definition with M-. and back again with M-,
 (autoload 'elisp-slime-nav-mode "elisp-slime-nav")
 (add-hook 'emacs-lisp-mode-hook (lambda () (elisp-slime-nav-mode t)))
 (eval-after-load 'elisp-slime-nav '(diminish 'elisp-slime-nav-mode))
-
-
-;;
-;; Ruby related
-;;
-
-(add-to-list 'auto-mode-alist '("\\.rake$" . ruby-mode))
-(add-to-list 'auto-mode-alist '("\\.gemspec$" . ruby-mode))
-(add-to-list 'auto-mode-alist '("\\.ru$" . ruby-mode))
-(add-to-list 'auto-mode-alist '("Rakefile$" . ruby-mode))
-(add-to-list 'auto-mode-alist '("Gemfile$" . ruby-mode))
-(add-to-list 'auto-mode-alist '("Capfile$" . ruby-mode))
-(add-to-list 'auto-mode-alist '("Vagrantfile$" . ruby-mode))
-
-
-;;
-;; Clojure related
-;;
-
-(require 'rainbow-delimiters)
-(add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
-(add-hook 'nrepl-mode-hook 'rainbow-delimiters-mode)
-
-(evil-leader/set-key-for-mode 'clojure-mode
-  "eb" 'nrepl-load-current-buffer
-  "es" 'nrepl-eval-expression-at-point
-  "er" 'nrepl-eval-region
-  "nj" 'nrepl-jack-in
-  "nn" 'nrepl-set-ns
-  ;; This command sets and pulls up the appropriate nREPL for the current buffer. Useful when you have
-  ;; multiple REPLs going.
-  "nb" 'nrepl-switch-to-repl-buffer)
-
-(add-hook 'clojure-mode-hook 'clojure-test-mode)
-(eval-after-load 'clojure-mode
-  '(define-key clojure-mode-map "\C-c\M-r" 'nrepl-switch-to-repl-buffer))
-
-;; Clojure indentation rules
-;; (add-hook 'clojure-mode-hook (lambda () (setq lisp-indent-offset 2)))
-(eval-after-load 'clojure-mode
-  '(define-clojure-indent
-     (send-off 1)                                              ; Core
-     (GET 2) (POST 2) (PUT 2) (PATCH 2) (DELETE 2) (context 2) ; Compojure
-     (select 1) (insert 1) (update 1) (delete 1) (upsert 1)    ; Korma
-     (clone-for 1)                                             ; Enlive
-     (up 1) (down 1) (alter 1) (table 1)                       ; Lobos
-     ))
-
-;; Autocompletion in nrepl
-(require 'ac-nrepl)
-(add-hook 'nrepl-mode-hook 'ac-nrepl-setup)
-(add-hook 'nrepl-mode-hook 'auto-complete-mode)
-(add-hook 'nrepl-interaction-mode-hook 'ac-nrepl-setup)
-(add-hook 'nrepl-interaction-mode-hook 'auto-complete-mode)
-(add-hook 'nrepl-interaction-mode-hook 'nrepl-turn-on-eldoc-mode)
-(setq nrepl-hide-special-buffers t)
-(eval-after-load 'auto-complete '(add-to-list 'ac-modes 'nrepl-mode))
-
-(evil-define-key 'normal clojure-mode-map "K" 'nrepl-doc)
-(evil-define-key 'normal clojure-mode-map "gf" 'nrepl-jump)
-(put 'dired-find-alternate-file 'disabled nil)
