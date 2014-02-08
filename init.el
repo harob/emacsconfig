@@ -69,6 +69,8 @@
 ;;
 
 (require 'cl)
+(add-to-list 'load-path "~/.emacs.d/")
+(require 'lisp-helpers-personal)
 
 ;; Anecdotally, this reduces the amount of display flicker on some Emacs startup.
 (setq redisplay-dont-pause t)
@@ -263,9 +265,10 @@
   "vt" (lambda () (interactive) (find-file "~/Dropbox/tasks.org"))
   "vn" (lambda () (interactive) (find-file "~/Dropbox/notes.org"))
   "ve" (lambda () (interactive) (find-file "~/.emacs.d/init.el"))
-  "vh" (lambda () (interactive) (find-file "~/workspace/hmp_repos/liftoff/haggler/src/haggler/handler.clj"))
   "vl" (lambda () (interactive) (find-file "~/.lein/profiles.clj"))
-  "vg" (lambda () (interactive) (find-file "~/workspace/hmp_repos/gumshoedb/src/gumshoe/core.go")))
+  "vp" 'open-root-of-project-in-dired
+  "vh" (lambda () (interactive) (find-file "~/workspace/liftoff_repos/liftoff/haggler/src/haggler/handler.clj"))
+  "vg" (lambda () (interactive) (find-file "~/workspace/liftoff_repos/gumshoedb/src/gumshoe/core.go")))
 
 (eval-after-load 'evil
   '(progn
@@ -609,17 +612,19 @@
          'org-backward-heading-same-level)
   "gl" 'outline-next-visible-heading
   "t" 'org-todo
-  "T" '(lambda () (interactive) (evil-org-eol-call '(org-insert-todo-heading nil)))
-  "H" 'org-beginning-of-line
-  "L" 'org-end-of-line
-  ",vt" 'org-show-todo-tree
+  "T" 'org-set-tags-command
   "O" '(lambda () (interactive) (evil-org-eol-call 'always-insert-item))
   "o" '(lambda () (interactive) (evil-org-eol-call 'org-insert-heading))
-  "$" 'org-end-of-line
   "^" 'org-beginning-of-line
+  "$" 'org-end-of-line
+  "H" 'org-beginning-of-line
+  "L" 'org-end-of-line
+  "{" 'org-backward-heading-same-level
+  "}" 'org-forward-heading-same-level
   "<" 'org-metaleft
   ">" 'org-metaright
   ",a" 'org-archive-subtree
+  ",vt" 'org-show-todo-tree
   ",va" 'org-agenda
   "-" 'org-cycle-list-bullet
   (kbd "TAB") 'org-cycle)
@@ -648,6 +653,48 @@
 ;;
 
 (projectile-global-mode)
+
+(setq project-folders '("~/workspace/liftoff_repos" "~/workspace/liftoff_repos/liftoff"))
+
+;; This is set to 600 by default. It shouldn't be the case, but for some reason, the filter-files-in-directory
+;; function hits this limit.
+(setq max-lisp-eval-depth 1200)
+
+(defun filter-files-in-directory (directory filter-fn include-subdirectories)
+  "Filters the files in the given directory and subdirectories using filter-fn. Excludes .git subdirectories."
+  (->> (directory-files directory t)
+       (remove-if (lambda (path)
+                    (or (string/ends-with path ".")
+                        (string/ends-with path "..")
+                        (string/ends-with path ".git"))))
+       (mapcar (lambda (file)
+                 (if (and include-subdirectories (file-directory-p file))
+                     (filter-files-in-directory file filter-fn include-subdirectories)
+                   file)))
+       flatten
+       (remove-if-not filter-fn)))
+
+(defun open-root-of-project-in-dired ()
+  "Prompts for the name of a project which exists in your common project folders and opens a dired window in
+   the root of the project folder. This is a fast way to open a new project and be able to run
+   projectile-file-file.
+   Once a project is chosen, the current elscreen-tab is set to be the name of that project."
+  (interactive)
+  (let ((all-project-folders (->> project-folders
+                                  (mapcar (lambda (file)
+                                            (filter-files-in-directory file 'file-directory-p nil)))
+                                  flatten)))
+    (let ((project-to-open (ido-completing-read "Project folder: "
+                                                (mapcar 'file-name-nondirectory all-project-folders)
+                                                nil t)))
+      (->> all-project-folders
+           (remove-if-not (lambda (project) (string/ends-with project (concat "/" project-to-open))))
+           first
+           ((lambda (project)
+              (dired project)
+              ;; If we invoke this inside of a split, don't set the tab's title.
+              (when (= 1 (length (window-list)))
+                (elscreen-screen-nickname (file-name-nondirectory project)))))))))
 
 
 ;;
@@ -1052,6 +1099,13 @@ but doesn't treat single semicolons as right-hand-side comments."
   (setq-local fill-prefix "// "))
 
 (add-hook 'go-mode-hook 'init-go-buffer-settings)
+
+
+;;
+;; Magit - for staging hunks and making commits to git
+;;
+
+(require 'magit-mode-personal)
 
 
 ;;
