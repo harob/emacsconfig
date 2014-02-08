@@ -262,7 +262,7 @@
   ; "v" is a mnemonic prefix for "view X".
   "vt" (lambda () (interactive) (find-file "~/Dropbox/tasks.org"))
   "vn" (lambda () (interactive) (find-file "~/Dropbox/notes.org"))
-  "ve" (lambda () (interactive) (find-file "~/.emacs.d/emacs"))
+  "ve" (lambda () (interactive) (find-file "~/.emacs.d/init.el"))
   "vh" (lambda () (interactive) (find-file "~/workspace/hmp_repos/liftoff/haggler/src/haggler/handler.clj"))
   "vl" (lambda () (interactive) (find-file "~/.lein/profiles.clj"))
   "vg" (lambda () (interactive) (find-file "~/workspace/hmp_repos/gumshoedb/src/gumshoe/core.go")))
@@ -566,11 +566,24 @@
 ;;
 
 (require 'org)
-(require 'evil-org)
 (eval-after-load 'org
   '(progn
      ; This enables "clean mode", such that sublists use whitespace for indentation ala markdown.
      (setq org-startup-indented t)))
+
+(defun always-insert-item ()
+  "Force insertion of org item"
+  (if (not (org-in-item-p))
+      (insert "\n- ")
+    (org-insert-item))
+  )
+
+(defun evil-org-eol-call (fun)
+  "Go to end of line and call provided function"
+  (end-of-line)
+  (funcall fun)
+  (evil-append nil)
+  )
 
 ;; Moves the current heading (and all of its children) into the matching parent note in the archive file.
 ;; I think this is the most sensible way to archive TODOs in org mode files.
@@ -584,6 +597,47 @@
                      (car (org-get-outline-path)))
            org-archive-location)))
     ad-do-it))
+
+;; normal state shortcuts
+(evil-define-key 'normal org-mode-map
+  "gh" 'outline-up-heading
+  "gj" (if (fboundp 'org-forward-same-level) ;to be backward compatible with older org version
+         'org-forward-same-level
+         'org-forward-heading-same-level)
+  "gk" (if (fboundp 'org-backward-same-level)
+         'org-backward-same-level
+         'org-backward-heading-same-level)
+  "gl" 'outline-next-visible-heading
+  "t" 'org-todo
+  "T" '(lambda () (interactive) (evil-org-eol-call '(org-insert-todo-heading nil)))
+  "H" 'org-beginning-of-line
+  "L" 'org-end-of-line
+  ",vt" 'org-show-todo-tree
+  "O" '(lambda () (interactive) (evil-org-eol-call 'always-insert-item))
+  "o" '(lambda () (interactive) (evil-org-eol-call 'org-insert-heading))
+  "$" 'org-end-of-line
+  "^" 'org-beginning-of-line
+  "<" 'org-metaleft
+  ">" 'org-metaright
+  ",a" 'org-archive-subtree
+  ",va" 'org-agenda
+  "-" 'org-cycle-list-bullet
+  (kbd "TAB") 'org-cycle)
+
+;; normal & insert state shortcuts.
+(mapc (lambda (state)
+        (evil-define-key state org-mode-map
+          (kbd "M-l") 'org-metaright
+          (kbd "M-h") 'org-metaleft
+          (kbd "M-k") 'org-metaup
+          (kbd "M-j") 'org-metadown
+          (kbd "M-L") 'org-shiftmetaright
+          (kbd "M-H") 'org-shiftmetaleft
+          (kbd "M-K") 'org-shiftmetaup
+          (kbd "M-J") 'org-shiftmetadown))
+      '(normal insert))
+
+(define-key org-mode-map "\M-t" nil)
 
 (setq org-default-notes-file "~/Dropbox/tasks.org")
 (define-key org-mode-map "\C-cc" 'org-capture)

@@ -1,9 +1,6 @@
 [submodule "/Users/harry/.emacs.d/plugins/evil-org-mode"]
 	path = /Users/harry/.emacs.d/plugins/evil-org-mode
 	url = git://github.com/edwtjo/evil-org-mode.git
-[submodule "plugins/evil-org-mode"]
-	path = plugins/evil-org-mode
-	url = git@github.com:harob/evil-org-mode.git
 [submodule "plugins/evil-surround"]
 	path = plugins/evil-surround
 	url = https://github.com/timcharper/evil-surround.git
