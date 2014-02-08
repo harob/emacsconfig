@@ -14,18 +14,21 @@
                       ac-nrepl
                       ace-jump-mode
                       ack-and-a-half
+                      ag
                       auto-complete
                       buffer-move
                       cider
                       cider-tracing
                       clojure-mode
                       clojure-test-mode
+                      coffee-mode
                       column-marker
                       color-theme-sanityinc-tomorrow
                       diminish
                       dired-details+ ; Hides all of the unnecessary file details in dired mode.
                       elisp-slime-nav
                       elscreen
+                      exec-path-from-shell
                       evil
                       evil-leader
                       evil-nerd-commenter
@@ -44,6 +47,8 @@
                       powerline
                       projectile ; Find file in project (ala CTRL-P).
                       rainbow-delimiters
+                      ruby-electric ; Insert matching delimiters; unindent end blocks after you type them.
+                      scss-mode
                       smartparens
                       smex
                       surround
@@ -76,12 +81,14 @@
 (setq initial-scratch-message "") ; When opening a new buffer, don't show the scratch message.
 
 ;; Use the same PATH variable as your shell does. From http://clojure-doc.org/articles/tutorials/emacs.html
-(defun set-exec-path-from-shell-PATH ()
-  (let ((path-from-shell (shell-command-to-string "$SHELL -i -c 'echo $PATH'")))
-    (setenv "PATH" path-from-shell)
-    (setq exec-path (split-string path-from-shell path-separator))))
+;; (defun set-exec-path-from-shell-PATH ()
+;;   (let ((path-from-shell (shell-command-to-string "$SHELL -i -c 'echo $PATH'")))
+;;     (setenv "PATH" path-from-shell)
+;;     (setq exec-path (split-string path-from-shell path-separator))))
 
-(when window-system (set-exec-path-from-shell-PATH))
+;; (when window-system (set-exec-path-from-shell-PATH))
+(when (memq window-system '(mac ns))
+  (exec-path-from-shell-initialize))
 
 (global-auto-revert-mode t) ; Reload an open file from disk if it is changed outside of Emacs.
 
@@ -126,7 +133,7 @@
   '(progn
      ;; (setq whitespace-line-column 110) ; When text flows past 110 chars, highlight it.
      ; whitespace mode by default marks all whitespace. Show only tabs, trailing space, and trailing lines.
-     (setq whitespace-style '(face empty trailing tabs tab-mark))))
+     (setq whitespace-style '(face empty trailing))))
 ;; NOTE(harry) Flip the following two settings for editing snippets
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 ;; (setq-default mode-require-final-newline nil)
@@ -168,12 +175,18 @@
 ;; lower-right or right window, in that order of preference."
 (setq special-display-buffer-names '("*Help*" "*compilation*" "COMMIT_EDITMSG" "*Messages*"
                                      "*magit-process*" "*magit-commit*" "*Compile-Log*" "*Gofmt Errors*"))
-(setq special-display-regexps '("*cider.*"))
+;; (setq special-display-regexps '())
+(setq special-display-regexps '("*cider.*" "*ag.*"))
 (setq special-display-function 'show-ephemeral-buffer-in-a-sensible-window)
 
 ;; A list of "special" (ephemeral) buffer names which should be focused after they are shown. Used by
 ;; show-ephemeral-buffer-in-a-sensible-window
 (setq special-display-auto-focused-buffers '())
+
+(defun switch-to-upper-left () (interactive) (select-window (frame-first-window)))
+(defun switch-to-lower-left () (interactive) (switch-to-upper-left) (ignore-errors (windmove-down)))
+(defun switch-to-upper-right () (interactive) (switch-to-upper-left) (ignore-errors (windmove-right 1)))
+(defun switch-to-lower-right () (interactive) (switch-to-upper-right) (ignore-errors (windmove-down)))
 
 ;; References, for context:
 ;; http://snarfed.org/emacs_special-display-function_prefer-other-visible-frame
@@ -237,7 +250,7 @@
   "h" 'help
   "b" 'ido-switch-buffer
   "t" 'fiplr-find-file ;; 'projectile-find-file
-  "a" 'projectile-ack
+  "a" 'ag-project
   "d" 'projectile-dired
   "|" (lambda () (interactive)(split-window-horizontally) (other-window 1))
   "\\" (lambda () (interactive)(split-window-horizontally) (other-window 1))
@@ -251,7 +264,8 @@
   "vn" (lambda () (interactive) (find-file "~/Dropbox/notes.org"))
   "ve" (lambda () (interactive) (find-file "~/.emacs.d/emacs"))
   "vh" (lambda () (interactive) (find-file "~/workspace/hmp_repos/liftoff/haggler/src/haggler/handler.clj"))
-  "vl" (lambda () (interactive) (find-file "~/.lein/profiles.clj")))
+  "vl" (lambda () (interactive) (find-file "~/.lein/profiles.clj"))
+  "vg" (lambda () (interactive) (find-file "~/workspace/hmp_repos/gumshoedb/src/gumshoe/core.go")))
 
 (eval-after-load 'evil
   '(progn
@@ -332,7 +346,7 @@
 (defadvice windmove-right (before other-window-now activate) (save-buffer-if-dirty))
 ;; This hasn't been a problem yet, but advising "select-window" may cause problems. For instance, it's called
 ;; every time a character is typed in isearch mode.
-(defadvice select-window (before select-window activate) (save-buffer-if-dirty))
+;; (defadvice select-window (before select-window activate) (save-buffer-if-dirty))
 
 ;; Make it so Esc means quit, no matter the context.
 ;; http://stackoverflow.com/a/10166400/46237
@@ -361,8 +375,9 @@
 ;; <C-w>.
 ;; Undo the last change you made to your window configuration. Very handy as a method for temporarily
 ;; maximizing a window: first invoke delete-other-windows, and then invoke winner-undo..
+(define-key evil-window-map (kbd "m") 'delete-other-windows)
 (define-key evil-window-map (kbd "b") 'winner-undo)
-(define-key evil-window-map (kbd "SPC") 'dismiss-ephemeral-windows)
+(define-key evil-window-map (kbd "q") 'dismiss-ephemeral-windows)
 
 
 ;;
@@ -852,7 +867,6 @@
   "nb" 'cider-switch-to-repl-buffer
   "nt" 'cider-toggle-trace)
 (add-hook 'cider-mode-hook 'cider-turn-on-eldoc-mode)
-(setq nrepl-hide-special-buffers t)
 (setq cider-repl-popup-stacktraces t)
 (setq cider-repl-print-length 100)
 (setq cider-repl-use-clojure-font-lock t)
@@ -940,6 +954,50 @@ but doesn't treat single semicolons as right-hand-side comments."
 (setq ac-auto-start nil)
 (ac-set-trigger-key "TAB")
 (ac-linum-workaround)
+
+
+;;
+;; Go mode, for writing Go code
+;;
+
+(defun go-save-and-compile-fn (command-name)
+  "Returns a function for the purpose of binding to a key which saves the current buffer and then
+   runs the given command in the root of the go project."
+  (lexical-let ((command-name command-name))
+    #'(lambda ()
+        (interactive)
+        (save-buffer)
+        (message command-name)
+        (compile (concat "cd " (projectile-project-root) " && " command-name)))))
+
+(evil-leader/set-key-for-mode 'go-mode
+  ;; "r" is a namespace for run-related commands.
+  "rr" (go-save-and-compile-fn "make run")
+  ;; "rb" (go-save-and-compile-fn "make synthetic-benchmark")
+  "rt" (go-save-and-compile-fn "make test")
+  ;; "rw" (go-save-and-compile-fn "make run-web")
+  ;; "c" is a namespace for compile-related commands.
+  "cn" 'next-error
+  "cp" 'previous-error
+  ;; "cw" (go-save-and-compile-fn "make web")
+  ;; "cb" (go-save-and-compile-fn "make benchmark")
+  "cc" (go-save-and-compile-fn "make build"))
+
+(defun gofmt-before-save-ignoring-errors ()
+  "Don't pop up syntax errors in a new window when running gofmt-before-save."
+  (interactive)
+  (flet ((gofmt--process-errors (&rest args) t)) ; Don't show any syntax error output
+    (gofmt-before-save)))
+
+(defun init-go-buffer-settings ()
+  ;; I have Emacs configured to save when switching buffers, so popping up errors when I switch buffers is
+  ;; really jarring.
+  (add-hook 'before-save-hook 'gofmt-before-save-ignoring-errors)
+  ;; Make it so comments are line-wrapped properly when filling. It's an oversight that this is missing from
+  ;; go-mode.
+  (setq-local fill-prefix "// "))
+
+(add-hook 'go-mode-hook 'init-go-buffer-settings)
 
 
 ;;
