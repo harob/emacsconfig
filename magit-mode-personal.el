@@ -63,7 +63,12 @@
              magit-insert-untracked-files
              magit-insert-stashes
              magit-insert-unpulled-commits
-             magit-insert-unpushed-commits))))
+             magit-insert-unpushed-commits))
+
+     ;; Don't use a unicode ellipsis character when truncating author names in the git log view. It screws up
+     ;; the line height with my current font (Inconsolata).
+     (setq magit-ellipsis (get-byte 0 "."))
+     (identity magit-ellipsis)))
 
 (evil-set-initial-state 'magit-mode 'normal)
 (evil-set-initial-state 'magit-status-mode 'normal)
@@ -86,7 +91,6 @@
 (defun init-magit-log-mode-keybindings ()
   (evil-define-key 'normal magit-log-mode-map
     ",gca" 'magit-commit-amend
-    ",gri" 'magit-interactive-rebase
     ",gri" 'magit-interactive-rebase
     ",gpush" 'git-push
     ",gpull" 'git-pull
@@ -113,7 +117,11 @@
     "+" 'magit-diff-larger-hunks
     "gu" 'magit-jump-to-unstaged
     (kbd "TAB") 'magit-toggle-section
-    "r" 'magit-refresh))
+    "r" 'magit-refresh)
+
+  (evil-define-key 'visual magit-status-mode-map
+    "s" 'magit-stage-item
+    "u" 'magit-unstage-item))
 
 ;; Cache the buffer which was showing before we invoked magit.  In some cases magit doesn't properly restore
 ;; the buffer when you type "q", so we forcefully do it here ourselves.
@@ -132,7 +140,7 @@
   (lexical-let ((f f))
     (preserve-selected-window
      (lambda ()
-       (magit-display-process)
+       (magit-process)
        (funcall f)))))
 
 (defun git-pull ()
@@ -165,3 +173,7 @@
   (call-interactively 'magit-status)
   (magit-jump-to-unstaged)
   (magit-goto-next-section))
+
+;; TODO(harry) Get this working:
+;; (add-hook 'magit-commit-mode-hook '(lambda () (interactive)
+;;                                      (evil-append-line 0)))

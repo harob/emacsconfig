@@ -40,9 +40,12 @@
                       goto-last-change
                       ido-ubiquitous ; Make ido completions work everywhere.
                       ido-vertical-mode ; Show ido results vertically.
+                      less-css-mode
                       magit
                       markdown-mode
                       midje-mode
+                      noflet ; Replacement for the deprecated flet macro - see
+                             ; http://emacsredux.com/blog/2013/09/05/a-proper-replacement-for-flet/
                       org
                       powerline
                       projectile ; Find file in project (ala CTRL-P).
@@ -83,12 +86,8 @@
 (setq initial-scratch-message "") ; When opening a new buffer, don't show the scratch message.
 
 ;; Use the same PATH variable as your shell does. From http://clojure-doc.org/articles/tutorials/emacs.html
-;; (defun set-exec-path-from-shell-PATH ()
-;;   (let ((path-from-shell (shell-command-to-string "$SHELL -i -c 'echo $PATH'")))
-;;     (setenv "PATH" path-from-shell)
-;;     (setq exec-path (split-string path-from-shell path-separator))))
-
-;; (when window-system (set-exec-path-from-shell-PATH))
+;; NOTE(harry) On OSX, run the commands from https://gist.github.com/mcandre/7235205 to properly set the PATH
+;; when launching from Spotlight, LaunchBar, etc.
 (when (memq window-system '(mac ns))
   (exec-path-from-shell-initialize))
 
@@ -221,6 +220,14 @@
             (quit-window nil window))))
       (select-window original-window))))
 
+(defun preserve-selected-window (f)
+  "Runs the given function and then restores focus to the original window. Useful when you want to invoke
+   a function (like showing documentation) but don't want to keep editing your current buffer."
+  (lexical-let ((f f))
+    (let ((original-window (selected-window)))
+      (funcall f)
+      (select-window original-window))))
+
 
 ;;
 ;; Evil mode -- Vim keybindings for Emacs.
@@ -231,10 +238,8 @@
 (require 'evil-leader) ; Provide configuration functions for assigning actions to a Vim leader key.
 (require 'evil-nerd-commenter)
 (require 'goto-last-change)
-(require 'surround)
 (evil-mode t)
 (global-evil-leader-mode)
-(global-surround-mode 1)
 ;; Note that there is a bug where Evil-leader isn't properly bound to the initial buffers Emacs opens
 ;; with. We work around this by killing them. See https://github.com/cofi/evil-leader/issues/10.
 (kill-buffer "*Messages*")
@@ -382,6 +387,13 @@
 (define-key evil-window-map (kbd "b") 'winner-undo)
 (define-key evil-window-map (kbd "q") 'dismiss-ephemeral-windows)
 
+(require 'surround)
+(define-global-minor-mode global-surround-mode-with-exclusions global-surround-mode
+  (lambda ()
+    (when (not (memq major-mode (list 'magit-status-mode)))
+      (surround-mode 1))))
+(global-surround-mode-with-exclusions 1)
+
 
 ;;
 ;; Incremental search (isearch)
@@ -464,13 +476,12 @@
 
 (osx-keys-minor-mode t)
 
-(defadvice load (after give-osx-keybindings-priority)
+(defadvice load (after give-osx-keybindings-priority activate)
   "Try to ensure that osx keybindings always have priority."
   (if (not (eq (car (car minor-mode-map-alist)) 'osx-keys-minor-mode))
       (let ((osx-keys (assq 'osx-keys-minor-mode minor-mode-map-alist)))
         (assq-delete-all 'osx-keys-minor-mode minor-mode-map-alist)
         (add-to-list 'minor-mode-map-alist osx-keys))))
-(ad-activate 'load)
 
 ; Closes the current elscreen, or if there's only one screen, use the ":q" Evil
 ; command. This simulates the ":q" behavior of Vim when used with tabs.
@@ -955,7 +966,7 @@
 ;; http://stackoverflow.com/q/2706527/46237
 (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
   "Prevent annoying \"Active processes exist\" query when you quit Emacs."
-  (flet ((process-list ())) ad-do-it))
+  (noflet ((process-list ())) ad-do-it))
 
 (evil-leader/set-key-for-mode 'clojure-mode
   "eb" 'cider-load-current-buffer
@@ -968,7 +979,7 @@
   "nb" 'cider-switch-to-repl-buffer
   "nt" 'cider-toggle-trace)
 (add-hook 'cider-mode-hook 'cider-turn-on-eldoc-mode)
-(setq cider-repl-popup-stacktraces t)
+;; (setq cider-repl-popup-stacktraces t)
 (setq cider-repl-print-length 100)
 (setq cider-repl-use-clojure-font-lock t)
 (setq cider-repl-result-prefix ";; => ")
@@ -1087,7 +1098,7 @@ but doesn't treat single semicolons as right-hand-side comments."
 (defun gofmt-before-save-ignoring-errors ()
   "Don't pop up syntax errors in a new window when running gofmt-before-save."
   (interactive)
-  (flet ((gofmt--process-errors (&rest args) t)) ; Don't show any syntax error output
+  (noflet ((gofmt--process-errors (&rest args) t)) ; Don't show any syntax error output
     (gofmt-before-save)))
 
 (defun init-go-buffer-settings ()
@@ -1173,18 +1184,18 @@ but doesn't treat single semicolons as right-hand-side comments."
 ;; (require 'git-gutter-fringe+)
 ;; (setq git-gutter+-hide-gutter t)
 
-
-;; tweak projectile to not us git ls-files
+;; Tweak projectile to not use git ls-files
 (require 'projectile)
 (defun projectile-project-vcs ()
   "Determine the VCS used by the project if any."
   'none)
 
 (eval-after-load 'fiplr
-  '(setq fiplr-ignored-globs '((directories (".git" ".svn" "target" "log" ".sass-cache" "Build"))
-                               (files (".#*" "*.so" ".DS_Store" ".class")))))
+  '(setq fiplr-ignored-globs '((directories (".git" ".svn" "target" "log" ".sass-cache" "Build" ".deps"
+                                             "vendor" "MoPubSDK" "output"))
+                               (files (".#*" "*.so" ".DS_Store" "*.class")))))
 
-; Elisp go-to-definition with M-. and back again with M-,
+;; Elisp go-to-definition with M-. and back again with M-,
 (autoload 'elisp-slime-nav-mode "elisp-slime-nav")
 (add-hook 'emacs-lisp-mode-hook (lambda () (elisp-slime-nav-mode t)))
 (eval-after-load 'elisp-slime-nav '(diminish 'elisp-slime-nav-mode))
