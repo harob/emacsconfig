@@ -49,7 +49,6 @@
                       noflet ; Replacement for the deprecated flet macro - see
                              ; http://emacsredux.com/blog/2013/09/05/a-proper-replacement-for-flet/
                       org
-                      powerline
                       projectile ; Find file in project (ala CTRL-P).
                       rainbow-delimiters
                       ruby-electric ; Insert matching delimiters; unindent end blocks after you type them.
@@ -820,8 +819,11 @@
 ;; Powerline: improve the appearance & density of the Emacs status bar (mode line).
 ;;
 
-;; (require 'powerline)
-;; (powerline-default-theme)
+(add-to-list 'load-path "~/.emacs.d/vendor/emacs-powerline")
+(require 'powerline)
+(custom-set-faces
+ '(mode-line ((t (:foreground "#030303" :background "#bdbdbd" :box nil))))
+ '(mode-line-inactive ((t (:foreground "#f9f9f9" :background "#666666" :box nil)))))
 
 
 ;;
