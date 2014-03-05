@@ -24,8 +24,10 @@
                       coffee-mode
                       column-marker
                       color-theme-sanityinc-tomorrow
+                      deft ; Notational Velocity-style note taking
                       diminish
                       dired-details+ ; Hides all of the unnecessary file details in dired mode.
+                      epresent ; Transform org-mode file into a presentation
                       elisp-slime-nav
                       elscreen
                       exec-path-from-shell
@@ -64,15 +66,13 @@
   (when (not (package-installed-p p))
     (package-install p)))
 
-; Packages not on melpa:
-(add-to-list 'load-path "~/.emacs.d/plugins/evil-org-mode")
 
 ;;
 ;; General
 ;;
 
 (require 'cl)
-(add-to-list 'load-path "~/.emacs.d/")
+(add-to-list 'load-path "~/.emacs.d/elisp")
 (require 'lisp-helpers-personal)
 
 ;; Anecdotally, this reduces the amount of display flicker on some Emacs startup.
@@ -109,7 +109,6 @@
 (savehist-mode t) ; Save your minibuffer history across Emacs sessions. UX win!
 
 ;; Include path information in duplicate buffer names (e.g. a/foo.txt b/foo.txt)
-(require 'uniquify)
 (setq uniquify-buffer-name-style 'forward)
 
 ;; Start scrolling the window when the cursor reaches its edge.
@@ -176,8 +175,7 @@
 ;; lower-right or right window, in that order of preference."
 (setq special-display-buffer-names '("*Help*" "*compilation*" "COMMIT_EDITMSG" "*Messages*"
                                      "*magit-process*" "*magit-commit*" "*Compile-Log*" "*Gofmt Errors*"))
-;; (setq special-display-regexps '())
-(setq special-display-regexps '("*cider.*" "*ag.*"))
+(setq special-display-regexps '("*cider.*" "*ag.*" "magit: .**"))
 (setq special-display-function 'show-ephemeral-buffer-in-a-sensible-window)
 
 ;; A list of "special" (ephemeral) buffer names which should be focused after they are shown. Used by
@@ -258,7 +256,7 @@
   "b" 'ido-switch-buffer
   "t" 'fiplr-find-file ;; 'projectile-find-file
   "a" 'ag-project
-  "d" 'projectile-dired
+  "d" 'deft
   "|" (lambda () (interactive)(split-window-horizontally) (other-window 1))
   "\\" (lambda () (interactive)(split-window-horizontally) (other-window 1))
   "-" (lambda () (interactive)(split-window-vertically) (other-window 1))
@@ -267,13 +265,16 @@
   "gs" 'magit-status-and-focus-unstaged
   "gl" 'magit-log
   ; "v" is a mnemonic prefix for "view X".
-  "vt" (lambda () (interactive) (find-file "~/Dropbox/tasks.org"))
-  "vn" (lambda () (interactive) (find-file "~/Dropbox/notes.org"))
+  "vd" 'projectile-dired
+  "vp" 'open-root-of-project-in-dired
+  "vt" (lambda () (interactive)
+         (find-file "~/Dropbox/Notational Data/tasks.txt")
+         (org-mode))
   "ve" (lambda () (interactive) (find-file "~/.emacs.d/init.el"))
   "vl" (lambda () (interactive) (find-file "~/.lein/profiles.clj"))
-  "vp" 'open-root-of-project-in-dired
   "vh" (lambda () (interactive) (find-file "~/workspace/liftoff_repos/liftoff/haggler/src/haggler/handler.clj"))
-  "vg" (lambda () (interactive) (find-file "~/workspace/liftoff_repos/gumshoedb/src/gumshoe/core.go")))
+  "vg" (lambda () (interactive) (find-file "~/workspace/liftoff_repos/gumshoedb/src/gumshoe/core.go"))
+  )
 
 (eval-after-load 'evil
   '(progn
@@ -345,6 +346,9 @@
 (defun save-buffer-if-dirty ()
   (when (and buffer-file-name (buffer-modified-p))
     (save-buffer)))
+
+;; This hook is Emacs 24.4+.
+(add-hook 'focus-out-hook 'save-buffer-if-dirty)
 
 (defadvice switch-to-buffer (before save-buffer-now activate) (save-buffer-if-dirty))
 (defadvice other-window (before other-window-now activate) (save-buffer-if-dirty))
@@ -615,13 +619,13 @@
 ;; normal state shortcuts
 (evil-define-key 'normal org-mode-map
   "gh" 'outline-up-heading
+  "gl" 'outline-next-visible-heading
   "gj" (if (fboundp 'org-forward-same-level) ;to be backward compatible with older org version
          'org-forward-same-level
          'org-forward-heading-same-level)
   "gk" (if (fboundp 'org-backward-same-level)
          'org-backward-same-level
          'org-backward-heading-same-level)
-  "gl" 'outline-next-visible-heading
   "t" 'org-todo
   "T" 'org-set-tags-command
   "O" '(lambda () (interactive) (evil-org-eol-call 'always-insert-item))
@@ -635,7 +639,7 @@
   "<" 'org-metaleft
   ">" 'org-metaright
   ",a" 'org-archive-subtree
-  ",vt" 'org-show-todo-tree
+  ",vT" 'org-show-todo-tree
   ",va" 'org-agenda
   "-" 'org-cycle-list-bullet
   (kbd "TAB") 'org-cycle)
@@ -657,6 +661,11 @@
 
 (setq org-default-notes-file "~/Dropbox/tasks.org")
 (define-key org-mode-map "\C-cc" 'org-capture)
+
+(setq org-src-fontify-natively t)
+(setq org-todo-keywords '((sequence "TODO" "IP" "|" "DONE")))
+(setq org-todo-keyword-faces '(("IP" . (:foreground "cyan3" :weight bold))))
+
 
 
 ;;
@@ -735,13 +744,28 @@
   (call-interactively 'markdown-insert-list-item)
   (evil-append nil))
 
+(defun insert-markdown-header (header-line-text)
+  "With the cursor focused on the header's text, insert a setext header line below that text.
+   header-line-text: either '===' or '---'"
+  (end-of-line)
+  (insert (concat "\n" header-line-text))
+  (markdown-complete)
+  ;; markdown-complete inserts a newline after the header. Remove it and move the cursor to a logical place.
+  (next-line)
+  (next-line)
+  (delete-backward-char 1)
+  (next-line)
+  (beginning-of-line))
+
 (add-to-list 'auto-mode-alist '("\\.markdown$" . gfm-mode))
 (add-to-list 'auto-mode-alist '("\\.md$" . gfm-mode))
-
 
 (eval-after-load 'markdown-mode
   '(progn
      (evil-define-key 'normal markdown-mode-map
+       ;; Autocomplete setext headers by typing "==" or "--" on the header's line in normal mode.
+       (kbd "==") '(lambda () (interactive) (insert-markdown-header "=="))
+       (kbd "--") '(lambda () (interactive) (insert-markdown-header "--"))
        (kbd "M-h") 'evil-shift-paragraph-left
        (kbd "M-l") 'evil-shift-paragraph-right)
      ;; Note that while in insert mode, using "evil-shift-paragraph-right" while the cursor is at the end of a
@@ -784,10 +808,10 @@
 (require 'diminish)
 (diminish 'visual-line-mode "")
 (diminish 'global-whitespace-mode "")
-(diminish 'global-visual-line-mode "")
+;(diminish 'global-visual-line-mode "")
 (diminish 'auto-fill-function "")
-(diminish 'projectile-mode " p")
-(diminish 'yas-minor-mode "yas")
+(diminish 'projectile-mode "")
+(diminish 'yas-minor-mode "")
 (diminish 'osx-keys-minor-mode "")
 (diminish 'undo-tree-mode "")
 
@@ -796,62 +820,8 @@
 ;; Powerline: improve the appearance & density of the Emacs status bar (mode line).
 ;;
 
-(require 'powerline)
-
-(defface powerline-white-face
-  '((t (:background "#e0e0e0" :foreground "black" :inherit mode-line)))
-    "Face for powerline")
-(defface powerline-black-face
-  '((t (:background "#191919" :inherit mode-line)))
-  "Face for powerline")
-
-(defun powerline-projectile-project-name (&optional face padding)
-  "Returns a string describing the projectile project for the current buffer. Takes the same arguments as
-   powerline-raw."
-  (powerline-raw (concat "(" (projectile-project-name) ")") face padding))
-
-(defun powerline-personal-theme ()
-  "My customized powerline, copied and slightly modified from the default theme."
-  (interactive)
-  (setq-default mode-line-format
-                '("%e"
-                  (:eval
-                   (let* ((active (powerline-selected-window-active))
-                          (mode-line (if active 'mode-line 'mode-line-inactive))
-                          (face1 (if active 'powerline-active1 'powerline-inactive1))
-                          (face2 (if active 'powerline-active2 'powerline-inactive2))
-                          (separator-left (intern (format "powerline-%s-%s"
-                                                          powerline-default-separator
-                                                          (car powerline-default-separator-dir))))
-                          (separator-right (intern (format "powerline-%s-%s"
-                                                           powerline-default-separator
-                                                           (cdr powerline-default-separator-dir))))
-                          (lhs (list (powerline-raw "%*" 'powerline-black-face 'l)
-                                     (powerline-buffer-id 'powerline-black-face 'l)
-                                     (powerline-raw " " 'powerline-black-face)
-                                     (powerline-projectile-project-name 'powerline-black-face 'l)
-                                     (powerline-raw " " 'powerline-black-face)
-                                     (funcall separator-left mode-line face1)
-                                     (powerline-major-mode face1 'l)
-                                     (powerline-process face1)
-                                     (powerline-minor-modes face1 'l)
-                                     (powerline-narrow face1 'l)
-                                     (powerline-raw " " face1)))
-                          (rhs (list (powerline-raw global-mode-string face2 'r)
-                                     ;; "Version control" - show the modeline of any active VC mode.
-                                     (powerline-vc face1 'r)
-                                     (powerline-raw "%4l" face1 'l) ; Current line number
-                                     (powerline-raw ":" face1 'l)
-                                     (powerline-raw "%3c" face1 'r) ; Current column number
-                                     (powerline-raw " " face1)
-                                     ;; A visual scrollbar shown inside 1x1 char
-                                     (powerline-hud 'powerline-white-face face1))))
-                     (concat (powerline-render lhs)
-                             (powerline-fill face1 (powerline-width rhs))
-                             (powerline-render rhs)))))))
-
+;; (require 'powerline)
 ;; (powerline-default-theme)
-(powerline-personal-theme)
 
 
 ;;
@@ -964,9 +934,9 @@
 
 ;; Don't ask confirmation for closing any open nrepl connections when exiting Emacs.
 ;; http://stackoverflow.com/q/2706527/46237
-(defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
-  "Prevent annoying \"Active processes exist\" query when you quit Emacs."
-  (noflet ((process-list ())) ad-do-it))
+;; (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
+;;   "Prevent annoying \"Active processes exist\" query when you quit Emacs."
+;;   (noflet ((process-list () nil)) ad-do-it))
 
 (evil-leader/set-key-for-mode 'clojure-mode
   "eb" 'cider-load-current-buffer
@@ -1192,10 +1162,33 @@ but doesn't treat single semicolons as right-hand-side comments."
 
 (eval-after-load 'fiplr
   '(setq fiplr-ignored-globs '((directories (".git" ".svn" "target" "log" ".sass-cache" "Build" ".deps"
-                                             "vendor" "MoPubSDK" "output"))
+                                             "vendor" "MoPubSDK" "output"
+                                             "elpa"))
                                (files (".#*" "*.so" ".DS_Store" "*.class")))))
 
 ;; Elisp go-to-definition with M-. and back again with M-,
 (autoload 'elisp-slime-nav-mode "elisp-slime-nav")
 (add-hook 'emacs-lisp-mode-hook (lambda () (elisp-slime-nav-mode t)))
-(eval-after-load 'elisp-slime-nav '(diminish 'elisp-slime-nav-mode))
+(eval-after-load 'elisp-slime-nav '(diminish 'elisp-slime-nav-mode " SN"))
+(setq source-directory "/Users/harry/workspace/external_codebases/emacs-24.3/src")
+
+(setq tramp-default-method "pscp")
+
+
+;;
+;; Deft mode - Notational Velocity for emacs
+;;
+
+(require 'deft)
+(setq deft-extension "txt")
+(setq deft-directory "~/Dropbox/Notational Data")
+(setq deft-text-mode 'org-mode)
+(setq deft-use-filename-as-title t)
+(setq deft-auto-save-interval 0)
+(evil-set-initial-state 'deft-mode 'insert)
+(evil-define-key 'insert deft-mode-map (kbd "C-h") 'deft-filter-decrement)
+(evil-define-key 'insert deft-mode-map (kbd "C-w") 'deft-filter-decrement-word)
+(evil-define-key 'insert deft-mode-map (kbd "C-n") 'next-line)
+(evil-define-key 'insert deft-mode-map (kbd "C-p") 'previous-line)
+
+(require 'epresent)

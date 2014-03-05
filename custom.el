@@ -9,4 +9,5 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(linum ((t (:inherit (shadow default) :background "#2a2a2a" :foreground "gray50")))))
+ '(linum ((t (:inherit (shadow default) :background "#2a2a2a" :foreground "gray50"))))
+ '(org-table ((t (:foreground "gray90")))))

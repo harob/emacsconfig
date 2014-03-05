@@ -13,7 +13,6 @@
        "n" 'magit-goto-next-section
        "p" 'magit-goto-previous-section
        "L" 'magit-key-mode-popup-logging
-       "yy" 'magit-copy-full-commit-id ; Copies the commit ID of the commit under the cursor.
        (kbd "RET") 'magit-visit-item)
        ;; These scroll the diff window. Normally these are mapped to space and shift-space in magit.
        ;; TODO(philc): Uncomment these once the latest magit lands in melpa.
@@ -84,16 +83,20 @@
 (defun disable-magit-highlight-in-buffer () (face-remap-add-relative 'magit-item-highlight '()))
 (add-hook 'magit-status-mode-hook 'disable-magit-highlight-in-buffer)
 (add-hook 'magit-commit-mode-hook 'disable-magit-highlight-in-buffer)
+(add-hook 'magit-diff-mode-hook 'disable-magit-highlight-in-buffer)
 
-;; NOTE(philc): I'm setting the key bindings for these two magit modes when their buffers load, because for
-;; some reason, the evil bindings on the magit-log-mode and magit-status-mode keymaps collide.
+;; NOTE(philc): I'm setting the key bindings for these magit modes when their buffers load, because for
+;; some reason, the evil bindings on these modes conflict (i.e. when a new mode loads, it redefines the key
+;; for the other modes.
 (add-hook 'magit-log-mode-hook 'init-magit-log-mode-keybindings)
 (defun init-magit-log-mode-keybindings ()
-  (evil-define-key 'normal magit-log-mode-map
+  (define-keys evil-normal-state-local-map
     ",gca" 'magit-commit-amend
     ",gri" 'magit-interactive-rebase
     ",gpush" 'git-push
     ",gpull" 'git-pull
+    "yy" 'magit-copy-full-commit-id ; Copies the commit ID of the commit under the cursor.
+    "r" 'magit-refresh
     (kbd "SPC") 'magit-goto-next-section
     ;; I use C-d and C-u for scrolling the log view, and d and u for scrolling the diff view showing the
     ;; diff for the focused commit.
@@ -102,7 +105,8 @@
 
 (add-hook 'magit-status-mode-hook 'init-magit-status-mode-keybindings)
 (defun init-magit-status-mode-keybindings ()
-  (evil-define-key 'normal magit-status-mode-map
+  ;; NOTE(philc): using `evil-define-key` for these keymaps stopped working upon upgrading to Emacs 24.4.
+  (define-keys evil-normal-state-local-map
     "c" 'magit-commit
     ;; I have a git precommit hook which does style checks. Sometimes I want to disable it when committing.
     "C" (lambda() (interactive) (with-env-var "SKIP_GIT_STYLE_CHECK" "true" 'magit-commit))
@@ -117,11 +121,23 @@
     "+" 'magit-diff-larger-hunks
     "gu" 'magit-jump-to-unstaged
     (kbd "TAB") 'magit-toggle-section
-    "r" 'magit-refresh)
+    "r" 'magit-refresh))
 
-  (evil-define-key 'visual magit-status-mode-map
-    "s" 'magit-stage-item
-    "u" 'magit-unstage-item))
+
+(add-hook 'git-commit-mode-hook 'init-git-commit-mode)
+(defun init-git-commit-mode ()
+  ;; Sometimes I have a git hook which prepopulates a commit message prefix for me. Move to the end of the
+  ;; line so I can begin typing after the prefix.
+  (end-of-line))
+
+(add-hook 'magit-commit-mode-hook 'init-magit-commit-mode-keybindings)
+(defun init-magit-commit-mode-keybindings ()
+  ;; I'm specifying these keys here, becuase for some reason they get overridden by the yy shortcut I've
+  ;; defined for magit-log-mode.
+  (define-keys evil-normal-state-local-map
+    "yy" 'evil-yank-line)
+  (define-keys evil-visual-state-local-map
+    "y" 'evil-yank))
 
 ;; Cache the buffer which was showing before we invoked magit.  In some cases magit doesn't properly restore
 ;; the buffer when you type "q", so we forcefully do it here ourselves.
@@ -173,7 +189,3 @@
   (call-interactively 'magit-status)
   (magit-jump-to-unstaged)
   (magit-goto-next-section))
-
-;; TODO(harry) Get this working:
-;; (add-hook 'magit-commit-mode-hook '(lambda () (interactive)
-;;                                      (evil-append-line 0)))
