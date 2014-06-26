@@ -4,6 +4,7 @@
 ;; Package management
 ;;
 (require 'package)
+(package-initialize)
 (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
 
 (package-initialize)
@@ -18,7 +19,6 @@
                       auto-complete
                       buffer-move
                       cider
-                      cider-tracing
                       clojure-mode
                       clojure-test-mode
                       coffee-mode
@@ -40,12 +40,14 @@
                       framemove
                       go-mode
                       goto-last-change
+                      haskell-mode
                       ido-ubiquitous ; Make ido completions work everywhere.
                       ido-vertical-mode ; Show ido results vertically.
                       less-css-mode
                       magit
                       markdown-mode
                       midje-mode
+                      mustache-mode
                       noflet ; Replacement for the deprecated flet macro - see
                              ; http://emacsredux.com/blog/2013/09/05/a-proper-replacement-for-flet/
                       org
@@ -142,11 +144,11 @@
 (setq-default css-indent-offset 2)
 
 (setq-default fill-column 110) ; When wrapping with the Emacs fill commands, wrap at 110 chars.
-(auto-fill-mode t) ; When typing across the fill-column, hard-wrap the line as you type.
-(add-hook 'text-mode-hook 'turn-on-auto-fill) ; Some modes, like markdown, turn off autofill. Force it!
+;; (auto-fill-mode t) ; When typing across the fill-column, hard-wrap the line as you type.
+;; (add-hook 'text-mode-hook 'turn-on-auto-fill) ; Some modes, like markdown, turn off autofill. Force it!
 ; Visually wrap long lines on word boundaries. By default, Emacs will wrap mid-word. Note that Evil doesn't
 ; have good support for moving between visual lines versus logical lines. Here's the start of a solution:
-;; https://lists.ourproject.org/pipermail/implementations-list/2011-December/001430.html
+; https://lists.ourproject.org/pipermail/implementations-list/2011-December/001430.html
 (global-visual-line-mode t)
 
 ;; Don't use tabs by default. Modes that really need tabs should enable indent-tabs-mode explicitly.
@@ -965,15 +967,16 @@
 ;; (add-hook 'clojure-mode-hook (lambda () (setq lisp-indent-offset 2)))
 (eval-after-load 'clojure-mode
   '(define-clojure-indent
-     (send-off 1) (cli 1) (go-loop 1)                                  ; Core
+     (send-off 1) (cli 1) (go-loop 1) (cond-> 1) (cond->> 1)           ; Core
      (ANY 2) (GET 2) (POST 2) (PUT 2) (PATCH 2) (DELETE 2) (context 2) ; Compojure
      (select 1) (insert 1) (update 1) (where 1) (set-fields 1)         ; Korma
      (values 1) (delete 1) (upsert 1) (subselect 1)
      (clone-for 1)                                                     ; Enlive
      (up 1) (down 1) (alter 1) (table 1) (create 1)                    ; Lobos
      (checker 1)                                                       ; Midje
+     (wcar 1)                                                          ; Carmine
      (with-eligible-values 1) (when-eligible 1) (check 4)              ; Personal
-     (url-of-form 1)                                                   ; Personal
+     (url-of-form 1) (construct 1)
      ))
 
 (defun lisp-indent-line-single-semicolon-fix (&optional whole-exp)
@@ -1151,6 +1154,7 @@ but doesn't treat single semicolons as right-hand-side comments."
 
 (require 'fill-column-indicator)
 (add-hook 'after-change-major-mode-hook 'fci-mode)
+(add-hook 'ruby-mode-hook 'fci-mode)
 
 ;; TODO(harry) I couldn't get this working
 ;; (require 'git-gutter-fringe+)
@@ -1176,6 +1180,9 @@ but doesn't treat single semicolons as right-hand-side comments."
 
 (setq tramp-default-method "pscp")
 
+(setq ag-reuse-buffers 't)
+(setq ag-reuse-window 't)
+
 
 ;;
 ;; Deft mode - Notational Velocity for emacs
@@ -1194,3 +1201,6 @@ but doesn't treat single semicolons as right-hand-side comments."
 (evil-define-key 'insert deft-mode-map (kbd "C-p") 'previous-line)
 
 (require 'epresent)
+
+;; Flycheck syntax checking
+(add-hook 'after-init-hook #'global-flycheck-mode)
