@@ -12,7 +12,6 @@
   (package-refresh-contents))
 
 (defvar my-packages '(
-                      ac-nrepl
                       ace-jump-mode
                       ack-and-a-half
                       ag
@@ -20,7 +19,6 @@
                       buffer-move
                       cider
                       clojure-mode
-                      clojure-test-mode
                       coffee-mode
                       column-marker
                       color-theme-sanityinc-tomorrow
@@ -46,7 +44,6 @@
                       less-css-mode
                       magit
                       markdown-mode
-                      midje-mode
                       mustache-mode
                       noflet ; Replacement for the deprecated flet macro - see
                              ; http://emacsredux.com/blog/2013/09/05/a-proper-replacement-for-flet/
@@ -639,7 +636,7 @@
   "}" 'org-forward-heading-same-level
   "<" 'org-metaleft
   ">" 'org-metaright
-  ",a" 'org-archive-subtree
+  ",oa" 'org-archive-subtree
   ",vT" 'org-show-todo-tree
   ",va" 'org-agenda
   "-" 'org-cycle-list-bullet
@@ -1003,13 +1000,18 @@ but doesn't treat single semicolons as right-hand-side comments."
     (if (> (- (point-max) pos) (point))
         (goto-char (- (point-max) pos)))))
 
-(add-hook 'clojure-mode-hook 'clojure-test-mode)
-
-;; Autocompletion in nrepl
-(require 'ac-nrepl)
-(add-hook 'cider-mode-hook 'ac-nrepl-setup)
-(add-hook 'cider-mode-hook 'auto-complete-mode)
-(eval-after-load 'auto-complete '(add-to-list 'ac-modes 'cider-mode))
+;; ;; Autocompletion in nrepl
+;; (require 'ac-nrepl)
+;; (add-hook 'cider-mode-hook 'ac-nrepl-setup)
+;; (add-hook 'cider-mode-hook 'auto-complete-mode)
+;; (eval-after-load 'auto-complete '(add-to-list 'ac-modes 'cider-mode))
+;; TODO: Replace with:
+;; (require 'ac-cider-compliment)
+;; (add-hook 'cider-mode-hook 'ac-flyspell-workaround)
+;; (add-hook 'cider-mode-hook 'ac-cider-compliment-setup)
+;; (add-hook 'cider-repl-mode-hook 'ac-cider-compliment-repl-setup)
+;; (eval-after-load "auto-complete"
+;;   '(add-to-list 'ac-modes cider-mode))
 
 
 ;;
