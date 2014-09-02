@@ -264,14 +264,6 @@
             (quit-window nil window))))
       (select-window original-window))))
 
-(defun preserve-selected-window (f)
-  "Runs the given function and then restores focus to the original window. Useful when you want to invoke
-   a function (like showing documentation) but don't want to keep editing your current buffer."
-  (lexical-let ((f f))
-    (let ((original-window (selected-window)))
-      (funcall f)
-      (select-window original-window))))
-
 
 ;;
 ;; Evil mode -- Vim keybindings for Emacs.
@@ -783,6 +775,45 @@
 
 
 ;;
+;; Snippets
+;;
+
+;; "Ignore the default snippets that come with yasnippet. My own are all I need, and I don't want any
+;; conflicts."
+(setq yas-snippet-dirs '("~/.emacs.d/snippets"))
+(require 'yasnippet)
+(yas-global-mode 1)
+(define-key yas-keymap (kbd "ESC") 'yas-abort-snippet)
+
+
+;;
+;; Diminish - hide or shorten the names of minor modes in your modeline.
+;; To see which minor modes you have loaded and what their modeline strings are: (message minor-mode-alist)
+;;
+
+(require 'diminish)
+(diminish 'visual-line-mode "")
+(diminish 'global-whitespace-mode "")
+;(diminish 'global-visual-line-mode "")
+(diminish 'auto-fill-function "")
+(diminish 'projectile-mode "")
+(diminish 'yas-minor-mode "")
+(diminish 'osx-keys-minor-mode "")
+(diminish 'undo-tree-mode "")
+
+
+;;
+;; Powerline: improve the appearance & density of the Emacs status bar (mode line).
+;;
+
+(add-to-list 'load-path "~/.emacs.d/vendor/emacs-powerline")
+(require 'powerline)
+(custom-set-faces
+ '(mode-line ((t (:foreground "#030303" :background "#bdbdbd" :box nil))))
+ '(mode-line-inactive ((t (:foreground "#f9f9f9" :background "#666666" :box nil)))))
+
+
+;;
 ;; Markdown
 ;;
 
@@ -837,43 +868,6 @@
                ;; M-return creates a new todo item and enters insert mode.
                (kbd "<M-return>") 'markdown-insert-list-item-below))
            '(normal insert))))
-;;
-;; Snippets
-;;
-
-;; "Ignore the default snippets that come with yasnippet. My own are all I need, and I don't want any
-;; conflicts."
-(setq yas-snippet-dirs '("~/.emacs.d/snippets"))
-(require 'yasnippet)
-(yas-global-mode 1)
-(define-key yas-keymap (kbd "ESC") 'yas-abort-snippet)
-
-
-;;
-;; Diminish - hide or shorten the names of minor modes in your modeline.
-;; To see which minor modes you have loaded and what their modeline strings are: (message minor-mode-alist)
-;;
-
-(require 'diminish)
-(diminish 'visual-line-mode "")
-(diminish 'global-whitespace-mode "")
-;(diminish 'global-visual-line-mode "")
-(diminish 'auto-fill-function "")
-(diminish 'projectile-mode "")
-(diminish 'yas-minor-mode "")
-(diminish 'osx-keys-minor-mode "")
-(diminish 'undo-tree-mode "")
-
-
-;;
-;; Powerline: improve the appearance & density of the Emacs status bar (mode line).
-;;
-
-(add-to-list 'load-path "~/.emacs.d/vendor/emacs-powerline")
-(require 'powerline)
-(custom-set-faces
- '(mode-line ((t (:foreground "#030303" :background "#bdbdbd" :box nil))))
- '(mode-line-inactive ((t (:foreground "#f9f9f9" :background "#666666" :box nil)))))
 
 
 ;;
@@ -905,12 +899,21 @@
 (setq coffee-tab-width 2)
 (evil-leader/set-key-for-mode 'coffee-mode
   "c" nil ; Establishes "c" as a "prefix key". I found this trick here: http://www.emacswiki.org/emacs/Evil
-  "cf" (lambda ()
+  ;; This compiles the file and jumps to the first error, if there is one.
+  "cc" (lambda ()
          (interactive)
          (save-buffer)
-         (coffee-compile-file))
-  ;; The mnemonic for this is "compile & preview".
+         (coffee-compile-without-side-effect))
+  ;; The mnemonic for this is "compile & preview". It shows the javascript output in a new buffer.
   "cp" 'coffee-compile-buffer)
+
+(defun coffee-compile-without-side-effect ()
+  ;; coffee-compile-file annoyingly creates a file on disk.
+  (let* ((js-file (concat (file-name-sans-extension (buffer-file-name)) ".js"))
+         (js-file-existed (file-exists-p js-file)))
+    (coffee-compile-file)
+    (when (and (not js-file-existed) (file-exists-p js-file))
+      (delete-file js-file))))
 
 ;; Make return and open-line indent the cursor properly.
 (evil-define-key 'insert coffee-mode-map (kbd "RET") 'coffee-newline-and-indent)
@@ -938,131 +941,51 @@
 
 
 ;;
-;; Emacs Lisp (elisp)
+;; Smartparens utility functions. Used by emacs lisp and clojure.
 ;;
 
-(add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w" emacs-lisp-mode-syntax-table)))
-(evil-define-key 'normal emacs-lisp-mode-map
-  "K"'(lambda ()
-        (interactive)
-        ;; Run `describe-function` and show its output in a help
-        ;; window. Inspired from help-fns.el.
-        (with-help-window "*Help*"
-          (describe-function (intern (current-word))))))
+(require 'smartparens)
 
-(defun current-sexp ()
-  "Returns the text content of the sexp list around the cursor."
-  (let ((position (bounds-of-thing-at-point 'list)))
-    (buffer-substring-no-properties (car position) (cdr position))))
-
-(defun elisp-eval-current-sexp ()
+(defun shift-sexp-backward ()
   (interactive)
-  (print (eval (read (current-sexp)))))
+  (let* ((next (save-excursion (sp-forward-sexp)))
+         (prev (save-excursion (goto-char (sp-get next :beg-prf)) (sp-backward-sexp))))
+    (sp--transpose-objects prev next))
+  ;; Focus the cursor correctly.
+  (sp-backward-sexp)
+  (sp-backward-sexp))
 
-(evil-leader/set-key-for-mode 'emacs-lisp-mode
-  "eb" (lambda() (interactive) (save-buffer) (eval-buffer))
-  "es" 'elisp-eval-current-sexp
-  "ex" 'eval-defun)
+(defun shift-sexp-forward ()
+  (interactive)
+  (sp-forward-sexp)
+  (let* ((next (save-excursion (sp-forward-sexp)))
+         (prev (save-excursion (goto-char (sp-get next :beg-prf)) (sp-backward-sexp))))
+    (sp--transpose-objects prev next))
+  ;; Focus the cursor correctly.
+  (sp-backward-sexp))
 
 
 ;;
 ;; Clojure
 ;;
 
-;; Count hyphens, etc. as word characters in lisps
-(add-hook 'clojure-mode-hook (lambda () (modify-syntax-entry ?- "w" clojure-mode-syntax-table)))
-(add-hook 'clojure-mode-hook (lambda ()
-                               (setq indent-line-function 'lisp-indent-line-single-semicolon-fix)
-                               ;; Comment lines using only one semi-colon instead of two.
-                               (setq comment-add 0)))
-
-(evil-define-key 'normal clojure-mode-map "K"
-  (lambda () (interactive) (preserve-selected-window (lambda () (call-interactively 'cider-doc)))))
-
-(evil-define-key 'normal clojure-mode-map "gf" 'cider-jump)
-
-;; Hide the uninteresting nrepl-connection and nrepl-server buffers from the buffer list.
-(setq nrepl-hide-special-buffers t)
-
-;; Don't ask confirmation for closing any open nrepl connections when exiting Emacs.
-;; http://stackoverflow.com/q/2706527/46237
-;; (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
-;;   "Prevent annoying \"Active processes exist\" query when you quit Emacs."
-;;   (noflet ((process-list () nil)) ad-do-it))
+(require 'clojure-mode-personal)
+(require 'cider-test-personal)
 
 (evil-leader/set-key-for-mode 'clojure-mode
-  "eb" 'cider-load-current-buffer
-  "es" 'cider-eval-expression-at-point
-  "er" 'cider-eval-region
-  "nj" 'cider-jack-in
-  "nn" 'cider-repl-set-ns
-  ;; This command sets and pulls up the appropriate nREPL for the current buffer. Useful when you have
-  ;; multiple REPLs going.
-  "nb" 'cider-switch-to-repl-buffer
-  "nt" 'cider-toggle-trace)
-(add-hook 'cider-mode-hook 'cider-turn-on-eldoc-mode)
-;; (setq cider-repl-popup-stacktraces t)
-(setq cider-repl-print-length 100)
-(setq cider-repl-use-clojure-font-lock t)
-(setq cider-repl-result-prefix ";; => ")
+  ; t is a mnemonic for "test"
+  "eta" (lambda ()
+         (interactive)
+         (with-nrepl-connection-of-current-buffer 'cider-test/run-all-tests))
+  "ett" (lambda ()
+         (interactive)
+         (with-nrepl-connection-of-current-buffer 'cider-test/run-test-at-point))
+  "etb" (lambda ()
+         (interactive)
+         (with-nrepl-connection-of-current-buffer 'cider-test/run-tests-in-ns)))
 
-(require 'rainbow-delimiters)
-(add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
 (add-hook 'cider-mode-hook 'rainbow-delimiters-mode)
 (add-hook 'cider-repl-mode-hook 'rainbow-delimiters-mode)
-
-;; Clojure indentation rules
-;; (add-hook 'clojure-mode-hook (lambda () (setq lisp-indent-offset 2)))
-(eval-after-load 'clojure-mode
-  '(define-clojure-indent
-     (send-off 1) (cli 1) (go-loop 1) (cond-> 1) (cond->> 1)           ; Core
-     (ANY 2) (GET 2) (POST 2) (PUT 2) (PATCH 2) (DELETE 2) (context 2) ; Compojure
-     (select 1) (insert 1) (update 1) (where 1) (set-fields 1)         ; Korma
-     (values 1) (delete 1) (upsert 1) (subselect 1)
-     (clone-for 1)                                                     ; Enlive
-     (up 1) (down 1) (alter 1) (table 1) (create 1)                    ; Lobos
-     (checker 1)                                                       ; Midje
-     (wcar 1)                                                          ; Carmine
-     (with-eligible-values 1) (when-eligible 1) (check 4)              ; Personal
-     (url-of-form 1) (construct 1)
-     ))
-
-(defun lisp-indent-line-single-semicolon-fix (&optional whole-exp)
-  "Identical to the built-in function lisp-indent-line,
-but doesn't treat single semicolons as right-hand-side comments."
-  (interactive "P")
-  (let ((indent (calculate-lisp-indent)) shift-amt end
-        (pos (- (point-max) (point)))
-        (beg (progn (beginning-of-line) (point))))
-    (skip-chars-forward " \t")
-    (if (or (null indent) (looking-at "\\s<\\s<\\s<"))
-        ;; Don't alter indentation of a ;;; comment line
-        ;; or a line that starts in a string.
-        ;; FIXME: inconsistency: comment-indent moves ;;; to column 0.
-        (goto-char (- (point-max) pos))
-      (if (listp indent) (setq indent (car indent)))
-      (setq shift-amt (- indent (current-column)))
-      (if (zerop shift-amt)
-          nil
-        (delete-region beg (point))
-        (indent-to indent)))
-    ;; If initial point was within line's indentation,
-    ;; position after the indentation.  Else stay at same point in text.
-    (if (> (- (point-max) pos) (point))
-        (goto-char (- (point-max) pos)))))
-
-;; ;; Autocompletion in nrepl
-;; (require 'ac-nrepl)
-;; (add-hook 'cider-mode-hook 'ac-nrepl-setup)
-;; (add-hook 'cider-mode-hook 'auto-complete-mode)
-;; (eval-after-load 'auto-complete '(add-to-list 'ac-modes 'cider-mode))
-;; TODO: Replace with:
-;; (require 'ac-cider-compliment)
-;; (add-hook 'cider-mode-hook 'ac-flyspell-workaround)
-;; (add-hook 'cider-mode-hook 'ac-cider-compliment-setup)
-;; (add-hook 'cider-repl-mode-hook 'ac-cider-compliment-repl-setup)
-;; (eval-after-load "auto-complete"
-;;   '(add-to-list 'ac-modes cider-mode))
 
 
 ;;
