@@ -47,7 +47,6 @@
                       noflet ; Replacement for the deprecated flet macro - see
                              ; http://emacsredux.com/blog/2013/09/05/a-proper-replacement-for-flet/
                       org
-                      powerline
                       projectile ; Find file in project (ala CTRL-P).
                       rainbow-delimiters
                       ruby-electric ; Insert matching delimiters; unindent end blocks after you type them.
@@ -72,6 +71,7 @@
 (require 'cl)
 (add-to-list 'load-path "~/.emacs.d/elisp")
 (require 'lisp-helpers-personal)
+(require 'emacs-utils)
 
 ;; Anecdotally, this reduces the amount of display flicker on some Emacs startup.
 (setq redisplay-dont-pause t)
@@ -82,6 +82,9 @@
 (when (and (fboundp 'scroll-bar-mode) scroll-bar-mode) (scroll-bar-mode -1))
 
 (setq initial-scratch-message "") ; When opening a new buffer, don't show the scratch message.
+
+;; Make it so that the scratch buffer uses markdown. By default it uses Emacs Lisp mode.
+(setq initial-major-mode 'markdown-mode)
 
 ;; Use the same PATH variable as your shell does. From http://clojure-doc.org/articles/tutorials/emacs.html
 ;; NOTE(harry) On OSX, run the commands from https://gist.github.com/mcandre/7235205 to properly set the PATH
@@ -96,6 +99,7 @@
 (setq ring-bell-function 'ignore)
 (setq mac-option-modifier 'alt)
 (setq mac-command-modifier 'meta)
+
 ;; Require typing only "y" or"n" instead of the full "yes" to confirm destructive actions.
 (defalias 'yes-or-no-p 'y-or-n-p)
 
@@ -115,6 +119,7 @@
       scroll-step 1
       scroll-conservatively 10000
       scroll-preserve-screen-position 1
+      ;; Make touchpad scrolling on OSX less jerky
       mouse-wheel-scroll-amount '(0.01))
 
 ;; The preference file for Emac's "Customize" system. `M-x customize` to access it.
@@ -125,7 +130,7 @@
 (load-theme 'sanityinc-tomorrow-bright t)
 (set-face-attribute 'default nil :family "Consolas" :height 150)
 
-;; Whitespace
+;; Whitespace & line wrapping.
 (global-whitespace-mode t)
 (eval-after-load 'whitespace
   '(progn
@@ -135,6 +140,7 @@
 ;; NOTE(harry) Flip the following two settings for editing snippets
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 ;; (setq-default mode-require-final-newline nil)
+
 (setq-default tab-width 2)
 (setq-default evil-shift-width 2)
 ; Some modes have their own tab-width variables.
@@ -143,10 +149,14 @@
 (setq-default fill-column 110) ; When wrapping with the Emacs fill commands, wrap at 110 chars.
 ;; (auto-fill-mode t) ; When typing across the fill-column, hard-wrap the line as you type.
 ;; (add-hook 'text-mode-hook 'turn-on-auto-fill) ; Some modes, like markdown, turn off autofill. Force it!
-; Visually wrap long lines on word boundaries. By default, Emacs will wrap mid-word. Note that Evil doesn't
-; have good support for moving between visual lines versus logical lines. Here's the start of a solution:
-; https://lists.ourproject.org/pipermail/implementations-list/2011-December/001430.html
+
+;; Visually wrap long lines on word boundaries. By default, Emacs will wrap mid-word. Note that Evil doesn't
+;; have good support for moving between visual lines versus logical lines. Here's the start of a solution:
+;; https://lists.ourproject.org/pipermail/implementations-list/2011-December/001430.html
 (global-visual-line-mode t)
+
+;; Highlight the line the cursor is on. This is mostly to make it easier to tell which split is active.
+(global-hl-line-mode t)
 
 ;; Don't use tabs by default. Modes that really need tabs should enable indent-tabs-mode explicitly.
 ;; Makefile-mode already does that, for example.If indent-tabs-mode is off, untabify before saving.
@@ -157,10 +167,48 @@
                 (untabify (point-min) (point-max)))
             nil))
 
+;; Enable the common Bash text-editing shortcuts in the minibuffer.
+(util/define-keys minibuffer-local-map
+                  (kbd "C-k") 'kill-line
+                  (kbd "C-e") 'end-of-line
+                  (kbd "C-u") 'backward-kill-line
+                  (kbd "C-d") 'delete-char
+                  (kbd "C-w") 'backward-kill-word
+                  (kbd "C-h") 'backward-delete-char)
+
+;; Disable the prompt we get when killing a buffer with a process. This affects clojure mode in particular,
+;; when we want to restart the nrepl process.
+(setq kill-buffer-query-functions (remq 'process-kill-buffer-query-function kill-buffer-query-functions))
+
+;; Use smex to show the M-x command prompt. It has better completion support than the default M<x.
+(require 'smex)
+(global-set-key (kbd "M-x") 'smex)
+
 ;; RecentF mode is the Emacs minor mode used when opening files via C-x C-f.
 (require 'recentf)
 (define-key recentf-mode-map (kbd "C-w") 'backward-kill-word)
 (define-key recentf-mode-map (kbd "C-h") 'backward-delete-char)
+
+;; The poorly-named winner mode saves the history of your window splits, so you can undo and redo changes to
+;; your window configuration.
+(winner-mode t)
+
+;; Save buffers whenever they lose focus.
+;; This obviates the need to hit the Save key thousands of times a day. Inspired by http://goo.gl/2z0g5O.
+(add-hook 'focus-out-hook 'util/save-buffer-if-dirty) ; This hook is only available in Emacs 24.4+.
+(add-hook 'focus-out-hook '(lambda () (evil-normal-state))) ; This hook is only available in Emacs 24.4+.
+
+(defadvice windmove-up (before other-window-now activate) (util/save-buffer-if-dirty))
+(defadvice windmove-down (before other-window-now activate) (util/save-buffer-if-dirty))
+(defadvice windmove-left (before other-window-now activate) (util/save-buffer-if-dirty))
+(defadvice windmove-right (before other-window-now activate) (util/save-buffer-if-dirty))
+
+; This is fired whenever the buffer list is updated, which is a reasonably robust way to detect that the
+; window config has changed and the current buffer should be saved.
+(add-hook 'buffer-list-update-hook 'util/save-buffer-if-dirty)
+
+
+;; TODO(harry) Where is this split section in phil's config?
 
 ;; Settings for window splits.
 (setq split-height-threshold 40)
@@ -243,11 +291,42 @@
 ;; When opening new lines, indent according to the previous line.
 (setq evil-auto-indent t)
 
+;; Move up and down through long, wrapped lines one visual line at a time.
+(define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
+(define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
 (define-key evil-normal-state-map (kbd "K") 'info-lookup-symbol)
+;; I use this shortcut for manually splitting lines. Note that it does not put you in insert mode.
+(define-key evil-normal-state-map (kbd "s") 'newline-and-indent)
+
+;; By default, Emacs will not indent when you hit enter/return within a comment.
+(define-key evil-insert-state-map (kbd "RET") 'newline-and-indent)
+
+;; When jumping back and forth between marks, recenter the screen on the cursor.
+(define-key evil-normal-state-map (kbd "C-o")
+  (lambda () (interactive) (evil-jump-backward) (recenter-no-redraw)))
+(define-key evil-normal-state-map (kbd "C-i")
+  (lambda () (interactive) (evil-jump-forward) (recenter-no-redraw)))
 
 ; Some help keybindings which conflict with nothing else, so you can pull up help in any context.
-(global-set-key (kbd "C-A-M-h") 'help) ; Here we clobber C-h, which accesses Emacs's help.
+(global-set-key (kbd "C-A-M-h") 'help)
 (global-set-key (kbd "C-A-M-b") 'describe-bindings)
+
+;; Evil uses the current file's mode's definition of a paragraph, which is often surprising. For instance, in
+;; Markdown mode, a single item in a bullet list consistutes a paragraph. Instead, I've defined a paragraph to
+;; be hunks of text separated by newlines. That's typically what I would expect of a paragraph. You can still
+;; use Evil's paragraph definition using the text object "P" instead of "p".
+(evil-define-text-object evil-paragraph-from-newlines (count &optional beg end type)
+  "Select a paragraph separated by newlines."
+  :type line
+  ;; These two vars are set by the current programming mode. Set them to their default text mode values
+  ;; temporarily while we select the paragraph. The implementation of evil-move-paragraph invokes
+  ;; `forward-paragraph`, which uses these variables.
+  (let ((paragraph-start "\f\\|[     ]*$")
+        (paragraph-separate "[  ]*$"))
+    (evil-an-object-range count beg end type #'evil-move-paragraph nil nil t)))
+
+(define-key evil-outer-text-objects-map "p" 'evil-paragraph-from-newlines)
+(define-key evil-outer-text-objects-map "P" 'evil-a-paragraph)
 
 (evil-leader/set-key
   "h" 'help
@@ -258,9 +337,9 @@
   "|" (lambda () (interactive)(split-window-horizontally) (other-window 1))
   "\\" (lambda () (interactive)(split-window-horizontally) (other-window 1))
   "-" (lambda () (interactive)(split-window-vertically) (other-window 1))
-  "eb" 'eval-buffer
-  "es" 'eval-surrounding-sexp
-  "gs" 'magit-status-and-focus-unstaged
+  "gs" (lambda() (interactive)
+          (util/save-buffer-if-dirty)
+          (magit-status-and-focus-unstaged))
   "gl" 'magit-log
   ; "v" is a mnemonic prefix for "view X".
   "vd" 'projectile-dired
@@ -311,12 +390,30 @@
   (interactive "p")
   (kill-line (- 1 arg)))
 
-;; Enable Emacs/Bash insert-mode keybindings
-(define-key evil-insert-state-map (kbd "C-k") 'kill-line)
-(define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
-(define-key evil-insert-state-map (kbd "C-u") 'backward-kill-line)
-(define-key evil-insert-state-map (kbd "C-d") 'delete-char)
-(global-set-key (kbd "C-h") 'backward-delete-char) ; C-h in Emacs is the prefix for help functions.
+;; Enable the typical Bash/readline keybindings when in insert mode.
+(util/define-keys evil-insert-state-map
+                  (kbd "C-k") 'kill-line
+                  (kbd "C-e") 'end-of-line
+                  (kbd "C-u") 'backward-kill-line
+                  (kbd "C-d") 'delete-char)
+(global-set-key (kbd "C-h") 'backward-delete-char) ; Here we clobber C-h, which accesses Emacs's help.
+
+(eval-after-load 'evil
+  '(progn
+     (define-key evil-normal-state-map ",c " 'evilnc-comment-or-uncomment-lines)
+     (define-key evil-visual-state-map ",c " 'evilnc-comment-operator)))
+
+(require 'surround)
+(define-global-minor-mode global-surround-mode-with-exclusions global-surround-mode
+  (lambda ()
+    (when (not (memq major-mode (list 'magit-status-mode)))
+      (surround-mode 1))))
+(global-surround-mode-with-exclusions 1)
+
+
+;;
+;; Window manipulation, switching, & management.
+;;
 
 (defun split-window-sensibly-reverse (&optional window)
   "Identical to the built-in function split-window-sensibly, but prefers horizontal splits over vertical splits."
@@ -339,27 +436,10 @@
      (with-selected-window window
        (split-window-below))))))))
 
-;; Save buffers whenever they lose focus.
-;; This obviates the need to hit the Save key thousands of times a day. Inspired by http://goo.gl/2z0g5O.
-(defun save-buffer-if-dirty ()
-  (when (and buffer-file-name (buffer-modified-p))
-    (save-buffer)))
-
-;; This hook is Emacs 24.4+.
-(add-hook 'focus-out-hook 'save-buffer-if-dirty)
-
-(defadvice switch-to-buffer (before save-buffer-now activate) (save-buffer-if-dirty))
-(defadvice other-window (before other-window-now activate) (save-buffer-if-dirty))
-(defadvice windmove-up (before other-window-now activate) (save-buffer-if-dirty))
-(defadvice windmove-down (before other-window-now activate) (save-buffer-if-dirty))
-(defadvice windmove-left (before other-window-now activate) (save-buffer-if-dirty))
-(defadvice windmove-right (before other-window-now activate) (save-buffer-if-dirty))
-;; This hasn't been a problem yet, but advising "select-window" may cause problems. For instance, it's called
-;; every time a character is typed in isearch mode.
-;; (defadvice select-window (before select-window activate) (save-buffer-if-dirty))
-
 ;; Make it so Esc means quit, no matter the context.
 ;; http://stackoverflow.com/a/10166400/46237
+;; Note that when Emacs becomes unresponsive (e.g. because I accidentally grepped my home directory), I might
+;; still need to hold C-g (the Emacs esc/cancel key) to bring it back.
 (defun minibuffer-keyboard-quit ()
   "Abort recursive edit. In Delete Selection mode, if the mark is active, just deactivate it;
    then it takes a second \\[keyboard-quit] to abort the minibuffer."
@@ -368,6 +448,7 @@
       (setq deactivate-mark  t)
     (when (get-buffer "*Completions*") (delete-windows-on "*Completions*"))
     (abort-recursive-edit)))
+
 (define-key evil-normal-state-map [escape] 'keyboard-quit)
 (define-key evil-visual-state-map [escape] 'keyboard-quit)
 (define-key minibuffer-local-map [escape] 'minibuffer-keyboard-quit)
@@ -377,10 +458,6 @@
 (define-key minibuffer-local-isearch-map [escape] 'minibuffer-keyboard-quit)
 (global-set-key [escape] 'evil-exit-emacs-state)
 
-;; The poorly-named winner mode saves the history of your window splits, so you can undo and redo changes to
-;; your window configuration.
-(winner-mode t)
-
 ;; Evil's window map is the set of keys which control window functions. All of its keys are prefixed with
 ;; <C-w>.
 ;; Undo the last change you made to your window configuration. Very handy as a method for temporarily
@@ -388,13 +465,6 @@
 (define-key evil-window-map (kbd "m") 'delete-other-windows)
 (define-key evil-window-map (kbd "b") 'winner-undo)
 (define-key evil-window-map (kbd "q") 'dismiss-ephemeral-windows)
-
-(require 'surround)
-(define-global-minor-mode global-surround-mode-with-exclusions global-surround-mode
-  (lambda ()
-    (when (not (memq major-mode (list 'magit-status-mode)))
-      (surround-mode 1))))
-(global-surround-mode-with-exclusions 1)
 
 
 ;;
@@ -456,7 +526,8 @@
 
 
 ;;
-;; OS X keybindings minor mode. Make it so the OSX keybindings you're used to always work.
+;; Mac OS X keybindings minor mode.
+;; Make it so the OSX keybindings you're used to always work in every mode in Emacs.
 ;; http://stackoverflow.com/questions/683425/globally-override-key-binding-in-emacs
 ;;
 
@@ -472,6 +543,21 @@
 (define-key osx-keys-minor-mode-map (kbd "M-c") 'clipboard-kill-ring-save)
 (define-key osx-keys-minor-mode-map (kbd "M-W") 'evil-quit) ; Close all tabs in the current frame..
 
+(util/define-keys osx-keys-minor-mode-map
+                  (kbd "M-`") 'other-frame
+                  (kbd "M-~") '(lambda () (interactive) (other-frame -1))
+                  (kbd "M-w") 'vimlike-quit
+                  (kbd "M-q") 'save-buffers-kill-terminal
+                  (kbd "M-n") 'new-frame
+                  (kbd "M-a") 'mark-whole-buffer
+                  (kbd "M-s") 'save-buffer
+                  (kbd "M-h") 'ns-do-hide-emacs
+                  (kbd "M-v") 'clipboard-yank
+                  (kbd "M-c") 'clipboard-kill-ring-save
+                  ;; (kbd "M-m") 'iconify-or-deiconify-frame
+                  (kbd "M-W") 'evil-quit ; Close all tabs in the current frame..
+                  )
+
 (define-minor-mode osx-keys-minor-mode
   "A minor-mode for emulating osx keyboard shortcuts."
   t " osx" osx-keys-minor-mode-map)
@@ -484,6 +570,12 @@
       (let ((osx-keys (assq 'osx-keys-minor-mode minor-mode-map-alist)))
         (assq-delete-all 'osx-keys-minor-mode minor-mode-map-alist)
         (add-to-list 'minor-mode-map-alist osx-keys))))
+(ad-activate 'load)
+
+(defun open-folder-in-finder ()
+  "Opens the folder of the current file in OSX's Finder."
+  (interactive)
+  (call-process-region nil nil "/usr/bin/open" nil nil nil "."))
 
 ; Closes the current elscreen, or if there's only one screen, use the ":q" Evil
 ; command. This simulates the ":q" behavior of Vim when used with tabs.
@@ -513,8 +605,9 @@
 
 
 ;;
-;; Filename completions (CTRL-P / CMD+T)
+;; Filename completions (i.e. CTRL-P or CMD-T in other editors)
 ;;
+
 (ido-mode t)
 (ido-ubiquitous-mode t)
 (ido-vertical-mode t)
@@ -526,13 +619,14 @@
 
 
 ;;
-;; Dired related
+;; Dired mode - using the Emacs file browser.
 ;;
 
 (require 'dired-details+)
 (setq dired-recursive-copies (quote always))
 (setq dired-recursive-deletes (quote top))
-(put 'dired-find-alternate-file 'disabled nil)
+
+(put 'dired-find-alternate-file 'disabled nil) ; By default, the dired-find-alternative-file fn is disabled.
 
 ;; "go to dired, then call split-window-vertically, then go to another dired dir. Now, when you press C to
 ;; copy, the other dir in the split pane will be default destination. Same for R (rename; move)."
@@ -547,7 +641,7 @@
 (evil-define-key 'normal dired-mode-map "," nil) ; Ensure my evil-leader key works unhindered.
 (evil-define-key 'normal dired-mode-map "cd" 'dired-create-directory)
 (evil-define-key 'normal dired-mode-map "cf" 'dired-create-file)
-;; (evil-define-key 'normal dired-mode-map "x" 'dired-mark)
+(evil-define-key 'normal dired-mode-map "x" 'dired-mark)
 (evil-define-key 'normal dired-mode-map "v" 'dired-details-toggle)
 ;; The "e" prefix is for execute.
 (evil-define-key 'normal dired-mode-map "ed" 'dired-do-flagged-delete)
@@ -578,92 +672,49 @@
 
 
 ;;
+;; Emacs Lisp (elisp)
+;;
+
+(add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w" emacs-lisp-mode-syntax-table)))
+(evil-define-key 'normal emacs-lisp-mode-map
+  "gf" 'find-function-at-point
+  (kbd "C-S-H") 'shift-sexp-backward
+  (kbd "C-S-L") 'shift-sexp-forward
+  "K"'(lambda ()
+        (interactive)
+        ;; Run `describe-function` and show its output in a help
+        ;; window. Inspired from help-fns.el.
+        (with-help-window "*Help*"
+          (describe-function (intern (current-word))))))
+
+(defun current-sexp ()
+  "Returns the text content of the sexp list around the cursor."
+  (let ((position (bounds-of-thing-at-point 'list)))
+    (buffer-substring-no-properties (car position) (cdr position))))
+
+(defun elisp-eval-current-sexp ()
+  (interactive)
+  (message "%s" (eval (read (current-sexp)))))
+
+(evil-leader/set-key-for-mode 'emacs-lisp-mode
+  ; Note that I'm saving the buffer before each eval because otherwise, the buffer gets saved after the eval,
+  ; (due to save-when-switching-windows setup) and the output from the buffer save overwrites the eval results
+  ; in the minibuffer.
+  "eb" (lambda() (interactive) (util/save-buffer-if-dirty) (eval-buffer))
+  "es" (lambda () (interactive) (util/save-buffer-if-dirty) (elisp-eval-current-sexp))
+  "ex" (lambda () (interactive) (util/save-buffer-if-dirty) (call-interactively 'eval-defun))
+  "ee" 'view-echo-area-messages)
+
+;; Indentation rules.
+(put '-> 'lisp-indent-function nil)
+(put '->> 'lisp-indent-function nil)
+
+
+;;
 ;; Org mode, for TODOs and note taking.
 ;;
 
-(require 'org)
-(eval-after-load 'org
-  '(progn
-     ; This enables "clean mode", such that sublists use whitespace for indentation ala markdown.
-     (setq org-startup-indented t)))
-
-(defun always-insert-item ()
-  "Force insertion of org item"
-  (if (not (org-in-item-p))
-      (insert "\n- ")
-    (org-insert-item))
-  )
-
-(defun evil-org-eol-call (fun)
-  "Go to end of line and call provided function"
-  (end-of-line)
-  (funcall fun)
-  (evil-append nil)
-  )
-
-;; Moves the current heading (and all of its children) into the matching parent note in the archive file.
-;; I think this is the most sensible way to archive TODOs in org mode files.
-;; http://orgmode.org/worg/org-hacks.html
-(defadvice org-archive-subtree (around my-org-archive-subtree activate)
-  (let ((org-archive-location
-         (if (save-excursion (org-back-to-heading)
-                             (> (org-outline-level) 1))
-             (concat (car (split-string org-archive-location "::"))
-                     "::* "
-                     (car (org-get-outline-path)))
-           org-archive-location)))
-    ad-do-it))
-
-;; normal state shortcuts
-(evil-define-key 'normal org-mode-map
-  "gh" 'outline-up-heading
-  "gl" 'outline-next-visible-heading
-  "gj" (if (fboundp 'org-forward-same-level) ;to be backward compatible with older org version
-         'org-forward-same-level
-         'org-forward-heading-same-level)
-  "gk" (if (fboundp 'org-backward-same-level)
-         'org-backward-same-level
-         'org-backward-heading-same-level)
-  "t" 'org-todo
-  "T" 'org-set-tags-command
-  "O" '(lambda () (interactive) (evil-org-eol-call 'always-insert-item))
-  "o" '(lambda () (interactive) (evil-org-eol-call 'org-insert-heading))
-  "^" 'org-beginning-of-line
-  "$" 'org-end-of-line
-  "H" 'org-beginning-of-line
-  "L" 'org-end-of-line
-  "{" 'org-backward-heading-same-level
-  "}" 'org-forward-heading-same-level
-  "<" 'org-metaleft
-  ">" 'org-metaright
-  ",oa" 'org-archive-subtree
-  ",vT" 'org-show-todo-tree
-  ",va" 'org-agenda
-  "-" 'org-cycle-list-bullet
-  (kbd "TAB") 'org-cycle)
-
-;; normal & insert state shortcuts.
-(mapc (lambda (state)
-        (evil-define-key state org-mode-map
-          (kbd "M-l") 'org-metaright
-          (kbd "M-h") 'org-metaleft
-          (kbd "M-k") 'org-metaup
-          (kbd "M-j") 'org-metadown
-          (kbd "M-L") 'org-shiftmetaright
-          (kbd "M-H") 'org-shiftmetaleft
-          (kbd "M-K") 'org-shiftmetaup
-          (kbd "M-J") 'org-shiftmetadown))
-      '(normal insert))
-
-(define-key org-mode-map "\M-t" nil)
-
-(setq org-default-notes-file "~/Dropbox/tasks.org")
-(define-key org-mode-map "\C-cc" 'org-capture)
-
-(setq org-src-fontify-natively t)
-(setq org-todo-keywords '((sequence "TODO" "IP" "|" "DONE")))
-(setq org-todo-keyword-faces '(("IP" . (:foreground "cyan3" :weight bold))))
-
+(require 'org-mode-personal)
 
 
 ;;
@@ -1023,13 +1074,11 @@ but doesn't treat single semicolons as right-hand-side comments."
 (setq lazy-highlight-max-at-a-time nil)
 (global-undo-tree-mode t)
 (global-font-lock-mode t)
-(global-hl-line-mode t)
 (global-linum-mode t)
 ;; (line-number-mode 1)
 (column-number-mode 1)
 
 (global-set-key (kbd "RET") 'comment-indent-new-line)
-(global-set-key (kbd "M-x") 'smex)
 (global-set-key (kbd "M-X") 'smex-major-mode-commands)
 
 (eval-after-load 'paren
@@ -1122,11 +1171,6 @@ but doesn't treat single semicolons as right-hand-side comments."
 (define-key evil-normal-state-map (kbd ";") 'evil-ex)
 (define-key evil-visual-state-map (kbd ";") 'evil-ex)
 
-(eval-after-load 'evil
-  '(progn
-     (define-key evil-normal-state-map ",c " 'evilnc-comment-or-uncomment-lines)
-     (define-key evil-visual-state-map ",c " 'evilnc-comment-operator)))
-
 (dolist (i (number-sequence 1 9))
   (lexical-let ((tab-index (- i 1)))
     (global-set-key (kbd (concat "M-" (number-to-string i)))
@@ -1141,10 +1185,6 @@ but doesn't treat single semicolons as right-hand-side comments."
 (define-key osx-keys-minor-mode-map (kbd "M-=") 'text-scale-increase)
 (define-key osx-keys-minor-mode-map (kbd "M--") 'text-scale-decrease)
 (define-key osx-keys-minor-mode-map (kbd "M-0") (lambda () (interactive) (text-scale-increase 0)))
-
-(define-key evil-normal-state-map (kbd "s") 'newline-and-indent)
-(define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
-(define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
 
 (defun copy-to-end-of-line ()
   (interactive)
