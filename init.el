@@ -208,63 +208,6 @@
 (add-hook 'buffer-list-update-hook 'util/save-buffer-if-dirty)
 
 
-;; TODO(harry) Where is this split section in phil's config?
-
-;; Settings for window splits.
-(setq split-height-threshold 40)
-(setq split-width-threshold 200)
-(setq split-window-preferred-function 'split-window-sensibly-reverse)
-;; Ensure these open in the selected window, not a new popup.
-(setq same-window-buffer-names '("*magit-log*"))
-
-;; "I manage my windows in a 4x4 grid. I want ephemeral or status-based buffers to always show in the
-;; lower-right or right window, in that order of preference."
-(setq special-display-buffer-names '("*Help*" "*compilation*" "COMMIT_EDITMSG" "*Messages*"
-                                     "*magit-process*" "*magit-commit*" "*Compile-Log*" "*Gofmt Errors*"))
-(setq special-display-regexps '("*cider.*" "*ag.*" "magit: .**"))
-(setq special-display-function 'show-ephemeral-buffer-in-a-sensible-window)
-
-;; A list of "special" (ephemeral) buffer names which should be focused after they are shown. Used by
-;; show-ephemeral-buffer-in-a-sensible-window
-(setq special-display-auto-focused-buffers '())
-
-(defun switch-to-upper-left () (interactive) (select-window (frame-first-window)))
-(defun switch-to-lower-left () (interactive) (switch-to-upper-left) (ignore-errors (windmove-down)))
-(defun switch-to-upper-right () (interactive) (switch-to-upper-left) (ignore-errors (windmove-right 1)))
-(defun switch-to-lower-right () (interactive) (switch-to-upper-right) (ignore-errors (windmove-down)))
-
-;; References, for context:
-;; http://snarfed.org/emacs_special-display-function_prefer-other-visible-frame
-;; http://stackoverflow.com/questions/1002091/how-to-force-emacs-not-to-display-buffer-in-a-specific-window
-;; The implementation of this function is based on `special-display-popup-frame` in window.el.
-(defun show-ephemeral-buffer-in-a-sensible-window (buffer &optional buffer-data)
-  "Given a buffer, shows the window in a right-side split."
-  (let* ((original-window (selected-window))
-         (create-new-window (one-window-p))
-         (window (if create-new-window
-                     (split-window-sensibly-reverse)
-                   (save-excursion (switch-to-lower-right) (selected-window)))))
-    (display-buffer-record-window (if create-new-window 'window 'reuse) window buffer)
-    (set-window-buffer window buffer)
-    (when create-new-window (set-window-prev-buffers window nil))
-    (select-window original-window)
-    (when (member (buffer-name buffer) special-display-auto-focused-buffers)
-      (select-window window))
-    window))
-
-(defun dismiss-ephemeral-windows ()
-  "Dismisses any visible windows in the current frame identifiedy by `special-display-buffer-names` and
-   `special-display-regexps`. I use this to quickly dismiss help windows, compile output, etc."
-  (interactive)
-  (save-excursion
-    (let ((original-window (selected-window)))
-      (dolist (window (window-list))
-        (let ((buffer (window-buffer window)))
-          (when (special-display-p (buffer-name buffer))
-            (quit-window nil window))))
-      (select-window original-window))))
-
-
 ;;
 ;; Evil mode -- Vim keybindings for Emacs.
 ;;
@@ -333,7 +276,8 @@
           (util/save-buffer-if-dirty)
           (magit-status-and-focus-unstaged))
   "gl" 'magit-log
-  ; "v" is a mnemonic prefix for "view X".
+  ;; "v" is a mnemonic prefix for "view X".
+  ;; "vv" will be a natural choice as a mode-specific shortcut for previewing the current file.
   "vd" 'projectile-dired
   "vp" 'open-root-of-project-in-dired
   "vt" (lambda () (interactive)
@@ -407,6 +351,60 @@
 ;; Window manipulation, switching, & management.
 ;;
 
+;; Settings for window splits.
+(setq split-height-threshold 40)
+(setq split-width-threshold 200)
+(setq split-window-preferred-function 'split-window-sensibly-reverse)
+;; Ensure these open in the selected window, not a new popup.
+(setq same-window-buffer-names '("*magit-log*"))
+
+;; "I manage my windows in a 4x4 grid. I want ephemeral or status-based buffers to always show in the
+;; lower-right or right window, in that order of preference."
+(setq special-display-buffer-names '("*Help*" "*compilation*" "COMMIT_EDITMSG" "*Messages*"
+                                     "*magit-process*" "*magit-commit*" "*Compile-Log*" "*Gofmt Errors*"))
+(setq special-display-regexps '("*cider.*" "*ag.*" "magit: .**"))
+(setq special-display-function 'show-ephemeral-buffer-in-a-sensible-window)
+
+;; A list of "special" (ephemeral) buffer names which should be focused after they are shown. Used by
+;; show-ephemeral-buffer-in-a-sensible-window
+(setq special-display-auto-focused-buffers '())
+
+(defun switch-to-upper-left () (interactive) (select-window (frame-first-window)))
+(defun switch-to-lower-left () (interactive) (switch-to-upper-left) (ignore-errors (windmove-down)))
+(defun switch-to-upper-right () (interactive) (switch-to-upper-left) (ignore-errors (windmove-right 1)))
+(defun switch-to-lower-right () (interactive) (switch-to-upper-right) (ignore-errors (windmove-down)))
+
+;; References, for context:
+;; http://snarfed.org/emacs_special-display-function_prefer-other-visible-frame
+;; http://stackoverflow.com/questions/1002091/how-to-force-emacs-not-to-display-buffer-in-a-specific-window
+;; The implementation of this function is based on `special-display-popup-frame` in window.el.
+(defun show-ephemeral-buffer-in-a-sensible-window (buffer &optional buffer-data)
+  "Given a buffer, shows the window in a right-side split."
+  (let* ((original-window (selected-window))
+         (create-new-window (one-window-p))
+         (window (if create-new-window
+                     (split-window-sensibly-reverse)
+                   (save-excursion (switch-to-lower-right) (selected-window)))))
+    (display-buffer-record-window (if create-new-window 'window 'reuse) window buffer)
+    (set-window-buffer window buffer)
+    (when create-new-window (set-window-prev-buffers window nil))
+    (select-window original-window)
+    (when (member (buffer-name buffer) special-display-auto-focused-buffers)
+      (select-window window))
+    window))
+
+(defun dismiss-ephemeral-windows ()
+  "Dismisses any visible windows in the current frame identifiedy by `special-display-buffer-names` and
+   `special-display-regexps`. I use this to quickly dismiss help windows, compile output, etc."
+  (interactive)
+  (save-excursion
+    (let ((original-window (selected-window)))
+      (dolist (window (window-list))
+        (let ((buffer (window-buffer window)))
+          (when (special-display-p (buffer-name buffer))
+            (quit-window nil window))))
+      (select-window original-window))))
+
 (defun split-window-sensibly-reverse (&optional window)
   "Identical to the built-in function split-window-sensibly, but prefers horizontal splits over vertical splits."
   (let ((window (or window (selected-window))))
@@ -427,6 +425,14 @@
          (when (window-splittable-p window)
      (with-selected-window window
        (split-window-below))))))))
+
+;; Evil's window map is the set of keys which control window functions. All of its keys are prefixed with
+;; <C-w>.
+;; Undo the last change you made to your window configuration. Very handy as a method for temporarily
+;; maximizing a window: first invoke delete-other-windows, and then invoke winner-undo..
+(define-key evil-window-map (kbd "m") 'delete-other-windows)
+(define-key evil-window-map (kbd "b") 'winner-undo)
+(define-key evil-window-map (kbd "q") 'dismiss-ephemeral-windows)
 
 ;; Make it so Esc means quit, no matter the context.
 ;; http://stackoverflow.com/a/10166400/46237
@@ -450,13 +456,15 @@
 (define-key minibuffer-local-isearch-map [escape] 'minibuffer-keyboard-quit)
 (global-set-key [escape] 'evil-exit-emacs-state)
 
-;; Evil's window map is the set of keys which control window functions. All of its keys are prefixed with
-;; <C-w>.
-;; Undo the last change you made to your window configuration. Very handy as a method for temporarily
-;; maximizing a window: first invoke delete-other-windows, and then invoke winner-undo..
-(define-key evil-window-map (kbd "m") 'delete-other-windows)
-(define-key evil-window-map (kbd "b") 'winner-undo)
-(define-key evil-window-map (kbd "q") 'dismiss-ephemeral-windows)
+
+;;
+;; Ace jump - for quickly jumping to a precise character in view. Similar to Vim's EasyMotion.
+;;
+(require 'ace-jump-mode)
+(define-key evil-normal-state-map (kbd "SPC") 'evil-ace-jump-word-mode)
+;; Note that Evil mode's ace-jump integration is supposed to add this motion keybinding automatically for you,
+;; but it doesn't work. So I've defined it here explicitly.
+(define-key evil-motion-state-map (kbd "SPC") 'evil-ace-jump-word-mode)
 
 
 ;;
@@ -466,6 +474,7 @@
 ;; Make highlighting during incremental search feel snappier.
 (setq case-fold-search t) ; Make searches case insensitive.
 (setq lazy-highlight-initial-delay 0)
+(setq lazy-highlight-cleanup nil)
 (setq lazy-highlight-max-at-a-time nil)
 ;; Hitting escape aborts the search, restoring your cursor to the original position, as it does in Vim.
 (define-key isearch-mode-map (kbd "<escape>") 'isearch-abort)
@@ -871,25 +880,13 @@
 
 
 ;;
-;; Misc languages
+;; CSS
 ;;
 
-;; CSS
 (add-hook 'css-mode-hook (lambda ()
                            (autopair-mode 1) ; Auto-insert matching delimiters.
                            ;; Properly unindent a closing brace after you type it and hit enter.
                            (eletric-indent-mode)))
-
-;; HTML
-(add-to-list 'auto-mode-alist '("\\.erb$" . html-mode))
-
-;; SCSS
-(setq scss-compile-at-save nil)
-(add-to-list 'auto-mode-alist '("\\.scss\\'" . scss-mode))
-
-;; YAML
-(require 'yaml-mode)
-(add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode))
 
 
 ;;
@@ -941,6 +938,14 @@
 
 
 ;;
+;; Rainbow-delimiters: highlight parentheses in rainbow colors.
+;;
+
+(require 'rainbow-delimiters)
+(add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+
+
+;;
 ;; Smartparens utility functions. Used by emacs lisp and clojure.
 ;;
 
@@ -989,37 +994,62 @@
 
 
 ;;
-;; From Dmac - https://github.com/dmacdougall/dotfiles/blob/master/.emacs
+;; HTML mode
 ;;
 
-(setq lazy-highlight-initial-delay 0)
-(setq lazy-highlight-cleanup nil)
-(setq lazy-highlight-max-at-a-time nil)
-(global-undo-tree-mode t)
-(global-font-lock-mode t)
-(global-linum-mode t)
-;; (line-number-mode 1)
-(column-number-mode 1)
+(add-to-list 'auto-mode-alist '("\\.erb$" . html-mode))
 
-(global-set-key (kbd "RET") 'comment-indent-new-line)
-(global-set-key (kbd "M-X") 'smex-major-mode-commands)
+(defun preview-html ()
+  "Pipes the buffer's contents into a script which opens the HTML in a browser."
+  (interactive)
+  (call-process-region (point-min) (point-max) "/bin/bash" nil nil nil "-c" "bcat"))
 
-(eval-after-load 'paren
-  '(setq show-paren-delay 0))
-(show-paren-mode t)
+(defun indent-html-buffer ()
+  "Pipe the current buffer into `jq .`, and replace the current buffer's contents."
+  (interactive)
+  ;; html-beautify is a program defined here: https://github.com/beautify-web/js-beautify
+  ;; To install: cd ~; npm install js-beautify; add ~/node_modules/.bin to your PATH.
+  ;; I don't know why, but save-excursion does not maintain the cursor position.
+  ;; (save-excursion
+  (let ((p (point))
+        (scroll-y (window-start)))
+    (call-process-region (point-min) (point-max) "html-beautify" t (buffer-name) t
+                         "--file" "-" ; STDIN
+                         "--indent-size" "2"
+                         "--wrap-line-length" "110")
+    (set-window-start (selected-window) scroll-y)
+    (goto-char p)))
 
-(require 'auto-complete)
-(add-hook 'prog-mode-hook 'auto-complete-mode)
-(define-key ac-complete-mode-map "\C-n" 'ac-next)
-(define-key ac-complete-mode-map "\C-p" 'ac-previous)
-(setq ac-auto-start nil)
-(ac-set-trigger-key "TAB")
-(ac-linum-workaround)
+(evil-leader/set-key-for-mode 'html-mode
+  "i" 'indent-html-buffer
+  "vv" 'preview-html)
+
+
+;;
+;; SCSS mode, for editing SCSS files.
+;;
+
+(setq scss-compile-at-save nil)
+(add-to-list 'auto-mode-alist '("\\.scss\\'" . scss-mode))
+
+
+;;
+;; YAML mode, for editing YAML files
+;;
+
+(require 'yaml-mode)
+(add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode))
 
 
 ;;
 ;; Go mode, for writing Go code
 ;;
+
+(eval-after-load 'go-mode
+  '(progn
+     (evil-define-key 'normal go-mode-map
+       "gf" 'godef-jump
+       "K" 'godef-describe)))
 
 (defun go-save-and-compile-fn (command-name)
   "Returns a function for the purpose of binding to a key which saves the current buffer and then
@@ -1044,6 +1074,11 @@
   ;; "cb" (go-save-and-compile-fn "make benchmark")
   "cc" (go-save-and-compile-fn "make build"))
 
+;; goimports formats your code and also adds or removes imports as needed.
+;; goimports needs to be on your path. See https://godoc.org/code.google.com/p/go.tools/cmd/goimports
+;; TODO(harry) Set up
+;; (setq gofmt-command "goimports")
+
 (defun gofmt-before-save-ignoring-errors ()
   "Don't pop up syntax errors in a new window when running gofmt-before-save."
   (interactive)
@@ -1066,6 +1101,45 @@
 ;;
 
 (require 'magit-mode-personal)
+
+
+;;
+;; Javascript
+;;
+
+(setq js-indent-level 2)
+
+;;
+;; Misc
+;;
+
+(add-to-list 'auto-mode-alist '("\\.mustache$" . mustache-mode))
+
+
+;;
+;; From Dmac - https://github.com/dmacdougall/dotfiles/blob/master/.emacs
+;;
+
+(global-undo-tree-mode t)
+(global-font-lock-mode t)
+(global-linum-mode t)
+;; (line-number-mode 1)
+(column-number-mode 1)
+
+(global-set-key (kbd "RET") 'comment-indent-new-line)
+(global-set-key (kbd "M-X") 'smex-major-mode-commands)
+
+(eval-after-load 'paren
+  '(setq show-paren-delay 0))
+(show-paren-mode t)
+
+(require 'auto-complete)
+(add-hook 'prog-mode-hook 'auto-complete-mode)
+(define-key ac-complete-mode-map "\C-n" 'ac-next)
+(define-key ac-complete-mode-map "\C-p" 'ac-previous)
+(setq ac-auto-start nil)
+(ac-set-trigger-key "TAB")
+(ac-linum-workaround)
 
 
 ;;
@@ -1099,7 +1173,6 @@
     (global-set-key (kbd (concat "M-" (number-to-string i)))
                     (lambda () (interactive) (elscreen-goto tab-index)))))
 
-(require 'smartparens)
 (require 'smartparens-config)
 (smartparens-global-mode t)
 (sp-pair "'" nil :actions :rem)
@@ -1114,16 +1187,9 @@
   (evil-yank (point) (point-at-eol)))
 (define-key evil-normal-state-map "Y" 'copy-to-end-of-line)
 
-(require 'ace-jump-mode)
-(define-key evil-normal-state-map (kbd "SPC") 'evil-ace-jump-word-mode)
-
 (require 'fill-column-indicator)
 (add-hook 'after-change-major-mode-hook 'fci-mode)
 (add-hook 'ruby-mode-hook 'fci-mode)
-
-;; TODO(harry) I couldn't get this working
-;; (require 'git-gutter-fringe+)
-;; (setq git-gutter+-hide-gutter t)
 
 ;; Tweak projectile to not use git ls-files
 (require 'projectile)
@@ -1164,8 +1230,6 @@
 (evil-define-key 'insert deft-mode-map (kbd "C-w") 'deft-filter-decrement-word)
 (evil-define-key 'insert deft-mode-map (kbd "C-n") 'next-line)
 (evil-define-key 'insert deft-mode-map (kbd "C-p") 'previous-line)
-
-(require 'epresent)
 
 ;; Flycheck syntax checking
 (add-hook 'after-init-hook #'global-flycheck-mode)
