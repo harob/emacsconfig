@@ -25,7 +25,6 @@
                       deft ; Notational Velocity-style note taking
                       diminish
                       dired-details+ ; Hides all of the unnecessary file details in dired mode.
-                      epresent ; Transform org-mode file into a presentation
                       elisp-slime-nav
                       elscreen
                       exec-path-from-shell
@@ -48,6 +47,7 @@
                       noflet ; Replacement for the deprecated flet macro - see
                              ; http://emacsredux.com/blog/2013/09/05/a-proper-replacement-for-flet/
                       org
+                      powerline
                       projectile ; Find file in project (ala CTRL-P).
                       rainbow-delimiters
                       ruby-electric ; Insert matching delimiters; unindent end blocks after you type them.
