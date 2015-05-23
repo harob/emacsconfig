@@ -3,6 +3,7 @@
 ;;
 ;; Package management
 ;;
+
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
 (add-to-list 'package-archives '("melpa-stable" . "http://melpa-stable.milkbox.net/packages/"))
@@ -1222,8 +1223,7 @@
 (define-key evil-normal-state-map "Y" 'copy-to-end-of-line)
 
 (require 'fill-column-indicator)
-(add-hook 'after-change-major-mode-hook 'fci-mode)
-(add-hook 'ruby-mode-hook 'fci-mode)
+(add-hook 'prog-mode-hook 'fci-mode)
 
 ;; Tweak projectile to not use git ls-files
 (require 'projectile)
@@ -1280,4 +1280,5 @@
             (define-key evil-normal-state-local-map (kbd "SPC") 'neotree-enter)
             (define-key evil-normal-state-local-map (kbd "q") 'neotree-hide)
             (define-key evil-normal-state-local-map (kbd "RET") 'neotree-enter)))
-(custom-set-variables '(neo-window-width 30))
+(custom-set-variables '(neo-window-width 40))
+(custom-set-variables '(neo-banner-message nil))
