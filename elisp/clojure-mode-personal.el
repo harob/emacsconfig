@@ -22,8 +22,8 @@
 
 (evil-define-key 'normal clojure-mode-map "gf" 'cider-jump)
 (evil-define-key 'normal clojure-mode-map "gb" 'cider-jump-back)
-(evil-define-key 'normal clojure-mode-map (kbd "C-S-H") 'shift-sexp-backward)
-(evil-define-key 'normal clojure-mode-map (kbd "C-S-L") 'shift-sexp-forward)
+;; (evil-define-key 'normal clojure-mode-map (kbd "C-S-H") 'shift-sexp-backward)
+;; (evil-define-key 'normal clojure-mode-map (kbd "C-S-L") 'shift-sexp-forward)
 
 ;; Hide the uninteresting nrepl-connection and nrepl-server buffers from the buffer list.
 (setq nrepl-hide-special-buffers t)
@@ -137,7 +137,7 @@
          (save-buffer)
          ;; Note that I actually use cider-load-file here, not cider-eval-buffer, because it gives useful line
          ;; numbers on exceptions.
-         (with-nrepl-connection-of-current-buffer 'cider-load-current-buffer))
+         (with-nrepl-connection-of-current-buffer 'cider-load-buffer))
   ;; cider-restart-nrepl is more handy than cider-jack-in, because it doesn't leave existing repls running.
   "en" 'my-cider-restart-nrepl
   "es" 'my-cider-eval-current-sexp
@@ -149,6 +149,7 @@
   ;; multiple REPLs going.
   "nb" 'cider-switch-to-repl-buffer
   "nt" 'cider-toggle-trace
+  "nc" 'cider-find-and-clear-repl-buffer
   )
 
 ;; NOTE(harry) These are the simpler commands I had before:
@@ -166,6 +167,7 @@
 ;; Clojure indentation rules
 (eval-after-load 'clojure-mode
   '(define-clojure-indent
+     (assoc 1) (-> 0) (->> 0) (cond-> 0) (cond->> 0)                   ; Override defaults
      (send-off 1) (cli 1) (go-loop 1)                                  ; Core
      (ANY 2) (GET 2) (POST 2) (PUT 2) (PATCH 2) (DELETE 2) (context 2) ; Compojure
      (OPTIONS 2)
@@ -173,9 +175,9 @@
      (values 1) (delete 1) (upsert 1) (subselect 1)
      (clone-for 1)                                                     ; Enlive
      (up 1) (down 1) (alter 1) (table 1) (create 1)                    ; Lobos
-     (checker 1)                                                         ; Midje
+     (checker 1)                                                       ; Midje
      (with-eligible-values 1) (when-eligible 1) (check 4)              ; Personal
-     (url-of-form 1)                                                   ; Personal
+     (url-of-form 1) (when-let* 1)                                     ; Personal
      ))
 
 (defun lisp-indent-line-single-semicolon-fix (&optional whole-exp)

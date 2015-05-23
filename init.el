@@ -4,9 +4,8 @@
 ;; Package management
 ;;
 (require 'package)
-(package-initialize)
 (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
-
+(add-to-list 'package-archives '("melpa-stable" . "http://melpa-stable.milkbox.net/packages/"))
 (package-initialize)
 (when (not package-archive-contents)
   (package-refresh-contents))
@@ -44,11 +43,13 @@
                       magit
                       markdown-mode
                       mustache-mode
+                      neotree
                       noflet ; Replacement for the deprecated flet macro - see
                              ; http://emacsredux.com/blog/2013/09/05/a-proper-replacement-for-flet/
                       org
                       projectile ; Find file in project (ala CTRL-P).
                       rainbow-delimiters
+                      rainbow-identifiers
                       ruby-electric ; Insert matching delimiters; unindent end blocks after you type them.
                       scss-mode
                       smartparens
@@ -59,13 +60,15 @@
                       yasnippet
                       ))
 
+(add-to-list 'package-pinned-packages '(cider . "melpa-stable") t)
+
 (dolist (p my-packages)
   (when (not (package-installed-p p))
     (package-install p)))
 
 
 ;;
-;; General
+;; General settings
 ;;
 
 (require 'cl)
@@ -138,8 +141,8 @@
      ; whitespace mode by default marks all whitespace. Show only tabs, trailing space, and trailing lines.
      (setq whitespace-style '(face empty trailing))))
 ;; NOTE(harry) Flip the following two settings for editing snippets
-(add-hook 'before-save-hook 'delete-trailing-whitespace)
-;; (setq-default mode-require-final-newline nil)
+;; (add-hook 'before-save-hook 'delete-trailing-whitespace)
+(setq-default mode-require-final-newline nil)
 
 (setq-default tab-width 2)
 (setq-default evil-shift-width 2)
@@ -196,7 +199,8 @@
 ;; Save buffers whenever they lose focus.
 ;; This obviates the need to hit the Save key thousands of times a day. Inspired by http://goo.gl/2z0g5O.
 (add-hook 'focus-out-hook 'util/save-buffer-if-dirty) ; This hook is only available in Emacs 24.4+.
-(add-hook 'focus-out-hook '(lambda () (evil-normal-state))) ; This hook is only available in Emacs 24.4+.
+;; NOTE(harry) I prefer to stay in insert mode if I am jumping between apps
+;; (add-hook 'focus-out-hook '(lambda () (evil-normal-state))) ; This hook is only available in Emacs 24.4+.
 
 (defadvice windmove-up (before other-window-now activate) (util/save-buffer-if-dirty))
 (defadvice windmove-down (before other-window-now activate) (util/save-buffer-if-dirty))
@@ -234,7 +238,7 @@
 (define-key evil-normal-state-map (kbd "s") 'newline-and-indent)
 
 ;; By default, Emacs will not indent when you hit enter/return within a comment.
-(define-key evil-insert-state-map (kbd "RET") 'newline-and-indent)
+;; (define-key evil-insert-state-map (kbd "RET") 'newline-and-indent)
 
 ;; When jumping back and forth between marks, recenter the screen on the cursor.
 (define-key evil-normal-state-map (kbd "C-o")
@@ -258,6 +262,8 @@
   ;; `forward-paragraph`, which uses these variables.
   (let ((paragraph-start "\f\\|[     ]*$")
         (paragraph-separate "[  ]*$"))
+    ;; TODO(harry) Change to the following after upgrading evil:
+    ;; (evil-select-an-object 'evil-paragraph beg end type count)))
     (evil-an-object-range count beg end type #'evil-move-paragraph nil nil t)))
 
 (define-key evil-outer-text-objects-map "p" 'evil-paragraph-from-newlines)
@@ -277,7 +283,6 @@
           (magit-status-and-focus-unstaged))
   "gl" 'magit-log
   ;; "v" is a mnemonic prefix for "view X".
-  ;; "vv" will be a natural choice as a mode-specific shortcut for previewing the current file.
   "vd" 'projectile-dired
   "vp" 'open-root-of-project-in-dired
   "vt" (lambda () (interactive)
@@ -679,8 +684,8 @@
 (add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w" emacs-lisp-mode-syntax-table)))
 (evil-define-key 'normal emacs-lisp-mode-map
   "gf" 'find-function-at-point
-  (kbd "C-S-H") 'shift-sexp-backward
-  (kbd "C-S-L") 'shift-sexp-forward
+  ;; (kbd "C-S-H") 'shift-sexp-backward
+  ;; (kbd "C-S-L") 'shift-sexp-forward
   "K"'(lambda ()
         (interactive)
         ;; Run `describe-function` and show its output in a help
@@ -878,6 +883,33 @@
                (kbd "<M-return>") 'markdown-insert-list-item-below))
            '(normal insert))))
 
+(defun preview-markdown (beg end)
+  "Pipes the buffer's contents into a script which renders the markdown as HTML and opens in a browser.
+   If the markdown-stylesheet var is bound, then that stylesheet will be used (i.e. passed as an argument into
+   markdown_page."
+  (interactive (if (use-region-p)
+                   (list (region-beginning) (region-end))
+                 (list nil nil)))
+  (let* ((beg (or beg (point-min)))
+         (end (or end (point-max)))
+         (stylesheet (if (boundp 'markdown-stylesheet) markdown-stylesheet "github"))
+         ;; NOTE(philc): line-number-at-pos is 1-indexed.
+         (command (format "markdown_page.rb --css %s --scroll-to-line %s | browser"
+                          stylesheet
+                          (- (line-number-at-pos) 1))))
+    (call-process-region beg end "/bin/bash" nil nil nil "-c" command)))
+
+(mapc (lambda (mode)
+        (evil-leader/set-key-for-mode mode
+          "rr" 'preview-markdown
+          "re" (lambda ()
+                 (interactive)
+                 (let ((markdown-stylesheet "gmail"))
+                   (call-interactively 'preview-markdown)))))
+      '(gfm-mode markdown-mode))
+
+;; TODO(harry) Other option, from cespare's vimrc:
+;; command! Markdownd !markdownd -w % >/dev/null &
 
 ;;
 ;; CSS
@@ -943,6 +975,8 @@
 
 (require 'rainbow-delimiters)
 (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+(require 'rainbow-identifiers)
+(add-hook 'prog-mode-hook 'rainbow-identifiers-mode)
 
 
 ;;
@@ -1022,7 +1056,7 @@
 
 (evil-leader/set-key-for-mode 'html-mode
   "i" 'indent-html-buffer
-  "vv" 'preview-html)
+  "rr" 'preview-html)
 
 
 ;;
@@ -1233,3 +1267,17 @@
 
 ;; Flycheck syntax checking
 (add-hook 'after-init-hook #'global-flycheck-mode)
+
+;;
+;; Neotree - NERDTree for Emacs
+;;
+
+(require 'neotree)
+(evil-leader/set-key "vn" 'neotree-toggle)
+(add-hook 'neotree-mode-hook
+          (lambda ()
+            (define-key evil-normal-state-local-map (kbd "TAB") 'neotree-enter)
+            (define-key evil-normal-state-local-map (kbd "SPC") 'neotree-enter)
+            (define-key evil-normal-state-local-map (kbd "q") 'neotree-hide)
+            (define-key evil-normal-state-local-map (kbd "RET") 'neotree-enter)))
+(custom-set-variables '(neo-window-width 30))
