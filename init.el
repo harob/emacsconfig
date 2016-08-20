@@ -16,6 +16,7 @@
                       ack-and-a-half
                       ag
                       auto-complete
+                      browse-at-remote
                       buffer-move
                       cider
                       clojure-mode
@@ -27,6 +28,7 @@
                       dired-details+ ; Hides all of the unnecessary file details in dired mode.
                       elisp-slime-nav
                       elscreen
+                      ess
                       exec-path-from-shell
                       evil
                       evil-leader
@@ -50,13 +52,13 @@
                       org
                       projectile ; Find file in project (ala CTRL-P).
                       rainbow-delimiters
-                      rainbow-identifiers
                       ruby-electric ; Insert matching delimiters; unindent end blocks after you type them.
                       scss-mode
                       smartparens
                       smex
                       surround
                       undo-tree
+                      web-mode
                       yaml-mode
                       yasnippet
                       ))
@@ -291,8 +293,8 @@
          (org-mode))
   "ve" (lambda () (interactive) (find-file "~/.emacs.d/init.el"))
   "vl" (lambda () (interactive) (find-file "~/.lein/profiles.clj"))
-  "vh" (lambda () (interactive) (find-file "~/workspace/liftoff_repos/liftoff/haggler/src/haggler/handler.clj"))
-  "vg" (lambda () (interactive) (find-file "~/workspace/liftoff_repos/gumshoedb/src/gumshoe/core.go"))
+  "vh" (lambda () (interactive) (find-file "~/workspace/src/liftoff/haggler/src/haggler/handler.clj"))
+  "vs" (lambda () (interactive) (find-file "~/workspace/src/liftoff/zdocs/text_scratchpad.txt"))
   )
 
 (eval-after-load 'evil
@@ -337,7 +339,10 @@
                   (kbd "C-k") 'kill-line
                   (kbd "C-e") 'end-of-line
                   (kbd "C-u") 'backward-kill-line
-                  (kbd "C-d") 'delete-char)
+                  (kbd "C-d") 'delete-char
+                  (kbd "C-p") 'previous-line
+                  (kbd "C-n") 'next-line
+                  )
 (global-set-key (kbd "C-h") 'backward-delete-char) ; Here we clobber C-h, which accesses Emacs's help.
 
 (eval-after-load 'evil
@@ -685,8 +690,8 @@
 (add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w" emacs-lisp-mode-syntax-table)))
 (evil-define-key 'normal emacs-lisp-mode-map
   "gf" 'find-function-at-point
-  ;; (kbd "C-S-H") 'shift-sexp-backward
-  ;; (kbd "C-S-L") 'shift-sexp-forward
+  (kbd "M-h") 'shift-sexp-backward
+  (kbd "M-l") 'shift-sexp-forward
   "K"'(lambda ()
         (interactive)
         ;; Run `describe-function` and show its output in a help
@@ -723,6 +728,12 @@
 
 (require 'org-mode-personal)
 
+(custom-set-variables
+ '(org-confirm-babel-evaluate nil)
+ '(org-babel-load-languages '((clojure . t)
+                              (emacs-lisp . t)
+                              (R . t))))
+
 
 ;;
 ;; Projectile (find file from the root of the current project).
@@ -730,7 +741,7 @@
 
 (projectile-global-mode)
 
-(setq project-folders '("~/workspace/liftoff_repos" "~/workspace/liftoff_repos/liftoff"))
+(setq project-folders '("~/workspace/src" "~/workspace/src/liftoff"))
 
 ;; This is set to 600 by default. It shouldn't be the case, but for some reason, the filter-files-in-directory
 ;; function hits this limit.
@@ -893,11 +904,13 @@
                  (list nil nil)))
   (let* ((beg (or beg (point-min)))
          (end (or end (point-max)))
-         (stylesheet (if (boundp 'markdown-stylesheet) markdown-stylesheet "github"))
+         (stylesheet (if (boundp 'markdown-stylesheet) markdown-stylesheet "gmail"))
          ;; NOTE(philc): line-number-at-pos is 1-indexed.
          (command (format "markdown_page.rb --css %s --scroll-to-line %s | browser"
                           stylesheet
                           (- (line-number-at-pos) 1))))
+    (message command)
+    (message (format "%d %d" beg end))
     (call-process-region beg end "/bin/bash" nil nil nil "-c" command)))
 
 (mapc (lambda (mode)
@@ -976,8 +989,6 @@
 
 (require 'rainbow-delimiters)
 (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
-(require 'rainbow-identifiers)
-(add-hook 'prog-mode-hook 'rainbow-identifiers-mode)
 
 
 ;;
@@ -985,6 +996,9 @@
 ;;
 
 (require 'smartparens)
+
+(sp-with-modes '(clojure-mode)
+  (sp-local-pair "`" "`" :when '(sp-in-string-p)))
 
 (defun shift-sexp-backward ()
   (interactive)
@@ -1040,7 +1054,6 @@
   (call-process-region (point-min) (point-max) "/bin/bash" nil nil nil "-c" "bcat"))
 
 (defun indent-html-buffer ()
-  "Pipe the current buffer into `jq .`, and replace the current buffer's contents."
   (interactive)
   ;; html-beautify is a program defined here: https://github.com/beautify-web/js-beautify
   ;; To install: cd ~; npm install js-beautify; add ~/node_modules/.bin to your PATH.
@@ -1058,6 +1071,23 @@
 (evil-leader/set-key-for-mode 'html-mode
   "i" 'indent-html-buffer
   "rr" 'preview-html)
+
+;; TODO(harry) If this doesn't work out try multi-web-mode or mmm-mode. See:
+;; http://www.emacswiki.org/emacs/MultipleModes
+;; http://stackoverflow.com/questions/4462393/how-do-i-configure-emacs-for-editing-html-files-that-contain-javascript
+(require 'web-mode)
+(add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.mustache\\'" . web-mode))
+
+(defun my-web-mode-hook ()
+  (setq web-mode-markup-indent-offset 2)
+  (setq web-mode-css-indent-offset 2)
+  (setq web-mode-code-indent-offset 2)
+  (setq web-mode-style-padding 2)
+  (setq web-mode-script-padding 2)
+  (setq web-mode-block-padding 2))
+(add-hook 'web-mode-hook 'my-web-mode-hook)
 
 
 ;;
@@ -1079,56 +1109,80 @@
 ;;
 ;; Go mode, for writing Go code
 ;;
+(with-eval-after-load "go-mode"
+  (evil-define-key 'normal go-mode-map
+    "gf" 'godef-jump
+    "K" 'godef-describe))
 
-(eval-after-load 'go-mode
-  '(progn
-     (evil-define-key 'normal go-mode-map
-       "gf" 'godef-jump
-       "K" 'godef-describe)))
-
-(defun go-save-and-compile-fn (command-name)
+(defun go-save-and-compile-fn (command)
   "Returns a function for the purpose of binding to a key which saves the current buffer and then
    runs the given command in the root of the go project."
-  (lexical-let ((command-name command-name))
+  (lexical-let ((command command))
     #'(lambda ()
         (interactive)
-        (save-buffer)
-        (message command-name)
-        (compile (concat "cd " (projectile-project-root) " && " command-name)))))
+        (go-save-and-compile command))))
+
+;; Note that this function uses (projectile-project-root) to determine the directory to run `go` commands,
+;; which requires that the go project have a .projectile file in it or that it be at the root of a git repo.
+(defun go-save-and-compile (command)
+  "Saves the current buffer before invoking the given command."
+  (lexical-let ((has-makefile (file-exists-p (concat (projectile-project-root) "Makefile"))))
+    (save-buffer)
+    (message command)
+    (util/without-confirmation
+     (lambda () (compile (concat "cd " (projectile-project-root) " && " command))))))
 
 (evil-leader/set-key-for-mode 'go-mode
   ;; "r" is a namespace for run-related commands.
   "rr" (go-save-and-compile-fn "make run")
-  ;; "rb" (go-save-and-compile-fn "make synthetic-benchmark")
+  "rb" (go-save-and-compile-fn "make synthetic-benchmark")
   "rt" (go-save-and-compile-fn "make test")
-  ;; "rw" (go-save-and-compile-fn "make run-web")
+  "rw" (go-save-and-compile-fn "make run-web")
   ;; "c" is a namespace for compile-related commands.
   "cn" 'next-error
   "cp" 'previous-error
-  ;; "cw" (go-save-and-compile-fn "make web")
-  ;; "cb" (go-save-and-compile-fn "make benchmark")
-  "cc" (go-save-and-compile-fn "make build"))
+  "cw" (go-save-and-compile-fn "make web")
+  "cb" (go-save-and-compile-fn "make benchmark")
+  "cc" (go-save-and-compile-fn "make compile")
+  ;; "cc" (go-save-and-compile-fn "go build")
+
+  ;; "ai" 'go-import-add
+  )
 
 ;; goimports formats your code and also adds or removes imports as needed.
 ;; goimports needs to be on your path. See https://godoc.org/code.google.com/p/go.tools/cmd/goimports
-;; TODO(harry) Set up
-;; (setq gofmt-command "goimports")
+(setq gofmt-command "goimports")
+
+(setq gofmt-in-progress nil)
 
 (defun gofmt-before-save-ignoring-errors ()
   "Don't pop up syntax errors in a new window when running gofmt-before-save."
   (interactive)
-  (noflet ((gofmt--process-errors (&rest args) t)) ; Don't show any syntax error output
-    (gofmt-before-save)))
+  ;; Note that `gofmt-before-save` triggers this save-hook for some reason, so we lock on gmt-in-progress to
+  ;; to protect from infinite recurision.
+  (when (not gofmt-in-progress)
+    (setq gofmt-in-progress 't)
+    (flet ((gofmt--process-errors (&rest args) t)) ; Don't show any syntax error output
+      (gofmt-before-save))
+    (setq gofmt-in-progress nil)))
 
 (defun init-go-buffer-settings ()
   ;; I have Emacs configured to save when switching buffers, so popping up errors when I switch buffers is
   ;; really jarring.
-  (add-hook 'before-save-hook 'gofmt-before-save-ignoring-errors)
+  (add-hook 'before-save-hook 'gofmt-before-save-ignoring-errors nil t)
   ;; Make it so comments are line-wrapped properly when filling. It's an oversight that this is missing from
   ;; go-mode.
   (setq-local fill-prefix "// "))
 
 (add-hook 'go-mode-hook 'init-go-buffer-settings)
+
+(defun go-package-of-current-buffer ()
+  "Returns the go package name defined in the current buffer. Returns nil if no package has been defined."
+  (let ((file-contents (buffer-string)))
+    (let ((match-exists (string-match "^package \\(.+\\)\w*" file-contents)))
+      (when match-exists
+        (buffer-substring-no-properties (+ 1 (match-beginning 1))
+                                        (+ 1 (match-end 1)))))))
 
 
 ;;
@@ -1148,7 +1202,13 @@
 ;; Misc
 ;;
 
-(add-to-list 'auto-mode-alist '("\\.mustache$" . mustache-mode))
+;; Don't use the native OSX full screen support, because it uses OSX Spaces which don't play well with
+;; CMD-tabbing to applications which are behind Emacs. Invoke fullscreen with `toggle-frame-fullscreen`.
+(setq ns-use-native-fullscreen nil)
+(evil-leader/set-key "wf" 'toggle-frame-fullscreen)
+
+;; NOTE(harry) Using web-mode instead
+;; (add-to-list 'auto-mode-alist '("\\.mustache$" . mustache-mode))
 
 
 ;;
@@ -1168,13 +1228,20 @@
   '(setq show-paren-delay 0))
 (show-paren-mode t)
 
-(require 'auto-complete)
-(add-hook 'prog-mode-hook 'auto-complete-mode)
-(define-key ac-complete-mode-map "\C-n" 'ac-next)
-(define-key ac-complete-mode-map "\C-p" 'ac-previous)
+;;
+;; Emacs general autocompletion
+;;
+;; One nice feature of Emac's autocomplete mode is that it auto-populates likely completions as you type.
+;; However, in doing so, it causes my cursors to flicker in other splits while I'm typing. This makes the mode
+;; unusable.
 (setq ac-auto-start nil)
-(ac-set-trigger-key "TAB")
-(ac-linum-workaround)
+;; (require 'auto-complete)
+;; (add-hook 'prog-mode-hook 'auto-complete-mode)
+;; (define-key ac-complete-mode-map "\C-n" 'ac-next)
+;; (define-key ac-complete-mode-map "\C-p" 'ac-previous)
+;; (setq ac-auto-start nil)
+;; (ac-set-trigger-key "TAB")
+;; (ac-linum-workaround)
 
 
 ;;
@@ -1224,6 +1291,7 @@
 
 (require 'fill-column-indicator)
 (add-hook 'prog-mode-hook 'fci-mode)
+(add-hook 'gfm-mode-hook 'fci-mode)
 
 ;; Tweak projectile to not use git ls-files
 (require 'projectile)
@@ -1253,6 +1321,10 @@
 ;; Deft mode - Notational Velocity for emacs
 ;;
 
+(defun truncate-lines-hook-fun ()
+  (visual-line-mode -1)
+  (toggle-truncate-lines 1))
+
 (require 'deft)
 (setq deft-extension "txt")
 (setq deft-directory "~/Dropbox/Notational Data")
@@ -1264,9 +1336,12 @@
 (evil-define-key 'insert deft-mode-map (kbd "C-w") 'deft-filter-decrement-word)
 (evil-define-key 'insert deft-mode-map (kbd "C-n") 'next-line)
 (evil-define-key 'insert deft-mode-map (kbd "C-p") 'previous-line)
+(add-hook 'deft-mode-hook 'truncate-lines-hook-fun)
 
 ;; Flycheck syntax checking
 (add-hook 'after-init-hook #'global-flycheck-mode)
+(with-eval-after-load 'flycheck
+  (setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc html-tidy)))
 
 ;;
 ;; Neotree - NERDTree for Emacs
@@ -1280,5 +1355,7 @@
             (define-key evil-normal-state-local-map (kbd "SPC") 'neotree-enter)
             (define-key evil-normal-state-local-map (kbd "q") 'neotree-hide)
             (define-key evil-normal-state-local-map (kbd "RET") 'neotree-enter)))
+(add-hook 'neotree-mode-hook 'truncate-lines-hook-fun)
 (custom-set-variables '(neo-window-width 40))
 (custom-set-variables '(neo-banner-message nil))
+(custom-set-variables '(neo-theme 'nerd))

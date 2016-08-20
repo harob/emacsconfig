@@ -29,7 +29,10 @@
   "t" 'org-todo
   "T" 'org-set-tags-command
   "o" '(lambda () (interactive) (evil-org-eol-call 'org-insert-heading))
-  "O" '(lambda () (interactive) (evil-org-eol-call 'always-insert-item))
+  "O" '(lambda () (interactive) (evil-org-eol-call
+                                 (lambda ()
+                                   (org-insert-heading)
+                                   (org-metaup))))
   "^" 'org-beginning-of-line
   "$" 'org-end-of-line
   "H" 'org-beginning-of-line
@@ -74,7 +77,8 @@
     (org-insert-item)))
 
 (defun evil-org-eol-call (fun)
-  (end-of-line)
+  (end-of-line) ;; This jumps to the end of a potentially wrapped line
+  (org-end-of-line) ;; This jumps over the "..." hiding elided bullet points
   (funcall fun)
   (evil-append nil))
 

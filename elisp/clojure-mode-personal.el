@@ -22,8 +22,8 @@
 
 (evil-define-key 'normal clojure-mode-map "gf" 'cider-jump)
 (evil-define-key 'normal clojure-mode-map "gb" 'cider-jump-back)
-;; (evil-define-key 'normal clojure-mode-map (kbd "C-S-H") 'shift-sexp-backward)
-;; (evil-define-key 'normal clojure-mode-map (kbd "C-S-L") 'shift-sexp-forward)
+(evil-define-key 'normal clojure-mode-map (kbd "M-h") 'shift-sexp-backward)
+(evil-define-key 'normal clojure-mode-map (kbd "M-l") 'shift-sexp-forward)
 
 ;; Hide the uninteresting nrepl-connection and nrepl-server buffers from the buffer list.
 (setq nrepl-hide-special-buffers t)
@@ -97,14 +97,15 @@
                          (search "ml_lib" project-directory))
                      (car nrepl-connection-list))
                     (project-directory
-                     (car (-filter
-                           (lambda (conn)
-                             (let ((conn-proj-dir (with-current-buffer (get-buffer conn)
-                                                    nrepl-project-dir)))
-                               (when conn-proj-dir
-                                 (equal (file-truename project-directory)
-                                        (file-truename conn-proj-dir)))))
-                           nrepl-connection-list))))))
+                     (or (car (-filter
+                               (lambda (conn)
+                                 (let ((conn-proj-dir (with-current-buffer (get-buffer conn)
+                                                        nrepl-project-dir)))
+                                   (when conn-proj-dir
+                                     (equal (file-truename project-directory)
+                                            (file-truename conn-proj-dir)))))
+                               nrepl-connection-list))
+                         (car nrepl-connection-list))))))
           (if buf
               (get-buffer buf)
             "No relevant nREPL connection found."))))))
@@ -121,13 +122,24 @@
          (form (concat "(" print-fn form ")")))
     (cider-interactive-eval form)))
 
-(defun my-cider-eval-current-sexp (&optional print-result)
-  "Eval the sexp the cursor is currently in. In Emacs' syntax table, this is called a list of expressions."
+;; From http://timothypratley.blogspot.com/2015/07/seven-specialty-emacs-settings-with-big.html
+(defun my-cider-eval-current-sexp-in-repl ()
   (interactive)
+  ;; Update the REPL namespace first if necessary:
+  (unless (equal (cider-current-ns) (with-current-buffer (cider-current-repl-buffer) nrepl-buffer-ns))
+    (cider-repl-set-ns (cider-current-ns)))
   (let ((form (current-sexp)))
-    (if print-result
-        (my-cider-eval-and-print-to-repl form)
-      (cider-interactive-eval form))))
+    ;; Strip excess whitespace
+    (while (string-match "\\`\s+\\|\n+\\'" form)
+           (setq form (replace-match "" t t form)))
+    (set-buffer (cider-get-repl-buffer))
+    (goto-char (point-max))
+    (insert form)
+    (cider-repl-return)))
+
+(require 'cider-mode)
+(define-key cider-mode-map
+            (kbd "C-;") 'cider-eval-expression-at-point-in-repl)
 
 (evil-leader/set-key-for-mode 'clojure-mode
   "eap" (lambda () (interactive) (with-nrepl-connection-of-current-buffer 'cider-eval-paragraph))
@@ -140,7 +152,9 @@
          (with-nrepl-connection-of-current-buffer 'cider-load-buffer))
   ;; cider-restart-nrepl is more handy than cider-jack-in, because it doesn't leave existing repls running.
   "en" 'my-cider-restart-nrepl
-  "es" 'my-cider-eval-current-sexp
+  ;; This function actually CPs the current s-expr into the REPL, rather the just printing the result:
+  ;; TODO(harry) Port the other similar functions to have the same behavior
+  "es" 'my-cider-eval-current-sexp-in-repl
   "ex" (lambda () (interactive) (with-nrepl-connection-of-current-buffer 'cider-eval-defun-at-point))
   "er" (lambda () (interactive) (with-nrepl-connection-of-current-buffer 'cider-eval-region))
   "nj" 'cider-jack-in
@@ -212,10 +226,10 @@ but doesn't treat single semicolons as right-hand-side comments."
 (setq cider-repl-result-prefix ";; => ")
 
 ;; ;; Autocompletion in nrepl
-;; (require 'ac-nrepl)
-;; (add-hook 'cider-mode-hook 'ac-nrepl-setup)
-;; (add-hook 'cider-mode-hook 'auto-complete-mode)
-;; (eval-after-load 'auto-complete '(add-to-list 'ac-modes 'cider-mode))
+(require 'ac-nrepl)
+(add-hook 'cider-mode-hook 'ac-nrepl-setup)
+(add-hook 'cider-mode-hook 'auto-complete-mode)
+(eval-after-load 'auto-complete '(add-to-list 'ac-modes 'cider-mode))
 ;; TODO: Replace with:
 ;; (require 'ac-cider-compliment)
 ;; (add-hook 'cider-mode-hook 'ac-flyspell-workaround)
@@ -223,3 +237,28 @@ but doesn't treat single semicolons as right-hand-side comments."
 ;; (add-hook 'cider-repl-mode-hook 'ac-cider-compliment-repl-setup)
 ;; (eval-after-load "auto-complete"
 ;;   '(add-to-list 'ac-modes cider-mode))
+
+
+;;
+;; cljfmt -- automatic formatting of Clojure code. This configuration is Liftoff-specific.
+;;
+
+(load "$REPOS/liftoff/exp/emacs/cljfmt.el")
+
+;; Note that `cljfmt-before-save` triggers this save-hook for some reason, so we lock on clj-in-progress to
+;; to protect from infinite recurision.
+(setq cljfmt-in-progress nil)
+(defun cljfmt-before-save-mutually-exclusive ()
+ (interactive)
+ (when (and (eq major-mode 'clojure-mode)
+            (not cljfmt-in-progress))
+   (setq cljfmt-in-progress 't)
+   (cljfmt)
+   (setq cljfmt-in-progress nil)))
+
+(setq cljfmt-show-errors nil)
+
+;; (add-hook 'before-save-hook 'cljfmt-before-save-mutually-exclusive nil)
+;; ;; Run this again after save so we see any formatting error messages in the Emacs echo area,
+;; ;; because they get cloberred by Emacs's "Wrote [file]" message.
+;; (add-hook 'after-save-hook 'cljfmt-before-save-mutually-exclusive nil)
