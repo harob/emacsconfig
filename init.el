@@ -31,8 +31,11 @@
                       ess
                       exec-path-from-shell
                       evil
+                      evil-anzu
                       evil-leader
+                      evil-matchit
                       evil-nerd-commenter
+                      evil-visualstar
                       fill-column-indicator
                       fiplr
                       flx-ido ; Fuzzy matching for ido, which improves the UX of Projectile.
@@ -43,6 +46,7 @@
                       ido-ubiquitous ; Make ido completions work everywhere.
                       ido-vertical-mode ; Show ido results vertically.
                       less-css-mode
+                      lua-mode
                       magit
                       markdown-mode
                       mustache-mode
@@ -50,6 +54,7 @@
                       noflet ; Replacement for the deprecated flet macro - see
                              ; http://emacsredux.com/blog/2013/09/05/a-proper-replacement-for-flet/
                       org
+                      paradox ; Better package menu
                       projectile ; Find file in project (ala CTRL-P).
                       rainbow-delimiters
                       ruby-electric ; Insert matching delimiters; unindent end blocks after you type them.
@@ -144,8 +149,8 @@
      ; whitespace mode by default marks all whitespace. Show only tabs, trailing space, and trailing lines.
      (setq whitespace-style '(face empty trailing))))
 ;; NOTE(harry) Flip the following two settings for editing snippets
-;; (add-hook 'before-save-hook 'delete-trailing-whitespace)
-(setq-default mode-require-final-newline nil)
+(add-hook 'before-explicit-save-hook 'delete-trailing-whitespace)
+;; (setq-default mode-require-final-newline nil)
 
 (setq-default tab-width 2)
 (setq-default evil-shift-width 2)
@@ -214,7 +219,6 @@
 ; window config has changed and the current buffer should be saved.
 (add-hook 'buffer-list-update-hook 'util/save-buffer-if-dirty)
 
-
 ;;
 ;; Evil mode -- Vim keybindings for Emacs.
 ;;
@@ -275,7 +279,7 @@
 (evil-leader/set-key
   "h" 'help
   "b" 'ido-switch-buffer
-  "t" 'fiplr-find-file ;; 'projectile-find-file
+  "t" 'fiplr-find-file
   "a" 'ag-project
   "d" 'deft
   "|" (lambda () (interactive)(split-window-horizontally) (other-window 1))
@@ -294,8 +298,8 @@
   "ve" (lambda () (interactive) (find-file "~/.emacs.d/init.el"))
   "vl" (lambda () (interactive) (find-file "~/.lein/profiles.clj"))
   "vh" (lambda () (interactive) (find-file "~/workspace/src/liftoff/haggler/src/haggler/handler.clj"))
-  "vs" (lambda () (interactive) (find-file "~/workspace/src/liftoff/zdocs/text_scratchpad.txt"))
-  )
+  "vs" (lambda () (interactive) (switch-to-buffer "*scratch*"))
+  "vk" (lambda () (interactive) (find-file "~/workspace/side_projects/qmk_firmware/keyboards/ergodox/keymaps/dvorak_harob/keymap.c")))
 
 (eval-after-load 'evil
   '(progn
@@ -356,6 +360,15 @@
     (when (not (memq major-mode (list 'magit-status-mode)))
       (surround-mode 1))))
 (global-surround-mode-with-exclusions 1)
+
+(require 'evil-visualstar)
+(global-evil-visualstar-mode)
+
+(require 'evil-matchit)
+(global-evil-matchit-mode 1)
+
+(require 'evil-anzu)
+(set-face-attribute 'anzu-mode-line nil :foreground "black" :weight 'bold)
 
 
 ;;
@@ -544,17 +557,6 @@
 ;;
 
 (defvar osx-keys-minor-mode-map (make-keymap) "osx-keys-minor-mode-keymap")
-(define-key osx-keys-minor-mode-map (kbd "M-`") 'other-frame)
-(define-key osx-keys-minor-mode-map (kbd "M-~") '(lambda () (interactive) (other-frame -1)))
-(define-key osx-keys-minor-mode-map (kbd "M-w") 'vimlike-quit)
-(define-key osx-keys-minor-mode-map (kbd "M-q") 'save-buffers-kill-terminal)
-(define-key osx-keys-minor-mode-map (kbd "M-n") 'new-frame)
-(define-key osx-keys-minor-mode-map (kbd "M-a") 'mark-whole-buffer)
-(define-key osx-keys-minor-mode-map (kbd "M-s") 'save-buffer)
-(define-key osx-keys-minor-mode-map (kbd "M-v") 'clipboard-yank)
-(define-key osx-keys-minor-mode-map (kbd "M-c") 'clipboard-kill-ring-save)
-(define-key osx-keys-minor-mode-map (kbd "M-W") 'evil-quit) ; Close all tabs in the current frame..
-
 (util/define-keys osx-keys-minor-mode-map
                   (kbd "M-`") 'other-frame
                   (kbd "M-~") '(lambda () (interactive) (other-frame -1))
@@ -562,8 +564,8 @@
                   (kbd "M-q") 'save-buffers-kill-terminal
                   (kbd "M-n") 'new-frame
                   (kbd "M-a") 'mark-whole-buffer
-                  (kbd "M-s") 'save-buffer
-                  (kbd "M-h") 'ns-do-hide-emacs
+                  (kbd "M-s") 'explicitly-save-buffer
+                  ;; (kbd "M-h") 'ns-do-hide-emacs
                   (kbd "M-v") 'clipboard-yank
                   (kbd "M-c") 'clipboard-kill-ring-save
                   ;; (kbd "M-m") 'iconify-or-deiconify-frame
@@ -614,6 +616,15 @@
      (one-elscreen
       (evil-quit)
       nil))))
+
+(defvar before-explicit-save-hook nil)
+(defvar after-explicit-save-hook nil)
+
+(defun explicitly-save-buffer ()
+  (interactive)
+  (run-hooks 'before-explicit-save-hook)
+  (save-buffer)
+  (run-hooks 'after-explicit-save-hook))
 
 
 ;;
@@ -692,6 +703,8 @@
   "gf" 'find-function-at-point
   (kbd "M-h") 'shift-sexp-backward
   (kbd "M-l") 'shift-sexp-forward
+  (kbd "M-H") 'sp-forward-slurp-sexp
+  (kbd "M-L") 'sp-forward-barf-sexp
   "K"'(lambda ()
         (interactive)
         ;; Run `describe-function` and show its output in a help
@@ -789,8 +802,8 @@
 ;;
 
 (elscreen-start)
-(define-key evil-normal-state-map (kbd "M-}") 'elscreen-next)
-(define-key evil-normal-state-map (kbd "M-{") 'elscreen-previous)
+(define-key evil-normal-state-map (kbd "A-L") 'elscreen-next)
+(define-key evil-normal-state-map (kbd "A-H") 'elscreen-previous)
 (define-key evil-normal-state-map (kbd "M-t") 'open-new-tab-with-current-buffer)
 
 (defun open-new-tab-with-current-buffer ()
@@ -1023,6 +1036,7 @@
 ;; Clojure
 ;;
 
+(require 'clojure-mode)
 (require 'clojure-mode-personal)
 (require 'cider-test-personal)
 
@@ -1234,14 +1248,14 @@
 ;; One nice feature of Emac's autocomplete mode is that it auto-populates likely completions as you type.
 ;; However, in doing so, it causes my cursors to flicker in other splits while I'm typing. This makes the mode
 ;; unusable.
-(setq ac-auto-start nil)
-;; (require 'auto-complete)
-;; (add-hook 'prog-mode-hook 'auto-complete-mode)
-;; (define-key ac-complete-mode-map "\C-n" 'ac-next)
-;; (define-key ac-complete-mode-map "\C-p" 'ac-previous)
 ;; (setq ac-auto-start nil)
-;; (ac-set-trigger-key "TAB")
-;; (ac-linum-workaround)
+(require 'auto-complete)
+(add-hook 'prog-mode-hook 'auto-complete-mode)
+(define-key ac-complete-mode-map "\C-n" 'ac-next)
+(define-key ac-complete-mode-map "\C-p" 'ac-previous)
+(setq ac-auto-start nil)
+(ac-set-trigger-key "TAB")
+(ac-linum-workaround)
 
 
 ;;
@@ -1309,7 +1323,7 @@
 (autoload 'elisp-slime-nav-mode "elisp-slime-nav")
 (add-hook 'emacs-lisp-mode-hook (lambda () (elisp-slime-nav-mode t)))
 (eval-after-load 'elisp-slime-nav '(diminish 'elisp-slime-nav-mode " SN"))
-(setq source-directory "/Users/harry/workspace/external_codebases/emacs-24.3/src")
+(setq source-directory "/Users/harry/workspace/external_codebases/emacs-24.3/")
 
 (setq tramp-default-method "pscp")
 

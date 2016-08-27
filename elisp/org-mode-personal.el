@@ -45,18 +45,22 @@
   "-" 'org-cycle-list-bullet
   (kbd "TAB") 'org-cycle)
 
-(defun preview-org ()
+(defun preview-org (beg end)
   "Pipes the buffer's contents into a script which renders the markdown as HTML and opens in a browser."
-  (interactive)
-  ;; This convert_org_to_markdown.rb is a primitive script I've written which fits my needs.
-  (call-process-region (point-min) (point-max) "/bin/bash" nil nil nil "-c"
-                       "convert_org_to_markdown.rb | markdown_page.rb | bcat"))
+  (interactive (if (use-region-p)
+                   (list (region-beginning) (region-end))
+                 (list nil nil)))
+  (let* ((beg (or beg (point-min)))
+         (end (or end (point-max))))
+    ;; This convert_org_to_markdown.rb is a primitive script I've written which fits my needs.
+    (call-process-region beg end "/bin/bash" nil nil nil "-c"
+                         "convert_org_to_markdown.rb | markdown_page.rb --css gmail | browser")))
 
 (evil-leader/set-key-for-mode 'org-mode
   "oa" 'org-archive-subtree
   "vT" 'org-show-todo-tree
   "va" 'org-agenda
-  "vv" 'preview-org)
+  "rr" 'preview-org)
 
 ;; normal & insert state shortcuts.
 (mapc (lambda (state)

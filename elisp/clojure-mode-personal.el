@@ -22,8 +22,13 @@
 
 (evil-define-key 'normal clojure-mode-map "gf" 'cider-jump)
 (evil-define-key 'normal clojure-mode-map "gb" 'cider-jump-back)
-(evil-define-key 'normal clojure-mode-map (kbd "M-h") 'shift-sexp-backward)
-(evil-define-key 'normal clojure-mode-map (kbd "M-l") 'shift-sexp-forward)
+
+(dolist (state '(normal insert))
+  (evil-define-key state clojure-mode-map
+    (kbd "M-h") 'shift-sexp-backward
+    (kbd "M-l") 'shift-sexp-forward
+    (kbd "M-H") 'sp-forward-slurp-sexp
+    (kbd "M-L") 'sp-forward-barf-sexp))
 
 ;; Hide the uninteresting nrepl-connection and nrepl-server buffers from the buffer list.
 (setq nrepl-hide-special-buffers t)
@@ -258,7 +263,9 @@ but doesn't treat single semicolons as right-hand-side comments."
 
 (setq cljfmt-show-errors nil)
 
-;; (add-hook 'before-save-hook 'cljfmt-before-save-mutually-exclusive nil)
-;; ;; Run this again after save so we see any formatting error messages in the Emacs echo area,
-;; ;; because they get cloberred by Emacs's "Wrote [file]" message.
-;; (add-hook 'after-save-hook 'cljfmt-before-save-mutually-exclusive nil)
+;; TODO(harry) The before-save-hook fires every time cider looks up the docstring for a variable, which is
+;; all the time in normal mode. As as short term fix I'm only running cljfmt when I explicitly save with M-s:
+(add-hook 'before-explicit-save-hook 'cljfmt-before-save-mutually-exclusive nil)
+;; Run this again after save so we see any formatting error messages in the Emacs echo area,
+;; because they get cloberred by Emacs's "Wrote [file]" message.
+(add-hook 'after-explicit-save-hook 'cljfmt-before-save-mutually-exclusive nil)
