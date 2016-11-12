@@ -189,3 +189,8 @@
   (call-interactively 'magit-status)
   (magit-jump-to-unstaged)
   (magit-goto-next-section))
+
+(define-key magit-mode-map "\M-1" nil)
+(define-key magit-mode-map "\M-2" nil)
+(define-key magit-mode-map "\M-3" nil)
+(define-key magit-mode-map "\M-4" nil)

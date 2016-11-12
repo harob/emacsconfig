@@ -12,6 +12,7 @@
   (package-refresh-contents))
 
 (defvar my-packages '(
+                      ac-nrepl
                       ace-jump-mode
                       ack-and-a-half
                       ag
@@ -252,10 +253,6 @@
   (lambda () (interactive) (evil-jump-backward) (recenter-no-redraw)))
 (define-key evil-normal-state-map (kbd "C-i")
   (lambda () (interactive) (evil-jump-forward) (recenter-no-redraw)))
-
-; Some help keybindings which conflict with nothing else, so you can pull up help in any context.
-(global-set-key (kbd "C-A-M-h") 'help)
-(global-set-key (kbd "C-A-M-b") 'describe-bindings)
 
 ;; Evil uses the current file's mode's definition of a paragraph, which is often surprising. For instance, in
 ;; Markdown mode, a single item in a bullet list consistutes a paragraph. Instead, I've defined a paragraph to
@@ -565,10 +562,8 @@
                   (kbd "M-n") 'new-frame
                   (kbd "M-a") 'mark-whole-buffer
                   (kbd "M-s") 'explicitly-save-buffer
-                  ;; (kbd "M-h") 'ns-do-hide-emacs
                   (kbd "M-v") 'clipboard-yank
                   (kbd "M-c") 'clipboard-kill-ring-save
-                  ;; (kbd "M-m") 'iconify-or-deiconify-frame
                   (kbd "M-W") 'evil-quit ; Close all tabs in the current frame..
                   )
 
@@ -700,7 +695,6 @@
 
 (add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w" emacs-lisp-mode-syntax-table)))
 (evil-define-key 'normal emacs-lisp-mode-map
-  "gf" 'find-function-at-point
   (kbd "M-h") 'shift-sexp-backward
   (kbd "M-l") 'shift-sexp-forward
   (kbd "M-H") 'sp-forward-slurp-sexp
@@ -802,8 +796,8 @@
 ;;
 
 (elscreen-start)
-(define-key evil-normal-state-map (kbd "A-L") 'elscreen-next)
-(define-key evil-normal-state-map (kbd "A-H") 'elscreen-previous)
+(define-key evil-normal-state-map (kbd "M-}") 'elscreen-next)
+(define-key evil-normal-state-map (kbd "M-{") 'elscreen-previous)
 (define-key evil-normal-state-map (kbd "M-t") 'open-new-tab-with-current-buffer)
 
 (defun open-new-tab-with-current-buffer ()
@@ -1125,7 +1119,6 @@
 ;;
 (with-eval-after-load "go-mode"
   (evil-define-key 'normal go-mode-map
-    "gf" 'godef-jump
     "K" 'godef-describe))
 
 (defun go-save-and-compile-fn (command)
@@ -1212,6 +1205,14 @@
 
 (setq js-indent-level 2)
 
+
+;;
+;; Lua
+;;
+
+(setq lua-indent-level 2)
+
+
 ;;
 ;; Misc
 ;;
@@ -1284,6 +1285,12 @@
 (define-key evil-normal-state-map (kbd ";") 'evil-ex)
 (define-key evil-visual-state-map (kbd ";") 'evil-ex)
 
+;; TODO(harry) Why doesn't this work?
+;; (dolist (state-map '(evil-normal-state-map evil-visual-state-map))
+;;   (define-key state-map (kbd ";") 'evil-ex)
+;;   (define-key state-map (kbd "H") 'evil-first-non-blank)
+;;   (define-key state-map (kbd "L") 'evil-end-of-line))
+
 (dolist (i (number-sequence 1 9))
   (lexical-let ((tab-index (- i 1)))
     (global-set-key (kbd (concat "M-" (number-to-string i)))
@@ -1335,14 +1342,9 @@
 ;; Deft mode - Notational Velocity for emacs
 ;;
 
-(defun truncate-lines-hook-fun ()
-  (visual-line-mode -1)
-  (toggle-truncate-lines 1))
-
 (require 'deft)
-(setq deft-extension "txt")
 (setq deft-directory "~/Dropbox/Notational Data")
-(setq deft-text-mode 'org-mode)
+(setq deft-use-filter-string-for-filename t)
 (setq deft-use-filename-as-title t)
 (setq deft-auto-save-interval 0)
 (evil-set-initial-state 'deft-mode 'insert)
@@ -1350,7 +1352,8 @@
 (evil-define-key 'insert deft-mode-map (kbd "C-w") 'deft-filter-decrement-word)
 (evil-define-key 'insert deft-mode-map (kbd "C-n") 'next-line)
 (evil-define-key 'insert deft-mode-map (kbd "C-p") 'previous-line)
-(add-hook 'deft-mode-hook 'truncate-lines-hook-fun)
+(add-to-list 'auto-mode-alist '("/Notational Data/.*\\.txt\\'" . org-mode))
+(add-to-list 'auto-mode-alist '("/Notational Data/.*\\.txt_archive\\'" . org-mode))
 
 ;; Flycheck syntax checking
 (add-hook 'after-init-hook #'global-flycheck-mode)
@@ -1360,6 +1363,10 @@
 ;;
 ;; Neotree - NERDTree for Emacs
 ;;
+
+(defun truncate-lines-hook-fun ()
+  (visual-line-mode -1)
+  (toggle-truncate-lines 1))
 
 (require 'neotree)
 (evil-leader/set-key "vn" 'neotree-toggle)

@@ -20,9 +20,6 @@
 (evil-define-key 'normal clojure-mode-map "K"
   (lambda () (interactive) (util/preserve-selected-window (lambda () (call-interactively 'cider-doc)))))
 
-(evil-define-key 'normal clojure-mode-map "gf" 'cider-jump)
-(evil-define-key 'normal clojure-mode-map "gb" 'cider-jump-back)
-
 (dolist (state '(normal insert))
   (evil-define-key state clojure-mode-map
     (kbd "M-h") 'shift-sexp-backward

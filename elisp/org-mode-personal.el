@@ -39,8 +39,6 @@
   "L" 'org-end-of-line
   "{" 'org-backward-heading-same-level
   "}" 'org-forward-heading-same-level
-  ; I use "gl" for this because it behaves similarly to "goto label" in gmail and elsewhere
-  "gl" 'org-goto-top-level-heading
   "gu" 'outline-up-heading
   "-" 'org-cycle-list-bullet
   (kbd "TAB") 'org-cycle)
@@ -72,13 +70,9 @@
           (kbd "M-L") 'org-shiftmetaright
           (kbd "M-H") 'org-shiftmetaleft
           (kbd "M-K") 'org-shiftmetaup
-          (kbd "M-J") 'org-shiftmetadown))
+          (kbd "M-J") 'org-shiftmetadown
+          (kbd "M-o") 'org-insert-todo-heading))
       '(normal insert))
-
-(defun always-insert-item ()
-  (if (not (org-in-item-p))
-      (insert "\n")
-    (org-insert-item)))
 
 (defun evil-org-eol-call (fun)
   (end-of-line) ;; This jumps to the end of a potentially wrapped line
@@ -101,9 +95,8 @@
 
 (define-key org-mode-map "\M-t" nil)
 
-(setq org-default-notes-file "~/Dropbox/tasks.org")
-(define-key org-mode-map "\C-cc" 'org-capture)
-
 (setq org-src-fontify-natively t)
 (setq org-todo-keywords '((sequence "TODO" "IP" "|" "DONE")))
 (setq org-todo-keyword-faces '(("IP" . (:foreground "cyan3" :weight bold))))
+
+(setq org-log-done 'time)
