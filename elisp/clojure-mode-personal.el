@@ -23,9 +23,7 @@
 (dolist (state '(normal insert))
   (evil-define-key state clojure-mode-map
     (kbd "M-h") 'shift-sexp-backward
-    (kbd "M-l") 'shift-sexp-forward
-    (kbd "M-H") 'sp-forward-slurp-sexp
-    (kbd "M-L") 'sp-forward-barf-sexp))
+    (kbd "M-l") 'shift-sexp-forward))
 
 ;; Hide the uninteresting nrepl-connection and nrepl-server buffers from the buffer list.
 (setq nrepl-hide-special-buffers t)
@@ -228,10 +226,11 @@ but doesn't treat single semicolons as right-hand-side comments."
 (setq cider-repl-result-prefix ";; => ")
 
 ;; ;; Autocompletion in nrepl
-(require 'ac-nrepl)
-(add-hook 'cider-mode-hook 'ac-nrepl-setup)
-(add-hook 'cider-mode-hook 'auto-complete-mode)
-(eval-after-load 'auto-complete '(add-to-list 'ac-modes 'cider-mode))
+;; TODO: This is broken since upgrading cider and EMacs:
+;(require 'ac-nrepl)
+;(add-hook 'cider-mode-hook 'ac-nrepl-setup)
+;(add-hook 'cider-mode-hook 'auto-complete-mode)
+;(eval-after-load 'auto-complete '(add-to-list 'ac-modes 'cider-mode))
 ;; TODO: Replace with:
 ;; (require 'ac-cider-compliment)
 ;; (add-hook 'cider-mode-hook 'ac-flyspell-workaround)

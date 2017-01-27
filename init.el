@@ -12,9 +12,7 @@
   (package-refresh-contents))
 
 (defvar my-packages '(
-                      ac-nrepl
                       ace-jump-mode
-                      ack-and-a-half
                       ag
                       auto-complete
                       browse-at-remote
@@ -24,6 +22,8 @@
                       coffee-mode
                       column-marker
                       color-theme-sanityinc-tomorrow
+                      dash
+                      dash-functional
                       deft ; Notational Velocity-style note taking
                       diminish
                       dired-details+ ; Hides all of the unnecessary file details in dired mode.
@@ -56,13 +56,13 @@
                              ; http://emacsredux.com/blog/2013/09/05/a-proper-replacement-for-flet/
                       org
                       paradox ; Better package menu
-                      projectile ; Find file in project (ala CTRL-P).
+                      projectile
                       rainbow-delimiters
                       ruby-electric ; Insert matching delimiters; unindent end blocks after you type them.
                       scss-mode
                       smartparens
                       smex
-                      surround
+                      evil-surround
                       undo-tree
                       web-mode
                       yaml-mode
@@ -285,12 +285,12 @@
   "gs" (lambda() (interactive)
           (util/save-buffer-if-dirty)
           (magit-status-and-focus-unstaged))
-  "gl" 'magit-log
+  "gl" 'magit-log-current
   ;; "v" is a mnemonic prefix for "view X".
   "vd" 'projectile-dired
   "vp" 'open-root-of-project-in-dired
   "vt" (lambda () (interactive)
-         (find-file "~/Dropbox/Notational Data/tasks.txt")
+         (find-file "~/Dropbox/notes/tasks.org")
          (org-mode))
   "ve" (lambda () (interactive) (find-file "~/.emacs.d/init.el"))
   "vl" (lambda () (interactive) (find-file "~/.lein/profiles.clj"))
@@ -307,7 +307,7 @@
 
 (setq evil-leader/leader ",")
 
-;; Ensure we evil-leader works in non-editing modes like magit. This is referenced from evil-leader's README.
+;; Ensure evil-leader works in non-editing modes like magit. This is referenced from evil-leader's README.
 (setq evil-leader/no-prefix-mode-rx '("magit-.*-mode"))
 
 (defun evil-shift-paragraph-left (beg end)
@@ -351,11 +351,11 @@
      (define-key evil-normal-state-map ",c " 'evilnc-comment-or-uncomment-lines)
      (define-key evil-visual-state-map ",c " 'evilnc-comment-operator)))
 
-(require 'surround)
-(define-global-minor-mode global-surround-mode-with-exclusions global-surround-mode
+(require 'evil-surround)
+(define-global-minor-mode global-surround-mode-with-exclusions global-evil-surround-mode
   (lambda ()
     (when (not (memq major-mode (list 'magit-status-mode)))
-      (surround-mode 1))))
+      (evil-surround-mode 1))))
 (global-surround-mode-with-exclusions 1)
 
 (require 'evil-visualstar)
@@ -629,11 +629,18 @@
 (ido-mode t)
 (ido-ubiquitous-mode t)
 (ido-vertical-mode t)
-(eval-after-load 'ido
-  '(progn
-     (setq ido-enable-flex-matching t)
-     (setq ido-use-virtual-buffers t)
-     (setq ido-everywhere t)))
+(setq ido-vertical-define-keys 'C-n-C-p-up-down-left-right)
+
+;; By default, ido-switch-buffer will move your focus to another frame if the buffer is open there. I instead
+;; want the desired buffer to open again within my current frame, even if it's already open in another frame.
+(setq ido-default-buffer-method 'selected-window)
+(with-eval-after-load "ido"
+  (setq ido-enable-flex-matching t)
+  (setq ido-use-virtual-buffers t)
+  (setq ido-everywhere t)
+  ;; Kill (unload) the highlighted buffer in the matches list.
+  (define-key ido-file-completion-map (kbd "C-w") 'backward-delete-word)
+  (define-key ido-buffer-completion-map (kbd "M-d") 'ido-kill-buffer-at-head))
 
 
 ;;
@@ -697,8 +704,6 @@
 (evil-define-key 'normal emacs-lisp-mode-map
   (kbd "M-h") 'shift-sexp-backward
   (kbd "M-l") 'shift-sexp-forward
-  (kbd "M-H") 'sp-forward-slurp-sexp
-  (kbd "M-L") 'sp-forward-barf-sexp
   "K"'(lambda ()
         (interactive)
         ;; Run `describe-function` and show its output in a help
@@ -999,13 +1004,21 @@
 
 
 ;;
-;; Smartparens utility functions. Used by emacs lisp and clojure.
+;; Smartparens utility functions
 ;;
 
 (require 'smartparens)
 
+(require 'smartparens-config)
+(smartparens-global-mode t)
+(sp-pair "'" nil :actions :rem)
+(setq sp-autoescape-string-quote nil)
+
 (sp-with-modes '(clojure-mode)
   (sp-local-pair "`" "`" :when '(sp-in-string-p)))
+
+(global-set-key (kbd "M-H") 'sp-forward-slurp-sexp)
+(global-set-key (kbd "M-L") 'sp-forward-barf-sexp)
 
 (defun shift-sexp-backward ()
   (interactive)
@@ -1165,11 +1178,11 @@
 (defun gofmt-before-save-ignoring-errors ()
   "Don't pop up syntax errors in a new window when running gofmt-before-save."
   (interactive)
-  ;; Note that `gofmt-before-save` triggers this save-hook for some reason, so we lock on gmt-in-progress to
+  ;; Note that `gofmt-before-save` triggers this save-hook for some reason, so we lock on gofmt-in-progress to
   ;; to protect from infinite recurision.
   (when (not gofmt-in-progress)
     (setq gofmt-in-progress 't)
-    (flet ((gofmt--process-errors (&rest args) t)) ; Don't show any syntax error output
+    (cl-letf (((symbol-function #'gofmt--process-errors) (lambda (&rest args) t)))
       (gofmt-before-save))
     (setq gofmt-in-progress nil)))
 
@@ -1196,7 +1209,7 @@
 ;; Magit - for staging hunks and making commits to git
 ;;
 
-(require 'magit-mode-personal)
+(require 'magit-config)
 
 
 ;;
@@ -1296,12 +1309,8 @@
     (global-set-key (kbd (concat "M-" (number-to-string i)))
                     (lambda () (interactive) (elscreen-goto tab-index)))))
 
-(require 'smartparens-config)
-(smartparens-global-mode t)
-(sp-pair "'" nil :actions :rem)
-(setq sp-autoescape-string-quote nil)
-
 (define-key osx-keys-minor-mode-map (kbd "M-=") 'text-scale-increase)
+(define-key osx-keys-minor-mode-map (kbd "M-+") 'text-scale-increase)
 (define-key osx-keys-minor-mode-map (kbd "M--") 'text-scale-decrease)
 (define-key osx-keys-minor-mode-map (kbd "M-0") (lambda () (interactive) (text-scale-increase 0)))
 
@@ -1343,7 +1352,8 @@
 ;;
 
 (require 'deft)
-(setq deft-directory "~/Dropbox/Notational Data")
+(setq deft-directory "~/Dropbox/notes")
+(setq deft-default-extension "org")
 (setq deft-use-filter-string-for-filename t)
 (setq deft-use-filename-as-title t)
 (setq deft-auto-save-interval 0)
@@ -1356,9 +1366,10 @@
 (add-to-list 'auto-mode-alist '("/Notational Data/.*\\.txt_archive\\'" . org-mode))
 
 ;; Flycheck syntax checking
-(add-hook 'after-init-hook #'global-flycheck-mode)
-(with-eval-after-load 'flycheck
-  (setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc html-tidy)))
+;; TODO: Broken after Emacs 25 upgrade
+;(add-hook 'after-init-hook #'global-flycheck-mode)
+;(with-eval-after-load 'flycheck
+  ;(setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc html-tidy)))
 
 ;;
 ;; Neotree - NERDTree for Emacs

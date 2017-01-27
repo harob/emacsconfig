@@ -67,12 +67,11 @@
           (kbd "M-h") 'org-metaleft
           (kbd "M-k") 'org-metaup
           (kbd "M-j") 'org-metadown
-          (kbd "M-L") 'org-shiftmetaright
-          (kbd "M-H") 'org-shiftmetaleft
-          (kbd "M-K") 'org-shiftmetaup
-          (kbd "M-J") 'org-shiftmetadown
           (kbd "M-o") 'org-insert-todo-heading))
       '(normal insert))
+(evil-define-key 'normal org-mode-map
+  (kbd "M-L") 'org-shiftmetaright
+  (kbd "M-H") 'org-shiftmetaleft)
 
 (defun evil-org-eol-call (fun)
   (end-of-line) ;; This jumps to the end of a potentially wrapped line
@@ -100,3 +99,4 @@
 (setq org-todo-keyword-faces '(("IP" . (:foreground "cyan3" :weight bold))))
 
 (setq org-log-done 'time)
+(setq org-agenda-files '("~/Dropbox/notes"))
