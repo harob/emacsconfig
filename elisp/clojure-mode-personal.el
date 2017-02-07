@@ -28,111 +28,23 @@
 ;; Hide the uninteresting nrepl-connection and nrepl-server buffers from the buffer list.
 (setq nrepl-hide-special-buffers t)
 
-;; Prevent the auto-display of the REPL buffer in a separate window after connection is established.
-;; (setq cider-repl-pop-to-buffer-on-connect nil)
-
 ;; Don't ask confirmation for closing any open nrepl connections when exiting Emacs.
 ;; http://stackoverflow.com/q/2706527/46237
 (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
   "Prevent annoying \"Active processes exist\" query when you quit Emacs."
   (flet ((process-list ())) ad-do-it))
 
-(evil-define-operator evil-cider-eval (beg end)
-  "Evaluate the text region moved over by an evil motion."
-  (cider-eval-region beg end))
-
-;; Eval a paragraph. This is different from eval-surrounding-sexp in that it will eval multiple adjacent
-;; s-expressions which are not separated by a new line. It's equivalent to wrapping the expressions in a do.
-(defun cider-eval-paragraph (beg end)
-  (interactive "r")
-  (let ((region (evil-a-paragraph)))
-    (evil-cider-eval (first region) (second region))))
-
-(defun cider-show-cider-buffer ()
-  "Shows the nrepl buffer, but does not focus it."
-  (interactive)
-  (command-execute 'cider-switch-to-repl-buffer)
-  (command-execute 'cider-switch-to-last-clojure-buffer))
-
-(defun cider-clear-buffer-inside-cider-buffer ()
-  "Switches to the cider buffer, clears it, and refocused to the original buffer."
-  (interactive)
-  (command-execute 'cider-switch-to-repl-buffer)
-  (cider-clear-buffer)
-  (command-execute 'cider-switch-to-last-clojure-buffer))
-
-(defun my-cider-restart-nrepl ()
-  "Restarts or starts afresh the nrepl."
-  (interactive)
-  (let ((repl-buffer (nrepl-connection-for-buffer (current-buffer))))
-    (util/without-confirmation (lambda ()
-                            (when (not (stringp repl-buffer))
-                              (nrepl-close repl-buffer))
-                            (cider-jack-in nil)))))
-
-(defun my-cider-make-connection-buffer-the-current-connection (connection-buffer)
-  (cons connection-buffer (delq connection-buffer nrepl-connection-list)))
-
-(defun with-nrepl-connection-of-current-buffer (f)
-  (let ((result (nrepl-connection-for-buffer (current-buffer))))
-    (if (stringp result)
-        (message result)
-      (progn
-        (my-cider-make-connection-buffer-the-current-connection result)
-        (funcall f)))))
-
-;; Based on `cider-switch-to-relevant-repl-buffer` in cider.el.
-;; NOTE(philc): I think this needs further tuning. It doesn't work in all circumstances.
-(defun nrepl-connection-for-buffer (buffer)
-  "Returns either the corresponding nrepl buffer for the given buffer, or a string error message."
-  (if (not (cider-connected-p))
-      "No active nREPL connection."
-    (let ((project-directory (nrepl-project-directory-for (nrepl-current-dir))))
-      (if (not project-directory)
-          "No project directory found."
-        (let ((buf (cond
-                    ;; I'm special casing shared_lib et al so that I can eval files from that project against
-                    ;; the most recent repl.
-                    ((or (search "shared_lib" project-directory)
-                         (search "ml_lib" project-directory))
-                     (car nrepl-connection-list))
-                    (project-directory
-                     (or (car (-filter
-                               (lambda (conn)
-                                 (let ((conn-proj-dir (with-current-buffer (get-buffer conn)
-                                                        nrepl-project-dir)))
-                                   (when conn-proj-dir
-                                     (equal (file-truename project-directory)
-                                            (file-truename conn-proj-dir)))))
-                               nrepl-connection-list))
-                         (car nrepl-connection-list))))))
-          (if buf
-              (get-buffer buf)
-            "No relevant nREPL connection found."))))))
-
-(defun my-cider-eval-and-print-to-repl (form)
-  "Wraps the form in 'print' and evaluates the expression."
-  ;; Cider has cider-interactive-eval-to-repl, but it prints the results of expressions to random places in
-  ;; the repl buffer.
-  (let* (;; NOTE(philc): I have pprint aliased into clojure.core as >pprint for all of my lein projects. I've
-         ;; done this through ~/.lein/profiles.clj. Assuming you don't, you can just use println as the
-         ;; print-fn.
-         ;; (print-fn ">pprint")
-         (print-fn "println")
-         (form (concat "(" print-fn form ")")))
-    (cider-interactive-eval form)))
-
 ;; From http://timothypratley.blogspot.com/2015/07/seven-specialty-emacs-settings-with-big.html
 (defun my-cider-eval-current-sexp-in-repl ()
   (interactive)
   ;; Update the REPL namespace first if necessary:
-  (unless (equal (cider-current-ns) (with-current-buffer (cider-current-repl-buffer) nrepl-buffer-ns))
+  (unless (equal (cider-current-ns) (with-current-buffer (cider-current-repl-buffer) cider-buffer-ns))
     (cider-repl-set-ns (cider-current-ns)))
   (let ((form (current-sexp)))
     ;; Strip excess whitespace
     (while (string-match "\\`\s+\\|\n+\\'" form)
            (setq form (replace-match "" t t form)))
-    (set-buffer (cider-get-repl-buffer))
+    (set-buffer (cider-current-repl-buffer))
     (goto-char (point-max))
     (insert form)
     (cider-repl-return)))
@@ -142,41 +54,19 @@
             (kbd "C-;") 'cider-eval-expression-at-point-in-repl)
 
 (evil-leader/set-key-for-mode 'clojure-mode
-  "eap" (lambda () (interactive) (with-nrepl-connection-of-current-buffer 'cider-eval-paragraph))
-  "ek" (lambda () (interactive) (with-nrepl-connection-of-current-buffer 'cider-find-and-clear-repl-buffer))
-  "eb" (lambda ()
-         (interactive)
-         (save-buffer)
-         ;; Note that I actually use cider-load-file here, not cider-eval-buffer, because it gives useful line
-         ;; numbers on exceptions.
-         (with-nrepl-connection-of-current-buffer 'cider-load-buffer))
-  ;; cider-restart-nrepl is more handy than cider-jack-in, because it doesn't leave existing repls running.
-  "en" 'my-cider-restart-nrepl
-  ;; This function actually CPs the current s-expr into the REPL, rather the just printing the result:
-  ;; TODO(harry) Port the other similar functions to have the same behavior
-  "es" 'my-cider-eval-current-sexp-in-repl
-  "ex" (lambda () (interactive) (with-nrepl-connection-of-current-buffer 'cider-eval-defun-at-point))
-  "er" (lambda () (interactive) (with-nrepl-connection-of-current-buffer 'cider-eval-region))
   "nj" 'cider-jack-in
   "nn" 'cider-repl-set-ns
   ;; This command sets and pulls up the appropriate nREPL for the current buffer. Useful when you have
   ;; multiple REPLs going.
   "nb" 'cider-switch-to-repl-buffer
-  "nt" 'cider-toggle-trace
-  "nc" 'cider-find-and-clear-repl-buffer
+  "nc" 'cider-find-and-clear-repl-output
+  ;; Note that I actually use cider-load-file here, not cider-eval-buffer, because it gives useful line
+  ;; numbers on exceptions.
+  "eb" 'cider-load-buffer
+  ;; This function actually CPs the current s-expr into the REPL, rather the just printing the result:
+  ;; TODO(harry) Port the other similar functions to have the same behavior
+  "es" 'my-cider-eval-current-sexp-in-repl
   )
-
-;; NOTE(harry) These are the simpler commands I had before:
-;; (evil-leader/set-key-for-mode 'clojure-mode
-;;   "eb" 'cider-load-current-buffer
-;;   "es" 'cider-eval-expression-at-point
-;;   "er" 'cider-eval-region
-;;   "nj" 'cider-jack-in
-;;   "nn" 'cider-repl-set-ns
-;;   ;; This command sets and pulls up the appropriate nREPL for the current buffer. Useful when you have
-;;   ;; multiple REPLs going.
-;;   "nb" 'cider-switch-to-repl-buffer
-;;   "nt" 'cider-toggle-trace)
 
 ;; Clojure indentation rules
 (eval-after-load 'clojure-mode
@@ -218,12 +108,10 @@ but doesn't treat single semicolons as right-hand-side comments."
     (if (> (- (point-max) pos) (point))
         (goto-char (- (point-max) pos)))))
 
-
-(add-hook 'cider-mode-hook 'cider-turn-on-eldoc-mode)
-;; (setq cider-repl-popup-stacktraces t)
-(setq cider-repl-print-length 100)
 (setq cider-repl-use-clojure-font-lock t)
 (setq cider-repl-result-prefix ";; => ")
+(setq cider-prompt-for-symbol nil)
+(setq cider-prompt-save-file-on-load 'always-save)
 
 ;; ;; Autocompletion in nrepl
 ;; TODO: This is broken since upgrading cider and EMacs:
