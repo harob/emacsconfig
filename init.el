@@ -179,6 +179,13 @@
                 (untabify (point-min) (point-max)))
             nil))
 
+(defun backward-delete-word ()
+  "Deletes the word behind the cursor, and does not yank the contents to the clipboard."
+  ; This implementation is based on backward-kill-word.
+  (interactive)
+  (delete-region (point) (progn (forward-word -1) (point))))
+
+;; Enable the common Bash text-editing shortcuts in the minibuffer.
 ;; Enable the common Bash text-editing shortcuts in the minibuffer.
 (util/define-keys minibuffer-local-map
                   (kbd "C-k") 'kill-line
@@ -219,6 +226,9 @@
 ; This is fired whenever the buffer list is updated, which is a reasonably robust way to detect that the
 ; window config has changed and the current buffer should be saved.
 (add-hook 'buffer-list-update-hook 'util/save-buffer-if-dirty)
+
+(setq create-lockfiles nil)
+
 
 ;;
 ;; Evil mode -- Vim keybindings for Emacs.
@@ -279,9 +289,14 @@
   "t" 'fiplr-find-file
   "a" 'ag-project
   "d" 'deft
-  "|" (lambda () (interactive)(split-window-horizontally) (other-window 1))
-  "\\" (lambda () (interactive)(split-window-horizontally) (other-window 1))
-  "-" (lambda () (interactive)(split-window-vertically) (other-window 1))
+  "\\" (lambda () (interactive)
+         (split-window-horizontally)
+         (other-window 1)
+         (balance-windows))
+  "-" (lambda () (interactive)
+        (split-window-vertically)
+        (other-window 1)
+        (balance-windows))
   "gs" (lambda() (interactive)
           (util/save-buffer-if-dirty)
           (magit-status-and-focus-unstaged))
@@ -338,12 +353,13 @@
 ;; Enable the typical Bash/readline keybindings when in insert mode.
 (util/define-keys evil-insert-state-map
                   (kbd "C-k") 'kill-line
+                  (kbd "C-a") 'beginning-of-line
                   (kbd "C-e") 'end-of-line
                   (kbd "C-u") 'backward-kill-line
                   (kbd "C-d") 'delete-char
+                  (kbd "C-w") 'backward-delete-word
                   (kbd "C-p") 'previous-line
-                  (kbd "C-n") 'next-line
-                  )
+                  (kbd "C-n") 'next-line)
 (global-set-key (kbd "C-h") 'backward-delete-char) ; Here we clobber C-h, which accesses Emacs's help.
 
 (eval-after-load 'evil
@@ -565,7 +581,7 @@
                   (kbd "M-v") 'clipboard-yank
                   (kbd "M-c") 'clipboard-kill-ring-save
                   (kbd "M-W") 'evil-quit ; Close all tabs in the current frame..
-                  )
+                  (kbd "M-A-h") 'mac-hide-others)
 
 (define-minor-mode osx-keys-minor-mode
   "A minor-mode for emulating osx keyboard shortcuts."
@@ -620,6 +636,15 @@
   (run-hooks 'before-explicit-save-hook)
   (save-buffer)
   (run-hooks 'after-explicit-save-hook))
+
+;; From http://emacs.stackexchange.com/a/18981
+(defun mac-hide-others ()
+  "On a Mac, hide all applications other than Emacs."
+  (interactive)
+  (do-applescript (concat "tell application \"System Events\" to "
+                          "set visible of every process whose visible is true "
+                          "and name is not \"Emacs\" to "
+                          "false")))
 
 
 ;;
@@ -1339,7 +1364,7 @@
 (autoload 'elisp-slime-nav-mode "elisp-slime-nav")
 (add-hook 'emacs-lisp-mode-hook (lambda () (elisp-slime-nav-mode t)))
 (eval-after-load 'elisp-slime-nav '(diminish 'elisp-slime-nav-mode " SN"))
-(setq source-directory "/Users/harry/workspace/external_codebases/emacs-24.3/")
+(setq source-directory "/Users/harry/workspace/external_codebases/emacs-mac/src")
 
 (setq tramp-default-method "pscp")
 
