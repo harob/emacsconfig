@@ -95,8 +95,9 @@
 (define-key org-mode-map "\M-t" nil)
 
 (setq org-src-fontify-natively t)
-(setq org-todo-keywords '((sequence "TODO" "IP" "|" "DONE")))
-(setq org-todo-keyword-faces '(("IP" . (:foreground "cyan3" :weight bold))))
+(setq org-todo-keywords '((sequence "TODO" "IP" "WAIT" "|" "DONE")))
+(setq org-todo-keyword-faces '(("IP" . (:foreground "cyan3" :weight bold))
+                               ("WAIT" . (:foreground "MediumOrchid3" :weight bold))))
 
 (setq org-log-done 'time)
 (setq org-agenda-files '("~/Dropbox/notes"))
