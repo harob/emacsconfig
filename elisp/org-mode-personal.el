@@ -41,7 +41,8 @@
   "}" 'org-forward-heading-same-level
   "gu" 'outline-up-heading
   "-" 'org-cycle-list-bullet
-  (kbd "TAB") 'org-cycle)
+  (kbd "TAB") 'org-cycle
+  (kbd "RET") 'org-open-at-point)
 
 (defun preview-org (beg end)
   "Pipes the buffer's contents into a script which renders the markdown as HTML and opens in a browser."
@@ -101,3 +102,5 @@
 
 (setq org-log-done 'time)
 (setq org-agenda-files '("~/Dropbox/notes"))
+
+(setq org-link-search-must-match-exact-headline nil)

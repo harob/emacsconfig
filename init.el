@@ -22,6 +22,7 @@
                       coffee-mode
                       column-marker
                       color-theme-sanityinc-tomorrow
+                      company
                       dash
                       dash-functional
                       deft ; Notational Velocity-style note taking
@@ -33,6 +34,8 @@
                       exec-path-from-shell
                       evil
                       evil-anzu
+                      evil-args
+                      evil-exchange
                       evil-leader
                       evil-matchit
                       evil-nerd-commenter
@@ -57,6 +60,7 @@
                       org
                       paradox ; Better package menu
                       projectile
+                      protobuf-mode
                       rainbow-delimiters
                       ruby-electric ; Insert matching delimiters; unindent end blocks after you type them.
                       scss-mode
@@ -65,6 +69,7 @@
                       evil-surround
                       undo-tree
                       web-mode
+                      which-key
                       yaml-mode
                       yasnippet
                       ))
@@ -228,6 +233,7 @@
 (add-hook 'buffer-list-update-hook 'util/save-buffer-if-dirty)
 
 (setq create-lockfiles nil)
+(setq eldoc-echo-area-use-multiline-p nil)
 
 
 ;;
@@ -352,6 +358,7 @@
 
 ;; Enable the typical Bash/readline keybindings when in insert mode.
 (util/define-keys evil-insert-state-map
+                  (kbd "C-h") 'backward-delete-char
                   (kbd "C-k") 'kill-line
                   (kbd "C-a") 'beginning-of-line
                   (kbd "C-e") 'end-of-line
@@ -360,7 +367,7 @@
                   (kbd "C-w") 'backward-delete-word
                   (kbd "C-p") 'previous-line
                   (kbd "C-n") 'next-line)
-(global-set-key (kbd "C-h") 'backward-delete-char) ; Here we clobber C-h, which accesses Emacs's help.
+;; (global-set-key (kbd "C-h") 'backward-delete-char) ; Here we clobber C-h, which accesses Emacs's help.
 
 (eval-after-load 'evil
   '(progn
@@ -382,6 +389,13 @@
 
 (require 'evil-anzu)
 (set-face-attribute 'anzu-mode-line nil :foreground "black" :weight 'bold)
+
+(require 'evil-args)
+(define-key evil-inner-text-objects-map "a" 'evil-inner-arg)
+(define-key evil-outer-text-objects-map "a" 'evil-outer-arg)
+
+(require 'evil-exchange)
+(evil-exchange-install)
 
 
 ;;
@@ -967,7 +981,7 @@
 ;;
 
 (add-hook 'css-mode-hook (lambda ()
-                           (autopair-mode 1) ; Auto-insert matching delimiters.
+                           ;; (autopair-mode 1) ; Auto-insert matching delimiters.
                            ;; Properly unindent a closing brace after you type it and hit enter.
                            (eletric-indent-mode)))
 
@@ -1281,6 +1295,7 @@
   '(setq show-paren-delay 0))
 (show-paren-mode t)
 
+
 ;;
 ;; Emacs general autocompletion
 ;;
@@ -1304,10 +1319,10 @@
 ;; Switch across both windows (i.e. panes/splits) and frames (i.e. OS windows)!
 (require 'framemove)
 (setq framemove-hook-into-windmove t)
-(define-key evil-normal-state-map (kbd "C-h") 'evil-window-left)
-(define-key evil-normal-state-map (kbd "C-j") 'evil-window-down)
-(define-key evil-normal-state-map (kbd "C-k") 'evil-window-up)
-(define-key evil-normal-state-map (kbd "C-l") 'evil-window-right)
+(define-key evil-normal-state-map (kbd "C-h") (lambda () (interactive) (ignore-errors (evil-window-left 1))))
+(define-key evil-normal-state-map (kbd "C-j") (lambda () (interactive) (ignore-errors (evil-window-down 1))))
+(define-key evil-normal-state-map (kbd "C-k") (lambda () (interactive) (ignore-errors (evil-window-up 1))))
+(define-key evil-normal-state-map (kbd "C-l") (lambda () (interactive) (ignore-errors (evil-window-right 1))))
 
 (require 'buffer-move)
 (global-set-key (kbd "C-S-k") 'buf-move-up)
@@ -1356,7 +1371,7 @@
 
 (eval-after-load 'fiplr
   '(setq fiplr-ignored-globs '((directories (".git" ".svn" "target" "log" ".sass-cache" "Build" ".deps"
-                                             "vendor" "MoPubSDK" "output"
+                                             "vendor" "MoPubSDK" "output" "checkouts"
                                              "elpa"))
                                (files (".#*" "*.so" ".DS_Store" "*.class")))))
 
@@ -1370,6 +1385,30 @@
 
 (setq ag-reuse-buffers 't)
 (setq ag-reuse-window 't)
+
+; From http://emacsredux.com/blog/2013/03/27/copy-filename-to-the-clipboard/
+(defun copy-file-path-to-clipboard ()
+  "Copy the current buffer file name to the clipboard."
+  (interactive)
+  (let ((filename (if (equal major-mode 'dired-mode)
+                      default-directory
+                    (buffer-file-name))))
+    (when filename
+      (kill-new filename)
+      (message "Copied buffer file name '%s' to the clipboard." filename))))
+
+(defun copy-file-name-to-clipboard ()
+  "Copy the current buffer file name to the clipboard."
+  (interactive)
+  (let ((filename (file-name-nondirectory (buffer-file-name))))
+    (when filename
+      (kill-new filename)
+      (message "Copied buffer file name '%s' to the clipboard." filename))))
+
+(require 'which-key)
+(which-key-mode)
+(setq which-key-allow-evil-operators t)
+(setq which-key-show-operator-state-maps t)
 
 
 ;;
@@ -1395,6 +1434,7 @@
 ;(add-hook 'after-init-hook #'global-flycheck-mode)
 ;(with-eval-after-load 'flycheck
   ;(setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc html-tidy)))
+
 
 ;;
 ;; Neotree - NERDTree for Emacs

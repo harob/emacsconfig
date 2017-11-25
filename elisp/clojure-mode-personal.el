@@ -113,33 +113,33 @@ but doesn't treat single semicolons as right-hand-side comments."
 (setq cider-prompt-for-symbol nil)
 (setq cider-prompt-save-file-on-load 'always-save)
 
-;; ;; Autocompletion in nrepl
-;; TODO: This is broken since upgrading cider and EMacs:
-;(require 'ac-nrepl)
-;(add-hook 'cider-mode-hook 'ac-nrepl-setup)
-;(add-hook 'cider-mode-hook 'auto-complete-mode)
-;(eval-after-load 'auto-complete '(add-to-list 'ac-modes 'cider-mode))
-;; TODO: Replace with:
-;; (require 'ac-cider-compliment)
-;; (add-hook 'cider-mode-hook 'ac-flyspell-workaround)
-;; (add-hook 'cider-mode-hook 'ac-cider-compliment-setup)
-;; (add-hook 'cider-repl-mode-hook 'ac-cider-compliment-repl-setup)
-;; (eval-after-load "auto-complete"
-;;   '(add-to-list 'ac-modes cider-mode))
+;; Autocompletion in nrepl
+
+(add-hook 'cider-repl-mode-hook #'company-mode)
+(add-hook 'cider-mode-hook #'company-mode)
+(setq company-idle-delay nil) ; never start completions automatically
+(eval-after-load 'company
+  '(progn
+     (define-key company-active-map (kbd "TAB") 'company-complete-common-or-cycle)
+     (define-key company-active-map (kbd "<tab>") 'company-complete-common-or-cycle)))
 
 
 ;;
 ;; cljfmt -- automatic formatting of Clojure code. This configuration is Liftoff-specific.
 ;;
 
-(load "$REPOS/liftoff/exp/emacs/cljfmt.el")
+(defconst cljfmt-accessible (getenv "REPOS"))
+(if cljfmt-accessible
+  (load "$REPOS/liftoff/exp/emacs/cljfmt.el")
+  (message "REPOS environment variable is not defined. Not loading cljfmt."))
 
 ;; Note that `cljfmt-before-save` triggers this save-hook for some reason, so we lock on clj-in-progress to
 ;; to protect from infinite recurision.
 (setq cljfmt-in-progress nil)
 (defun cljfmt-before-save-mutually-exclusive ()
  (interactive)
- (when (and (eq major-mode 'clojure-mode)
+ (when (and cljfmt-accessible
+            (eq major-mode 'clojure-mode)
             (not cljfmt-in-progress))
    (setq cljfmt-in-progress 't)
    (cljfmt)
