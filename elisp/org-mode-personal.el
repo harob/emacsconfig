@@ -56,10 +56,17 @@
                          "convert_org_to_markdown.rb | markdown_page.rb --css gmail | browser")))
 
 (evil-leader/set-key-for-mode 'org-mode
+  "ly" 'org-store-link
+  "lp" 'org-insert-link
+  "lt" 'org-toggle-link-display
   "oa" 'org-archive-subtree
   "vT" 'org-show-todo-tree
   "va" 'org-agenda
   "rr" 'preview-org)
+
+(which-key-add-major-mode-key-based-replacements 'org-mode
+  "SPC l" "org-Links"
+  "SPC o" "Org")
 
 ;; normal & insert state shortcuts.
 (mapc (lambda (state)

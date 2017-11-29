@@ -68,6 +68,9 @@
   "es" 'my-cider-eval-current-sexp-in-repl
   )
 
+(which-key-add-major-mode-key-based-replacements 'clojure-mode
+  "SPC n" "Cider")
+
 ;; Clojure indentation rules
 (eval-after-load 'clojure-mode
   '(define-clojure-indent

@@ -28,6 +28,7 @@
                       deft ; Notational Velocity-style note taking
                       diminish
                       dired-details+ ; Hides all of the unnecessary file details in dired mode.
+                      dumb-jump ; Go-to-definition for all languages, using ag
                       elisp-slime-nav
                       elscreen
                       ess
@@ -195,7 +196,8 @@
 (util/define-keys minibuffer-local-map
                   (kbd "C-k") 'kill-line
                   (kbd "C-e") 'end-of-line
-                  (kbd "C-u") 'backward-kill-line
+                  ;; NOTE(harry) I don't use this, and it conflicts with Emac's universal argument key binding:
+                  ;; (kbd "C-u") 'backward-kill-line
                   (kbd "C-d") 'delete-char
                   (kbd "C-w") 'backward-kill-word
                   (kbd "C-h") 'backward-delete-char)
@@ -245,11 +247,13 @@
 (require 'evil-leader) ; Provide configuration functions for assigning actions to a Vim leader key.
 (require 'evil-nerd-commenter)
 (require 'goto-last-change)
-(evil-mode t)
 (global-evil-leader-mode)
-;; Note that there is a bug where Evil-leader isn't properly bound to the initial buffers Emacs opens
-;; with. We work around this by killing them. See https://github.com/cofi/evil-leader/issues/10.
-(kill-buffer "*Messages*")
+(evil-mode t)
+
+(require 'which-key)
+(which-key-mode)
+(setq which-key-allow-evil-operators t)
+(setq which-key-show-operator-state-maps t)
 
 ;; When opening new lines, indent according to the previous line.
 (setq evil-auto-indent t)
@@ -319,6 +323,15 @@
   "vs" (lambda () (interactive) (switch-to-buffer "*scratch*"))
   "vk" (lambda () (interactive) (find-file "~/workspace/side_projects/qmk_firmware/keyboards/ergodox/keymaps/dvorak_harob/keymap.c")))
 
+;; TODO(harry) Write a macro to prepend the evil-leader key instead of manually specifying SPC.
+(which-key-add-key-based-replacements
+  "SPC c" "Comment"
+  "SPC e" "Evaluate"
+  "SPC g" "Git"
+  "SPC r" "Render"
+  "SPC v" "View"
+  "SPC w" "Window")
+
 (eval-after-load 'evil
   '(progn
      (setq evil-default-cursor t)
@@ -326,7 +339,7 @@
      (define-key evil-normal-state-map (kbd "M-,") nil)
      (define-key evil-normal-state-map (kbd "M-.") nil)))
 
-(setq evil-leader/leader ",")
+(setq evil-leader/leader "SPC")
 
 ;; Ensure evil-leader works in non-editing modes like magit. This is referenced from evil-leader's README.
 (setq evil-leader/no-prefix-mode-rx '("magit-.*-mode"))
@@ -362,7 +375,7 @@
                   (kbd "C-k") 'kill-line
                   (kbd "C-a") 'beginning-of-line
                   (kbd "C-e") 'end-of-line
-                  (kbd "C-u") 'backward-kill-line
+                  ;; (kbd "C-u") 'backward-kill-line
                   (kbd "C-d") 'delete-char
                   (kbd "C-w") 'backward-delete-word
                   (kbd "C-p") 'previous-line
@@ -371,8 +384,8 @@
 
 (eval-after-load 'evil
   '(progn
-     (define-key evil-normal-state-map ",c " 'evilnc-comment-or-uncomment-lines)
-     (define-key evil-visual-state-map ",c " 'evilnc-comment-operator)))
+     (define-key evil-normal-state-map " cc" 'evilnc-comment-or-uncomment-lines)
+     (define-key evil-visual-state-map " cc" 'evilnc-comment-operator)))
 
 (require 'evil-surround)
 (define-global-minor-mode global-surround-mode-with-exclusions global-evil-surround-mode
@@ -512,10 +525,11 @@
 ;; Ace jump - for quickly jumping to a precise character in view. Similar to Vim's EasyMotion.
 ;;
 (require 'ace-jump-mode)
-(define-key evil-normal-state-map (kbd "SPC") 'evil-ace-jump-word-mode)
-;; Note that Evil mode's ace-jump integration is supposed to add this motion keybinding automatically for you,
-;; but it doesn't work. So I've defined it here explicitly.
-(define-key evil-motion-state-map (kbd "SPC") 'evil-ace-jump-word-mode)
+;; TODO(harry) Define a new shortcut using evil leader
+;; (define-key evil-normal-state-map (kbd "SPC") 'evil-ace-jump-word-mode)
+;; ;; Note that Evil mode's ace-jump integration is supposed to add this motion keybinding automatically for you,
+;; ;; but it doesn't work. So I've defined it here explicitly.
+;; (define-key evil-motion-state-map (kbd "SPC") 'evil-ace-jump-word-mode)
 
 
 ;;
@@ -1405,10 +1419,13 @@
       (kill-new filename)
       (message "Copied buffer file name '%s' to the clipboard." filename))))
 
-(require 'which-key)
-(which-key-mode)
-(setq which-key-allow-evil-operators t)
-(setq which-key-show-operator-state-maps t)
+(setq explicit-shell-file-name "bash")
+
+(require 'dumb-jump)
+;; Override the standard tags-based go-to-definition key bindings:
+(global-set-key (kbd "M-.") 'dumb-jump-go)
+(global-set-key (kbd "M-,") 'dumb-jump-back)
+;; (setq dumb-jump-selector 'ivy)
 
 
 ;;
