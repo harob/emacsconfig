@@ -5,6 +5,7 @@
 
 (require 'evil)
 (require 'org)
+(require 'ox-md-personal)
 
 (provide 'org-mode-personal)
 
@@ -111,3 +112,4 @@
 (setq org-agenda-files '("~/Dropbox/notes"))
 
 (setq org-link-search-must-match-exact-headline nil)
+
