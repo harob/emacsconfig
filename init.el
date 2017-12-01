@@ -11,9 +11,11 @@
 (when (not package-archive-contents)
   (package-refresh-contents))
 
+;; TODO(harry) Remove all ido packages and uses
 (defvar my-packages '(
                       ace-jump-mode
                       ag
+                      amx ; A fork of smex, which upgrades M-x
                       auto-complete
                       browse-at-remote
                       buffer-move
@@ -48,8 +50,9 @@
                       go-mode
                       goto-last-change
                       haskell-mode
-                      ido-ubiquitous ; Make ido completions work everywhere.
-                      ido-vertical-mode ; Show ido results vertically.
+                      ;; ido-ubiquitous ; Make ido completions work everywhere.
+                      ;; ido-vertical-mode ; Show ido results vertically.
+                      ivy
                       less-css-mode
                       lua-mode
                       magit
@@ -66,7 +69,6 @@
                       ruby-electric ; Insert matching delimiters; unindent end blocks after you type them.
                       scss-mode
                       smartparens
-                      smex
                       evil-surround
                       undo-tree
                       web-mode
@@ -206,9 +208,11 @@
 ;; when we want to restart the nrepl process.
 (setq kill-buffer-query-functions (remq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
-;; Use smex to show the M-x command prompt. It has better completion support than the default M<x.
-(require 'smex)
-(global-set-key (kbd "M-x") 'smex)
+;; ;; Use amx to show the M-x command prompt. It has better completion support than the default M-x.
+(require 'amx)
+(amx-mode 1)
+;; (require 'counsel)
+;; (global-set-key (kbd "M-x") 'counsel-M-x)
 
 ;; RecentF mode is the Emacs minor mode used when opening files via C-x C-f.
 (require 'recentf)
@@ -295,10 +299,14 @@
 
 (evil-leader/set-key
   "h" 'help
-  "b" 'ido-switch-buffer
+  "SPC" 'amx
+  ":" 'eval-expression
+  ";" 'eval-expression
+  "b" 'ivy-switch-buffer
   "t" 'fiplr-find-file
-  "a" 'ag-project
+  "a" 'counsel-ag
   "d" 'deft
+  "/" 'swiper
   "\\" (lambda () (interactive)
          (split-window-horizontally)
          (other-window 1)
@@ -407,6 +415,7 @@
 (define-key evil-inner-text-objects-map "a" 'evil-inner-arg)
 (define-key evil-outer-text-objects-map "a" 'evil-outer-arg)
 
+;; gx to swap two text objects:
 (require 'evil-exchange)
 (evil-exchange-install)
 
@@ -679,22 +688,32 @@
 ;; Filename completions (i.e. CTRL-P or CMD-T in other editors)
 ;;
 
-(ido-mode t)
-(ido-ubiquitous-mode t)
-(ido-vertical-mode t)
-(setq ido-vertical-define-keys 'C-n-C-p-up-down-left-right)
+;; (ido-mode t)
+;; (ido-ubiquitous-mode t)
+;; (ido-vertical-mode t)
+;; (setq ido-vertical-define-keys 'C-n-C-p-up-down-left-right)
 
-;; By default, ido-switch-buffer will move your focus to another frame if the buffer is open there. I instead
-;; want the desired buffer to open again within my current frame, even if it's already open in another frame.
-(setq ido-default-buffer-method 'selected-window)
-(with-eval-after-load "ido"
-  (setq ido-enable-flex-matching t)
-  (setq ido-use-virtual-buffers t)
-  (setq ido-everywhere t)
-  ;; Kill (unload) the highlighted buffer in the matches list.
-  (define-key ido-file-completion-map (kbd "C-w") 'backward-delete-word)
-  (define-key ido-buffer-completion-map (kbd "M-d") 'ido-kill-buffer-at-head))
+;; ;; By default, ido-switch-buffer will move your focus to another frame if the buffer is open there. I instead
+;; ;; want the desired buffer to open again within my current frame, even if it's already open in another frame.
+;; (setq ido-default-buffer-method 'selected-window)
+;; (with-eval-after-load "ido"
+;;   (setq ido-enable-flex-matching t)
+;;   (setq ido-use-virtual-buffers t)
+;;   (setq ido-everywhere t)
+;;   ;; Kill (unload) the highlighted buffer in the matches list.
+;;   (define-key ido-file-completion-map (kbd "C-w") 'backward-delete-word)
+;;   (define-key ido-buffer-completion-map (kbd "M-d") 'ido-kill-buffer-at-head))
 
+(require 'ivy)
+(ivy-mode 1)
+(setq ivy-use-virtual-buffers t)
+(setq enable-recursive-minibuffers t)
+(setq ivy-height 15)
+(setq ivy-wrap t)
+
+(define-key ivy-minibuffer-map [escape] 'minibuffer-keyboard-quit)
+(define-key swiper-map [escape] 'minibuffer-keyboard-quit)
+(define-key swiper-map (kbd "C-h") 'backward-delete-char)
 
 ;;
 ;; Dired mode - using the Emacs file browser.
@@ -805,6 +824,11 @@
 ;;
 
 (projectile-global-mode)
+;; (setq projectile-completion-system 'ivy)
+;; (use-package counsel-projectile
+;;   :ensure t
+;;   :config
+;;   (counsel-projectile-on))
 
 (setq project-folders '("~/workspace/src" "~/workspace/src/liftoff"))
 
@@ -1303,7 +1327,7 @@
 (column-number-mode 1)
 
 (global-set-key (kbd "RET") 'comment-indent-new-line)
-(global-set-key (kbd "M-X") 'smex-major-mode-commands)
+;; (global-set-key (kbd "M-X") 'smex-major-mode-commands)
 
 (eval-after-load 'paren
   '(setq show-paren-delay 0))
