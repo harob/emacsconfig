@@ -31,6 +31,7 @@ Assume BACKEND is `md'."
   ;; Return updated tree.
   tree)
 
+;; Override ox-md function to fix up heading rendering to act more like a regular markdown list:
 (defun org-md-headline (headline contents info)
   "Transcode HEADLINE element into Markdown format.
 CONTENTS is the headline contents.  INFO is a plist used as
@@ -73,8 +74,8 @@ a communication channel."
                           (car (last (org-export-get-headline-number
                                       headline info))))
                          "."))))
-          (concat bullet (make-string (- 4 (length bullet)) ? ) heading tags
-                  "\n\n"
+          (concat bullet " " heading tags
+                  "\n"
                   (and contents
                        (replace-regexp-in-string "^" "    " contents)))))
        ;; Use "Setext" style.
@@ -85,3 +86,4 @@ a communication channel."
                 contents))
        ;; Use "atx" style.
        (t (concat (make-string level ?#) " " heading tags anchor "\n\n" contents))))))
+
