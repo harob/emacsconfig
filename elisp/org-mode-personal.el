@@ -60,7 +60,9 @@
   "ly" 'org-store-link
   "lp" 'org-insert-link
   "lt" 'org-toggle-link-display
+  "lo" 'ace-link-org
   "oa" 'org-archive-subtree
+  "or" 'avy-org-refile-as-child
   "vT" 'org-show-todo-tree
   "va" 'org-agenda
   "rr" 'preview-org)

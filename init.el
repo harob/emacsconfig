@@ -11,12 +11,12 @@
 (when (not package-archive-contents)
   (package-refresh-contents))
 
-;; TODO(harry) Remove all ido packages and uses
 (defvar my-packages '(
-                      ace-jump-mode
+                      ace-link
                       ag
                       amx ; A fork of smex, which upgrades M-x
                       auto-complete
+                      avy
                       browse-at-remote
                       buffer-move
                       cider
@@ -45,13 +45,10 @@
                       evil-visualstar
                       fill-column-indicator
                       fiplr
-                      flx-ido ; Fuzzy matching for ido, which improves the UX of Projectile.
                       framemove
                       go-mode
                       goto-last-change
                       haskell-mode
-                      ;; ido-ubiquitous ; Make ido completions work everywhere.
-                      ;; ido-vertical-mode ; Show ido results vertically.
                       ivy
                       less-css-mode
                       lua-mode
@@ -248,10 +245,17 @@
 
 (setq evil-want-C-u-scroll t)
 (require 'evil)
-(require 'evil-leader) ; Provide configuration functions for assigning actions to a Vim leader key.
 (require 'evil-nerd-commenter)
 (require 'goto-last-change)
+
+(require 'evil-leader) ; Provide configuration functions for assigning actions to a Vim leader key.
+(setq evil-leader/leader "SPC")
+;; Access leader with C-SPC in insert mode:
+(setq evil-leader/in-all-states t)
+;; Ensure evil-leader works in non-editing modes like magit. This is referenced from evil-leader's README.
+(setq evil-leader/no-prefix-mode-rx '("magit-.*-mode"))
 (global-evil-leader-mode)
+
 (evil-mode t)
 
 (require 'which-key)
@@ -346,11 +350,6 @@
      ;; Unbind these keys in evil so they can instead be used for code navigation.
      (define-key evil-normal-state-map (kbd "M-,") nil)
      (define-key evil-normal-state-map (kbd "M-.") nil)))
-
-(setq evil-leader/leader "SPC")
-
-;; Ensure evil-leader works in non-editing modes like magit. This is referenced from evil-leader's README.
-(setq evil-leader/no-prefix-mode-rx '("magit-.*-mode"))
 
 (defun evil-shift-paragraph-left (beg end)
   "Shifts a paragraph left."
@@ -688,29 +687,17 @@
 ;; Filename completions (i.e. CTRL-P or CMD-T in other editors)
 ;;
 
-;; (ido-mode t)
-;; (ido-ubiquitous-mode t)
-;; (ido-vertical-mode t)
-;; (setq ido-vertical-define-keys 'C-n-C-p-up-down-left-right)
-
-;; ;; By default, ido-switch-buffer will move your focus to another frame if the buffer is open there. I instead
-;; ;; want the desired buffer to open again within my current frame, even if it's already open in another frame.
-;; (setq ido-default-buffer-method 'selected-window)
-;; (with-eval-after-load "ido"
-;;   (setq ido-enable-flex-matching t)
-;;   (setq ido-use-virtual-buffers t)
-;;   (setq ido-everywhere t)
-;;   ;; Kill (unload) the highlighted buffer in the matches list.
-;;   (define-key ido-file-completion-map (kbd "C-w") 'backward-delete-word)
-;;   (define-key ido-buffer-completion-map (kbd "M-d") 'ido-kill-buffer-at-head))
-
 (require 'ivy)
 (ivy-mode 1)
 (setq ivy-use-virtual-buffers t)
 (setq enable-recursive-minibuffers t)
-(setq ivy-height 15)
+(setq ivy-height 20)
 (setq ivy-wrap t)
+(setq ivy-re-builders-alist '((t . ivy--regex-ignore-order)))
+;; TODO(harry) Remove some of the default "^"'s in this var:
+;; (setq ivy-initial-inputs-alist )
 
+(require 'swiper)
 (define-key ivy-minibuffer-map [escape] 'minibuffer-keyboard-quit)
 (define-key swiper-map [escape] 'minibuffer-keyboard-quit)
 (define-key swiper-map (kbd "C-h") 'backward-delete-char)
@@ -860,7 +847,7 @@
                                   (mapcar (lambda (file)
                                             (filter-files-in-directory file 'file-directory-p nil)))
                                   flatten)))
-    (let ((project-to-open (ido-completing-read "Project folder: "
+    (let ((project-to-open (ivy-completing-read "Project folder: "
                                                 (mapcar 'file-name-nondirectory all-project-folders)
                                                 nil t)))
       (->> all-project-folders
@@ -915,6 +902,7 @@
 (diminish 'yas-minor-mode "")
 (diminish 'osx-keys-minor-mode "")
 (diminish 'undo-tree-mode "")
+(diminish 'ivy-mode "")
 
 
 ;;
@@ -1354,6 +1342,8 @@
 ;; All new!
 ;;
 
+(setq find-function-C-source-directory "/Users/harry/workspace/external_codebases/emacs/src")
+
 ;; Switch across both windows (i.e. panes/splits) and frames (i.e. OS windows)!
 (require 'framemove)
 (setq framemove-hook-into-windmove t)
@@ -1446,16 +1436,23 @@
 (setq explicit-shell-file-name "bash")
 
 (require 'dumb-jump)
+(setq dumb-jump-selector 'ivy)
 ;; Override the standard tags-based go-to-definition key bindings:
 (global-set-key (kbd "M-.") 'dumb-jump-go)
 (global-set-key (kbd "M-,") 'dumb-jump-back)
-;; (setq dumb-jump-selector 'ivy)
 
+(require 'avy)
+(setq avy-keys (number-sequence ?a ?z))
+(setq avy-all-windows 'all-frames)
+(evil-leader/set-key "z" 'avy-goto-word-0)
+(define-key evil-motion-state-map (kbd "z") 'avy-goto-word-0)
+(define-key evil-visual-state-map (kbd "z") 'avy-goto-word-0)
 
-;;
-;; Deft mode - Notational Velocity for emacs
-;;
+;; Open links vimium-style with `o` in various help-like modes
+(require 'ace-link)
+(ace-link-setup-default)
 
+;; Notational Velocity-style note taking for emacs
 (require 'deft)
 (setq deft-directory "~/Dropbox/notes")
 (setq deft-default-extension "org")
@@ -1476,15 +1473,7 @@
 ;(with-eval-after-load 'flycheck
   ;(setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc html-tidy)))
 
-
-;;
-;; Neotree - NERDTree for Emacs
-;;
-
-(defun truncate-lines-hook-fun ()
-  (visual-line-mode -1)
-  (toggle-truncate-lines 1))
-
+;; NERDTree for Emacs
 (require 'neotree)
 (evil-leader/set-key "vn" 'neotree-toggle)
 (add-hook 'neotree-mode-hook

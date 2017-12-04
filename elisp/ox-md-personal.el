@@ -1,5 +1,7 @@
 (require 'ox-md)
 
+(provide 'ox-md-personal)
+
 (defun org-md-separate-elements (tree backend info)
   "Fix blank lines between elements.
 
@@ -86,4 +88,3 @@ a communication channel."
                 contents))
        ;; Use "atx" style.
        (t (concat (make-string level ?#) " " heading tags anchor "\n\n" contents))))))
-
