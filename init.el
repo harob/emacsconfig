@@ -44,7 +44,6 @@
                       evil-nerd-commenter
                       evil-visualstar
                       fill-column-indicator
-                      fiplr
                       framemove
                       go-mode
                       goto-last-change
@@ -307,7 +306,7 @@
   ":" 'eval-expression
   ";" 'eval-expression
   "b" 'ivy-switch-buffer
-  "t" 'fiplr-find-file
+  "t" 'counsel-fzf
   "a" 'counsel-ag
   "d" 'deft
   "/" 'swiper
@@ -702,6 +701,8 @@
 (define-key swiper-map [escape] 'minibuffer-keyboard-quit)
 (define-key swiper-map (kbd "C-h") 'backward-delete-char)
 
+(setq counsel-fzf-cmd "fzf --exact --filter=\"%s\"")
+
 ;;
 ;; Dired mode - using the Emacs file browser.
 ;;
@@ -810,12 +811,9 @@
 ;; Projectile (find file from the root of the current project).
 ;;
 
+(require 'projectile)
 (projectile-global-mode)
-;; (setq projectile-completion-system 'ivy)
-;; (use-package counsel-projectile
-;;   :ensure t
-;;   :config
-;;   (counsel-projectile-on))
+(setq projectile-completion-system 'ivy)
 
 (setq project-folders '("~/workspace/src" "~/workspace/src/liftoff"))
 
@@ -1391,12 +1389,7 @@
 (add-hook 'prog-mode-hook 'fci-mode)
 (add-hook 'gfm-mode-hook 'fci-mode)
 
-;; Tweak projectile to not use git ls-files
-(require 'projectile)
-(defun projectile-project-vcs ()
-  "Determine the VCS used by the project if any."
-  'none)
-
+;; TODO(harry) Move into a .projectile file since I'm no longer using fiplr
 (eval-after-load 'fiplr
   '(setq fiplr-ignored-globs '((directories (".git" ".svn" "target" "log" ".sass-cache" "Build" ".deps"
                                              "vendor" "MoPubSDK" "output" "checkouts"
