@@ -42,6 +42,7 @@
                       evil-leader
                       evil-matchit
                       evil-nerd-commenter
+                      evil-numbers
                       evil-visualstar
                       fill-column-indicator
                       framemove
@@ -307,9 +308,10 @@
   ";" 'eval-expression
   "b" 'ivy-switch-buffer
   "t" 'counsel-fzf
-  "a" 'counsel-ag
+  "a" 'counsel-rg
   "d" 'deft
   "/" 'swiper
+  "u" 'universal-argument
   "\\" (lambda () (interactive)
          (split-window-horizontally)
          (other-window 1)
@@ -416,6 +418,10 @@
 ;; gx to swap two text objects:
 (require 'evil-exchange)
 (evil-exchange-install)
+
+(require 'evil-numbers)
+(define-key evil-normal-state-map (kbd "C-a") 'evil-numbers/inc-at-pt)
+(define-key evil-normal-state-map (kbd "C-S-a") 'evil-numbers/dec-at-pt)
 
 
 ;;
@@ -693,13 +699,17 @@
 (setq ivy-height 20)
 (setq ivy-wrap t)
 (setq ivy-re-builders-alist '((t . ivy--regex-ignore-order)))
+(setq ivy-use-selectable-prompt t)
 ;; TODO(harry) Remove some of the default "^"'s in this var:
 ;; (setq ivy-initial-inputs-alist )
+(define-key ivy-mode-map (kbd "C-h") 'backward-delete-char)
+(define-key ivy-mode-map (kbd "C-w") 'backward-delete-word)
 
 (require 'swiper)
 (define-key ivy-minibuffer-map [escape] 'minibuffer-keyboard-quit)
 (define-key swiper-map [escape] 'minibuffer-keyboard-quit)
 (define-key swiper-map (kbd "C-h") 'backward-delete-char)
+(define-key swiper-map (kbd "C-w") 'backward-delete-word)
 
 (setq counsel-fzf-cmd "fzf --exact --filter=\"%s\"")
 
@@ -1111,16 +1121,12 @@
 (require 'cider-test-personal)
 
 (evil-leader/set-key-for-mode 'clojure-mode
-  ; t is a mnemonic for "test"
-  "eta" (lambda ()
-         (interactive)
-         (with-nrepl-connection-of-current-buffer 'cider-test/run-all-tests))
-  "ett" (lambda ()
-         (interactive)
-         (with-nrepl-connection-of-current-buffer 'cider-test/run-test-at-point))
-  "etb" (lambda ()
-         (interactive)
-         (with-nrepl-connection-of-current-buffer 'cider-test/run-tests-in-ns)))
+  "eta" 'cider-test/run-all-tests
+  "ett" 'cider-test/run-test-at-point
+  "etb" 'cider-test/run-tests-in-ns)
+
+(which-key-add-major-mode-key-based-replacements 'clojure-mode
+  "SPC e t" "EvaluateTests")
 
 (add-hook 'cider-mode-hook 'rainbow-delimiters-mode)
 (add-hook 'cider-repl-mode-hook 'rainbow-delimiters-mode)
