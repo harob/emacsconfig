@@ -68,6 +68,7 @@
                       smartparens
                       evil-surround
                       undo-tree
+                      wcheck-mode
                       web-mode
                       which-key
                       yaml-mode
@@ -900,6 +901,49 @@
 
 
 ;;
+;; Spell checking
+;;
+
+;; TODO(harry) This is breaking counsel for some reason:
+;; (require 'wcheck-mode)
+;; (setq-default wcheck-language "English")
+;; (setq-default wcheck-language-data
+;;               '(("English"
+;;                  (program . "/usr/local/bin/aspell")
+;;                  (args "list") ; -l: list only the mispellings.
+;;                  (face . hi-yellow)
+;;                  (connection . pty)
+;;                  ;; Note that I don't use this functionality of providing suggested spelling corrects, and
+;;                  ;; this config is untested. I just like to highlight mispelled words.
+;;                  (action-program . "/usr/local/bin/aspell")
+;;                  (action-args "-a") ; -a: lists alternatives.
+;;                  (action-parser . wcheck-parser-ispell-suggestions))))
+
+;; (add-hook 'text-mode-hook 'wcheck-mode)
+
+;; (define-key evil-normal-state-map (kbd "zg") 'wcheck-add-to-dictionary)
+
+;; (defvar custom-dictionary-file "~/.aspell.en.pws")
+
+;; (defun wcheck-add-to-dictionary ()
+;;   "Adds the word under the cursor to your personal dictionary. Also re-spellchecks the buffer to clear any
+;;    stale highlights."
+;;   (interactive)
+;;   (let ((word (thing-at-point 'word)))
+;;     (if (not (and custom-dictionary-file (file-writable-p custom-dictionary-file)))
+;;         (message "Couldn't locate your custom dictionary file '%s'" custom-dictionary-file)
+;;       (progn
+;;         (with-temp-buffer
+;;           (insert word) (newline)
+;;           (append-to-file (point-min) (point-max) custom-dictionary-file))
+;;         (message "Added word \"%s\" to %s" word custom-dictionary-file)
+;;         ; This is a hack to toggle the mode on and then off, to rescane the buffer and remove the mispelt
+;;         ; marker for the word that was just added to the dict.
+;;         (wcheck-mode)
+;;         (wcheck-mode)))))
+
+
+;;
 ;; Diminish - hide or shorten the names of minor modes in your modeline.
 ;; To see which minor modes you have loaded and what their modeline strings are: (message minor-mode-alist)
 ;;
@@ -1068,7 +1112,7 @@
 (add-to-list 'auto-mode-alist '("Vagrantfile$" . ruby-mode))
 
 ;; Insert matching delimiters; unindent end blocks after you type them.
-(add-hook 'ruby-mode-hook (lambda () (ruby-electric)))
+(add-hook 'ruby-mode-hook (lambda () (ruby-electric-mode)))
 
 
 ;;
@@ -1372,6 +1416,8 @@
 
 (define-key evil-normal-state-map (kbd ";") 'evil-ex)
 (define-key evil-visual-state-map (kbd ";") 'evil-ex)
+
+(define-key evil-normal-state-map (kbd "zz") 'evil-scroll-line-to-center)
 
 ;; TODO(harry) Why doesn't this work?
 ;; (dolist (state-map '(evil-normal-state-map evil-visual-state-map))

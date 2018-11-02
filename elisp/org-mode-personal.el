@@ -115,3 +115,6 @@
 
 (setq org-link-search-must-match-exact-headline nil)
 
+;; linum is horribly slow on large org files
+;; Cf https://emacs.stackexchange.com/questions/27771/emacs-24-5-cant-handle-large-org-files
+(add-hook 'org-mode-hook (lambda () (linum-mode 0)))
