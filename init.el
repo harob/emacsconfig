@@ -816,6 +816,9 @@
                               (emacs-lisp . t)
                               (R . t))))
 
+(add-to-list 'load-path "~/.emacs.d/vendor/org-mac-link")
+(require 'org-mac-link)
+
 
 ;;
 ;; Projectile (find file from the root of the current project).
