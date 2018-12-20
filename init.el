@@ -13,6 +13,7 @@
 
 (defvar my-packages '(
                       ace-link
+                      ace-jump-mode
                       ag
                       amx ; A fork of smex, which upgrades M-x
                       auto-complete
@@ -22,14 +23,13 @@
                       cider
                       clojure-mode
                       coffee-mode
-                      column-marker
                       color-theme-sanityinc-tomorrow
                       company
+                      counsel
                       dash
                       dash-functional
                       deft ; Notational Velocity-style note taking
                       diminish
-                      dired-details+ ; Hides all of the unnecessary file details in dired mode.
                       dumb-jump ; Go-to-definition for all languages, using ag
                       elisp-slime-nav
                       elscreen
@@ -43,9 +43,10 @@
                       evil-matchit
                       evil-nerd-commenter
                       evil-numbers
+                      evil-surround
                       evil-visualstar
                       fill-column-indicator
-                      framemove
+                      ;framemove ;; TODO(harry) No longer available on melpa?
                       go-mode
                       goto-last-change
                       haskell-mode
@@ -59,6 +60,7 @@
                       noflet ; Replacement for the deprecated flet macro - see
                              ; http://emacsredux.com/blog/2013/09/05/a-proper-replacement-for-flet/
                       org
+                      org-download
                       paradox ; Better package menu
                       projectile
                       protobuf-mode
@@ -66,7 +68,7 @@
                       ruby-electric ; Insert matching delimiters; unindent end blocks after you type them.
                       scss-mode
                       smartparens
-                      evil-surround
+                      swiper
                       undo-tree
                       wcheck-mode
                       web-mode
@@ -328,14 +330,12 @@
   ;; "v" is a mnemonic prefix for "view X".
   "vd" 'projectile-dired
   "vp" 'open-root-of-project-in-dired
-  "vt" (lambda () (interactive)
-         (find-file "~/Dropbox/notes/tasks.org")
-         (org-mode))
+  "vi" (lambda () (interactive) (find-file "~/Dropbox/notes/inbox.org") (org-mode))
   "ve" (lambda () (interactive) (find-file "~/.emacs.d/init.el"))
-  "vl" (lambda () (interactive) (find-file "~/.lein/profiles.clj"))
   "vh" (lambda () (interactive) (find-file "~/workspace/src/liftoff/haggler/src/haggler/handler.clj"))
+  "vk" (lambda () (interactive) (find-file "~/workspace/side_projects/qmk_firmware/keyboards/ergodox/keymaps/dvorak_harob/keymap.c"))
   "vs" (lambda () (interactive) (switch-to-buffer "*scratch*"))
-  "vk" (lambda () (interactive) (find-file "~/workspace/side_projects/qmk_firmware/keyboards/ergodox/keymaps/dvorak_harob/keymap.c")))
+  "vt" (lambda () (interactive) (find-file "~/Dropbox/notes/tasks.org") (org-mode)))
 
 ;; TODO(harry) Write a macro to prepend the evil-leader key instead of manually specifying SPC.
 (which-key-add-key-based-replacements
@@ -397,6 +397,8 @@
      (define-key evil-visual-state-map " cc" 'evilnc-comment-operator)))
 
 (require 'evil-surround)
+(evil-define-key 'visual evil-surround-mode-map "s" 'evil-surround-region)
+(evil-define-key 'visual evil-surround-mode-map "gs" 'evil-Surround-region)
 (define-global-minor-mode global-surround-mode-with-exclusions global-evil-surround-mode
   (lambda ()
     (when (not (memq major-mode (list 'magit-status-mode)))
@@ -718,7 +720,6 @@
 ;; Dired mode - using the Emacs file browser.
 ;;
 
-(require 'dired-details+)
 (setq dired-recursive-copies (quote always))
 (setq dired-recursive-deletes (quote top))
 
@@ -810,15 +811,6 @@
 ;;
 
 (require 'org-mode-personal)
-
-(custom-set-variables
- '(org-confirm-babel-evaluate nil)
- '(org-babel-load-languages '((clojure . t)
-                              (emacs-lisp . t)
-                              (R . t))))
-
-(add-to-list 'load-path "~/.emacs.d/vendor/org-mac-link")
-(require 'org-mac-link)
 
 
 ;;
@@ -1137,6 +1129,10 @@
 (sp-with-modes '(clojure-mode)
   (sp-local-pair "`" "`" :when '(sp-in-string-p)))
 
+(sp-with-modes '(org-mode)
+  (sp-local-pair "=" nil :actions :rem)
+  (sp-local-pair "~" nil :actions :rem))
+
 (global-set-key (kbd "M-H") 'sp-forward-slurp-sexp)
 (global-set-key (kbd "M-L") 'sp-forward-barf-sexp)
 
@@ -1168,7 +1164,6 @@
 (require 'cider-test-personal)
 
 (evil-leader/set-key-for-mode 'clojure-mode
-  "eta" 'cider-test/run-all-tests
   "ett" 'cider-test/run-test-at-point
   "etb" 'cider-test/run-tests-in-ns)
 
@@ -1176,6 +1171,7 @@
   "SPC e t" "EvaluateTests")
 
 (add-hook 'cider-mode-hook 'rainbow-delimiters-mode)
+(add-hook 'cider-mode-hook 'eldoc-mode)
 (add-hook 'cider-repl-mode-hook 'rainbow-delimiters-mode)
 
 
@@ -1396,8 +1392,9 @@
 (setq find-function-C-source-directory "/Users/harry/workspace/external_codebases/emacs/src")
 
 ;; Switch across both windows (i.e. panes/splits) and frames (i.e. OS windows)!
-(require 'framemove)
-(setq framemove-hook-into-windmove t)
+;; FIXME(harry) Find a replacement package; emacs says it can't find this package...
+;(require 'framemove)
+;(setq framemove-hook-into-windmove t)
 (define-key evil-normal-state-map (kbd "C-h") (lambda () (interactive) (ignore-errors (evil-window-left 1))))
 (define-key evil-normal-state-map (kbd "C-j") (lambda () (interactive) (ignore-errors (evil-window-down 1))))
 (define-key evil-normal-state-map (kbd "C-k") (lambda () (interactive) (ignore-errors (evil-window-up 1))))

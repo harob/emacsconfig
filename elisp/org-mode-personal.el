@@ -28,12 +28,23 @@
 ;; normal state shortcuts
 (evil-define-key 'normal evil-org-mode-map
   "t" 'org-todo
-  "T" 'org-set-tags-command
-  "o" '(lambda () (interactive) (evil-org-eol-call 'org-insert-heading))
-  "O" '(lambda () (interactive) (evil-org-eol-call
-                                 (lambda ()
-                                   (org-insert-heading)
-                                   (org-metaup))))
+  "T" '(lambda () (interactive)
+         (let ((original-val org-log-done))
+           (setq org-log-done nil)
+           (org-todo 'done)
+           (setq org-log-done original-val)))
+  "o" '(lambda () (interactive)
+         (evil-end-of-line nil) ; Necessary to handle multi-visible-line headings
+         (evil-insert nil)
+         (org-end-of-line)
+         (if (outline-invisible-p)
+             (org-insert-heading-respect-content)
+           (org-insert-heading)))
+  "O" '(lambda () (interactive)
+         (evil-end-of-line nil) ; Necessary to handle multi-visible-line headings
+         (org-insert-heading-respect-content)
+         (org-metaup)
+         (evil-append nil))
   "^" 'org-beginning-of-line
   "$" 'org-end-of-line
   "H" 'org-beginning-of-line
@@ -60,9 +71,11 @@
   "ly" 'org-store-link
   "lp" 'org-insert-link
   "lt" 'org-toggle-link-display
+  "lc" 'org-mac-grab-link
   "lo" 'ace-link-org
   "oa" 'org-archive-subtree
   "or" 'avy-org-refile-as-child
+  "ot" 'org-set-tags-command
   "vT" 'org-show-todo-tree
   "va" 'org-agenda
   "rr" 'preview-org)
@@ -83,12 +96,6 @@
 (evil-define-key 'normal org-mode-map
   (kbd "M-L") 'org-shiftmetaright
   (kbd "M-H") 'org-shiftmetaleft)
-
-(defun evil-org-eol-call (fun)
-  (end-of-line) ;; This jumps to the end of a potentially wrapped line
-  (org-end-of-line) ;; This jumps over the "..." hiding elided bullet points
-  (funcall fun)
-  (evil-append nil))
 
 ;; Moves the current heading (and all of its children) into the matching parent note in the archive file.
 ;; I think this is the most sensible way to archive TODOs in org mode files.
@@ -111,10 +118,26 @@
                                ("WAIT" . (:foreground "MediumOrchid3" :weight bold))))
 
 (setq org-log-done 'time)
-(setq org-agenda-files '("~/Dropbox/notes"))
+(setq org-agenda-files '("~/Dropbox/notes/tasks.org" "~/Dropbox/notes/inbox.org"))
 
 (setq org-link-search-must-match-exact-headline nil)
 
 ;; linum is horribly slow on large org files
 ;; Cf https://emacs.stackexchange.com/questions/27771/emacs-24-5-cant-handle-large-org-files
 (add-hook 'org-mode-hook (lambda () (linum-mode 0)))
+
+(custom-set-variables
+ '(org-confirm-babel-evaluate nil)
+ '(org-babel-load-languages '((clojure . t)
+                              (emacs-lisp . t)
+                              (R . t))))
+
+(add-to-list 'load-path "~/.emacs.d/vendor/org-mac-link")
+(require 'org-mac-link)
+
+(require 'org-download)
+(setq org-download-method 'directory)
+(setq-default org-download-image-dir "images")
+(setq org-image-actual-width '(400))
+
+(setq org-timer-display 'both)

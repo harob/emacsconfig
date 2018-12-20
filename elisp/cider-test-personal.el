@@ -37,19 +37,6 @@
          (cider-notes (remove-if-not (lambda (o) (overlay-get o 'cider-note-p)) overlays)))
     (> (length cider-notes) 0)))
 
-;; TODO(philc): This command doesn't work; we must first load the tests before running them.
-(defun cider-test/run-all-tests ()
-  "Saves and evals the buffer, and then runs any clojure.test tests defined in the p;roject."
-  (interactive)
-  (let ((project-dir (nrepl-project-directory-for (nrepl-current-dir))))
-    (print project-dir)
-    ;; TODO(philc): Make this a recursive file search.
-    (dolist (test-file (or argv (directory-files project-dir t "_test.clj$")))
-      (print test-file)
-      (cider-load-file-op test-file nil t)))
-  (when-compile-successful
-   (lambda () (cider-interactive-eval "(clojure.test/run-all-tests)"))))
-
 (defun cider-test/run-tests-in-ns ()
   "Saves and evals the buffer, and then runs any clojure.test tests defined in the current namespace."
   (interactive)

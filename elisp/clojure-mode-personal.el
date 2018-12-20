@@ -28,12 +28,6 @@
 ;; Hide the uninteresting nrepl-connection and nrepl-server buffers from the buffer list.
 (setq nrepl-hide-special-buffers t)
 
-;; Don't ask confirmation for closing any open nrepl connections when exiting Emacs.
-;; http://stackoverflow.com/q/2706527/46237
-(defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
-  "Prevent annoying \"Active processes exist\" query when you quit Emacs."
-  (cl-flet ((process-list ())) ad-do-it))
-
 ;; From http://timothypratley.blogspot.com/2015/07/seven-specialty-emacs-settings-with-big.html
 (defun my-cider-eval-current-sexp-in-repl ()
   (interactive)
@@ -50,18 +44,12 @@
     (cider-repl-return)))
 
 (require 'cider-mode)
-(define-key cider-mode-map
-            (kbd "C-;") 'cider-eval-expression-at-point-in-repl)
 
 (evil-leader/set-key-for-mode 'clojure-mode
   "nj" 'cider-jack-in
   "nn" 'cider-repl-set-ns
-  ;; This command sets and pulls up the appropriate nREPL for the current buffer. Useful when you have
-  ;; multiple REPLs going.
   "nb" 'cider-switch-to-repl-buffer
   "nc" 'cider-find-and-clear-repl-output
-  ;; Note that I actually use cider-load-file here, not cider-eval-buffer, because it gives useful line
-  ;; numbers on exceptions.
   "eb" 'cider-load-buffer
   ;; This function actually CPs the current s-expr into the REPL, rather the just printing the result:
   ;; TODO(harry) Port the other similar functions to have the same behavior
@@ -114,7 +102,7 @@ but doesn't treat single semicolons as right-hand-side comments."
 (setq cider-repl-use-clojure-font-lock t)
 (setq cider-repl-result-prefix ";; => ")
 (setq cider-prompt-for-symbol nil)
-(setq cider-prompt-save-file-on-load 'always-save)
+(setq cider-save-file-on-load t)
 
 ;; Autocompletion in nrepl
 
@@ -123,6 +111,8 @@ but doesn't treat single semicolons as right-hand-side comments."
 (setq company-idle-delay nil) ; never start completions automatically
 (eval-after-load 'company
   '(progn
+     ; FIXME: Autocomplete is broken currently:
+     ; completion--some: Invalid function: (dict (thread-first (\` ("op" "complete" "ns" (\, (cider-current-ns)) "symbol" (\, str) "context" (\, context))) (cider-nrepl-send-sync-request nil (quote abort-on-input)))) [2 times]
      (define-key company-active-map (kbd "TAB") 'company-complete-common-or-cycle)
      (define-key company-active-map (kbd "<tab>") 'company-complete-common-or-cycle)))
 
@@ -136,8 +126,8 @@ but doesn't treat single semicolons as right-hand-side comments."
   (load "$REPOS/liftoff/exp/emacs/cljfmt.el")
   (message "REPOS environment variable is not defined. Not loading cljfmt."))
 
-;; Note that `cljfmt-before-save` triggers this save-hook for some reason, so we lock on clj-in-progress to
-;; to protect from infinite recurision.
+;; `cljfmt-before-save` triggers this save-hook for some reason, so we lock on clj-in-progress to to protect
+;; from infinite recurision:
 (setq cljfmt-in-progress nil)
 (defun cljfmt-before-save-mutually-exclusive ()
  (interactive)
