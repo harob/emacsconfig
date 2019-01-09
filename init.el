@@ -13,7 +13,6 @@
 
 (defvar my-packages '(
                       ace-link
-                      ace-jump-mode
                       ag
                       amx ; A fork of smex, which upgrades M-x
                       auto-complete
@@ -537,16 +536,6 @@
 (global-set-key [escape] 'evil-exit-emacs-state)
 
 
-;;
-;; Ace jump - for quickly jumping to a precise character in view. Similar to Vim's EasyMotion.
-;;
-(require 'ace-jump-mode)
-;; TODO(harry) Define a new shortcut using evil leader
-;; (define-key evil-normal-state-map (kbd "SPC") 'evil-ace-jump-word-mode)
-;; ;; Note that Evil mode's ace-jump integration is supposed to add this motion keybinding automatically for you,
-;; ;; but it doesn't work. So I've defined it here explicitly.
-;; (define-key evil-motion-state-map (kbd "SPC") 'evil-ace-jump-word-mode)
-
 
 ;;
 ;; Incremental search (isearch)
@@ -685,10 +674,10 @@
 (defun mac-hide-others ()
   "On a Mac, hide all applications other than Emacs."
   (interactive)
-  (do-applescript (concat "tell application \"System Events\" to "
-                          "set visible of every process whose visible is true "
-                          "and name is not \"Emacs\" to "
-                          "false")))
+  (mac-do-applescript (concat "tell application \"System Events\" to "
+                              "set visible of every process whose visible is true "
+                              "and name is not \"Emacs\" to "
+                              "false")))
 
 
 ;;
@@ -1056,7 +1045,7 @@
 (add-hook 'css-mode-hook (lambda ()
                            ;; (autopair-mode 1) ; Auto-insert matching delimiters.
                            ;; Properly unindent a closing brace after you type it and hit enter.
-                           (eletric-indent-mode)))
+                           (electric-indent-mode)))
 
 
 ;;
@@ -1492,6 +1481,9 @@
 (evil-leader/set-key "z" 'avy-goto-word-0)
 (define-key evil-motion-state-map (kbd "z") 'avy-goto-word-0)
 (define-key evil-visual-state-map (kbd "z") 'avy-goto-word-0)
+(evil-leader/set-key "Z" 'avy-goto-line)
+(define-key evil-motion-state-map (kbd "Z") 'avy-goto-line)
+(define-key evil-visual-state-map (kbd "Z") 'avy-goto-line)
 
 ;; Open links vimium-style with `o` in various help-like modes
 (require 'ace-link)
