@@ -56,16 +56,17 @@
   (kbd "TAB") 'org-cycle
   (kbd "RET") 'org-open-at-point)
 
-(defun preview-org (beg end)
-  "Pipes the buffer's contents into a script which renders the markdown as HTML and opens in a browser."
-  (interactive (if (use-region-p)
-                   (list (region-beginning) (region-end))
-                 (list nil nil)))
-  (let* ((beg (or beg (point-min)))
-         (end (or end (point-max))))
-    ;; This convert_org_to_markdown.rb is a primitive script I've written which fits my needs.
-    (call-process-region beg end "/bin/bash" nil nil nil "-c"
-                         "convert_org_to_markdown.rb | markdown_page.rb --css gmail | browser")))
+;; TODO(harry) Remove
+;; (defun preview-org (beg end)
+;;   "Pipes the buffer's contents into a script which renders the markdown as HTML and opens in a browser."
+;;   (interactive (if (use-region-p)
+;;                    (list (region-beginning) (region-end))
+;;                  (list nil nil)))
+;;   (let* ((beg (or beg (point-min)))
+;;          (end (or end (point-max))))
+;;     ;; This convert_org_to_markdown.rb is a primitive script I've written which fits my needs.
+;;     (call-process-region beg end "/bin/bash" nil nil nil "-c"
+;;                          "convert_org_to_markdown.rb | markdown_page.rb --css gmail | browser")))
 
 (evil-leader/set-key-for-mode 'org-mode
   "ly" 'org-store-link
@@ -78,7 +79,7 @@
   "ot" 'org-set-tags-command
   "vT" 'org-show-todo-tree
   "va" 'org-agenda
-  "rr" 'preview-org)
+  "rr" 'org-export-dispatch)
 
 (which-key-add-major-mode-key-based-replacements 'org-mode
   "SPC l" "org-Links"
@@ -141,3 +142,13 @@
 (setq org-image-actual-width '(400))
 
 (setq org-timer-display 'both)
+
+;; Minimalistic export settings:
+(setq org-export-with-title nil)
+(setq org-export-with-toc nil)
+(setq org-export-headline-levels 0)
+(setq org-export-with-section-numbers 0)
+(setq org-export-with-author nil)
+(setq org-export-with-date nil)
+(setq org-export-time-stamp-file nil)
+(setq org-html-validation-link nil)
