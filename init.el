@@ -118,6 +118,7 @@
 (setq ring-bell-function 'ignore)
 (setq mac-option-modifier 'alt)
 (setq mac-command-modifier 'meta)
+(setq mac-pass-command-to-system nil) ; Avoid e.g. M-h performing OSX's "Hide window" command
 
 ;; Require typing only "y" or"n" instead of the full "yes" to confirm destructive actions.
 (defalias 'yes-or-no-p 'y-or-n-p)
