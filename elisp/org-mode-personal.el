@@ -5,6 +5,7 @@
 
 (require 'evil)
 (require 'org)
+(require 'ox-html-personal)
 (require 'ox-md-personal)
 
 (provide 'org-mode-personal)
@@ -56,18 +57,6 @@
   (kbd "TAB") 'org-cycle
   (kbd "RET") 'org-open-at-point)
 
-;; TODO(harry) Remove
-;; (defun preview-org (beg end)
-;;   "Pipes the buffer's contents into a script which renders the markdown as HTML and opens in a browser."
-;;   (interactive (if (use-region-p)
-;;                    (list (region-beginning) (region-end))
-;;                  (list nil nil)))
-;;   (let* ((beg (or beg (point-min)))
-;;          (end (or end (point-max))))
-;;     ;; This convert_org_to_markdown.rb is a primitive script I've written which fits my needs.
-;;     (call-process-region beg end "/bin/bash" nil nil nil "-c"
-;;                          "convert_org_to_markdown.rb | markdown_page.rb --css gmail | browser")))
-
 (evil-leader/set-key-for-mode 'org-mode
   "ly" 'org-store-link
   "lp" 'org-insert-link
@@ -75,6 +64,7 @@
   "lc" 'org-mac-grab-link
   "lo" 'ace-link-org
   "oa" 'org-archive-subtree
+  "od" 'org-time-stamp
   "or" 'avy-org-refile-as-child
   "ot" 'org-set-tags-command
   "vT" 'org-show-todo-tree
@@ -152,3 +142,5 @@
 (setq org-export-with-date nil)
 (setq org-export-time-stamp-file nil)
 (setq org-html-validation-link nil)
+;; Use Gmail's default styling, so I can copy exported HTML into the Compose window with no reformatting:
+(setq org-html-head "<style type=\"text/css\">body {font-size: small; font-family: arial, helvetica, sans-serif; line-height: 1.5;}</style>")
