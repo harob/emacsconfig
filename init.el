@@ -49,6 +49,7 @@
                       go-mode
                       goto-last-change
                       haskell-mode
+                      htmlize
                       ivy
                       less-css-mode
                       lua-mode
@@ -119,6 +120,7 @@
 (setq mac-option-modifier 'alt)
 (setq mac-command-modifier 'meta)
 (setq mac-pass-command-to-system nil) ; Avoid e.g. M-h performing OSX's "Hide window" command
+(add-to-list 'default-frame-alist '(ns-appearance . dark))
 
 ;; Require typing only "y" or"n" instead of the full "yes" to confirm destructive actions.
 (defalias 'yes-or-no-p 'y-or-n-p)
@@ -226,9 +228,6 @@
 ;; Save buffers whenever they lose focus.
 ;; This obviates the need to hit the Save key thousands of times a day. Inspired by http://goo.gl/2z0g5O.
 (add-hook 'focus-out-hook 'util/save-buffer-if-dirty) ; This hook is only available in Emacs 24.4+.
-;; NOTE(harry) I prefer to stay in insert mode if I am jumping between apps
-;; (add-hook 'focus-out-hook '(lambda () (evil-normal-state))) ; This hook is only available in Emacs 24.4+.
-
 (defadvice windmove-up (before other-window-now activate) (util/save-buffer-if-dirty))
 (defadvice windmove-down (before other-window-now activate) (util/save-buffer-if-dirty))
 (defadvice windmove-left (before other-window-now activate) (util/save-buffer-if-dirty))
@@ -675,10 +674,10 @@
 (defun mac-hide-others ()
   "On a Mac, hide all applications other than Emacs."
   (interactive)
-  (mac-do-applescript (concat "tell application \"System Events\" to "
-                              "set visible of every process whose visible is true "
-                              "and name is not \"Emacs\" to "
-                              "false")))
+  (do-applescript (concat "tell application \"System Events\" to "
+                          "set visible of every process whose visible is true "
+                          "and name is not \"Emacs\" to "
+                          "false")))
 
 
 ;;
