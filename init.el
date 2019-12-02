@@ -1019,35 +1019,13 @@
                (kbd "<M-return>") 'markdown-insert-list-item-below))
            '(normal insert))))
 
-(defun preview-markdown (beg end)
-  "Pipes the buffer's contents into a script which renders the markdown as HTML and opens in a browser.
-   If the markdown-stylesheet var is bound, then that stylesheet will be used (i.e. passed as an argument into
-   markdown_page."
-  (interactive (if (use-region-p)
-                   (list (region-beginning) (region-end))
-                 (list nil nil)))
-  (let* ((beg (or beg (point-min)))
-         (end (or end (point-max)))
-         (stylesheet (if (boundp 'markdown-stylesheet) markdown-stylesheet "gmail"))
-         ;; NOTE(philc): line-number-at-pos is 1-indexed.
-         (command (format "markdown_page.rb --css %s --scroll-to-line %s | browser"
-                          stylesheet
-                          (- (line-number-at-pos) 1))))
-    (message command)
-    (message (format "%d %d" beg end))
-    (call-process-region beg end "/bin/bash" nil nil nil "-c" command)))
-
-(mapc (lambda (mode)
-        (evil-leader/set-key-for-mode mode
-          "rr" 'preview-markdown
-          "re" (lambda ()
-                 (interactive)
-                 (let ((markdown-stylesheet "gmail"))
-                   (call-interactively 'preview-markdown)))))
-      '(gfm-mode markdown-mode))
-
-;; TODO(harry) Other option, from cespare's vimrc:
-;; command! Markdownd !markdownd -w % >/dev/null &
+(setq markdown-command
+      (concat
+       "/usr/local/bin/pandoc"
+       " --from markdown --to html"
+       " --metadata title='-'"
+       ;; Use Gmail's default styling, so I can copy exported HTML into the Compose window with no reformatting:
+       " --include-in-header /Users/harry/.emacs.d/resources/gmail.css"))
 
 ;;
 ;; CSS
