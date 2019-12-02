@@ -33,7 +33,6 @@
                       elisp-slime-nav
                       elscreen
                       ess
-                      exec-path-from-shell
                       evil
                       evil-anzu
                       evil-args
@@ -106,11 +105,23 @@
 ;; Make it so that the scratch buffer uses markdown. By default it uses Emacs Lisp mode.
 (setq initial-major-mode 'markdown-mode)
 
-;; Use the same PATH variable as your shell does. From http://clojure-doc.org/articles/tutorials/emacs.html
+;; Sync environment variables.
 ;; NOTE(harry) On OSX, run the commands from https://gist.github.com/mcandre/7235205 to properly set the PATH
 ;; when launching from Spotlight, LaunchBar, etc.
-(when (memq window-system '(mac ns))
-  (exec-path-from-shell-initialize))
+(defun sync-env ()
+  (when (memq window-system '(mac ns x))
+    (let ((env-pair-re "^\\([^=[:space:]]+\\)=\\(.*\\)$"))
+      (with-temp-buffer
+        (shell-command (concat shell-file-name " -i -c env") t)
+        (goto-char (point-min))
+        (while (re-search-forward env-pair-re nil t)
+          (let ((name (match-string 1))
+                (val (match-string 2)))
+            (setenv name val)
+            (when (string-equal "PATH" name)
+              (setq eshell-path-env val
+                    exec-path (append (parse-colon-path val) (list exec-directory))))))))))
+(sync-env)
 
 (global-auto-revert-mode t) ; Reload an open file from disk if it is changed outside of Emacs.
 
