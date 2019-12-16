@@ -1019,6 +1019,11 @@
                (kbd "<M-return>") 'markdown-insert-list-item-below))
            '(normal insert))))
 
+(mapc (lambda (mode)
+        (evil-leader/set-key-for-mode mode
+          "rr" 'markdown-preview))
+      '(gfm-mode markdown-mode))
+
 (setq markdown-command
       (concat
        "/usr/local/bin/pandoc"
@@ -1026,6 +1031,7 @@
        " --metadata title='-'"
        ;; Use Gmail's default styling, so I can copy exported HTML into the Compose window with no reformatting:
        " --include-in-header /Users/harry/.emacs.d/resources/gmail.css"))
+
 
 ;;
 ;; CSS
