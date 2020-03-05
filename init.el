@@ -1518,3 +1518,12 @@
 (custom-set-variables '(neo-window-width 40))
 (custom-set-variables '(neo-banner-message nil))
 (custom-set-variables '(neo-theme 'nerd))
+
+;; Company mode for autocompletion
+(add-hook 'org-mode-hook #'company-mode)
+(setq company-idle-delay nil)
+(evil-define-key 'insert org-mode-map (kbd "TAB") 'company-complete-common-or-cycle)
+(evil-define-key 'insert org-mode-map (kbd "<tab>") 'company-complete-common-or-cycle)
+(with-eval-after-load 'company
+  (define-key company-active-map (kbd "C-n") (lambda () (interactive) (company-complete-common-or-cycle 1)))
+  (define-key company-active-map (kbd "C-p") (lambda () (interactive) (company-complete-common-or-cycle -1))))
