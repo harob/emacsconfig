@@ -5,8 +5,8 @@
 ;;
 
 (require 'package)
-(add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
-(add-to-list 'package-archives '("melpa-stable" . "http://melpa-stable.milkbox.net/packages/"))
+(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
+(add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/"))
 (package-initialize)
 (when (not package-archive-contents)
   (package-refresh-contents))
@@ -340,12 +340,13 @@
   ;; "v" is a mnemonic prefix for "view X".
   "vd" 'projectile-dired
   "vp" 'open-root-of-project-in-dired
-  "vi" (lambda () (interactive) (find-file "~/Dropbox/notes/inbox.org") (org-mode))
   "ve" (lambda () (interactive) (find-file "~/.emacs.d/init.el"))
   "vh" (lambda () (interactive) (find-file "~/workspace/src/liftoff/haggler/src/haggler/handler.clj"))
   "vk" (lambda () (interactive) (find-file "~/workspace/side_projects/qmk_firmware/keyboards/ergodox/keymaps/dvorak_harob/keymap.c"))
+  "vi" (lambda () (interactive) (find-file "~/Dropbox/notes/inbox.org") (org-mode))
   "vs" (lambda () (interactive) (switch-to-buffer "*scratch*"))
-  "vt" (lambda () (interactive) (find-file "~/Dropbox/notes/tasks.org") (org-mode)))
+  "vt" (lambda () (interactive) (find-file "~/Dropbox/notes/tasks.org") (org-mode))
+  "vz" (lambda () (interactive) (find-file "~/dotfiles/.zshrc")))
 
 ;; TODO(harry) Write a macro to prepend the evil-leader key instead of manually specifying SPC.
 (which-key-add-key-based-replacements
@@ -950,6 +951,7 @@
 (diminish 'osx-keys-minor-mode "")
 (diminish 'undo-tree-mode "")
 (diminish 'ivy-mode "")
+(diminish 'company-mode "")
 
 
 ;;
@@ -1522,8 +1524,16 @@
 ;; Company mode for autocompletion
 (add-hook 'org-mode-hook #'company-mode)
 (setq company-idle-delay nil)
+(setq company-dabbrev-downcase nil)
+(setq company-dabbrev-ignore-case t)
 (evil-define-key 'insert org-mode-map (kbd "TAB") 'company-complete-common-or-cycle)
 (evil-define-key 'insert org-mode-map (kbd "<tab>") 'company-complete-common-or-cycle)
 (with-eval-after-load 'company
   (define-key company-active-map (kbd "C-n") (lambda () (interactive) (company-complete-common-or-cycle 1)))
   (define-key company-active-map (kbd "C-p") (lambda () (interactive) (company-complete-common-or-cycle -1))))
+;; Make company play nice with yasnippet, from
+;; https://github.com/company-mode/company-mode/blob/master/company-yasnippet.el#L104
+(add-hook 'ord-mode-hook
+          (lambda ()
+            (set (make-local-variable 'company-backends)
+                 '((company-dabbrev :with company-yasnippet)))))
