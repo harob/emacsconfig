@@ -257,6 +257,7 @@
 ;;
 
 (setq evil-want-C-u-scroll t)
+(setq evil-undo-system 'undo-tree)
 (require 'evil)
 (require 'evil-nerd-commenter)
 (require 'goto-last-change)
@@ -1034,6 +1035,10 @@
        ;; Use Gmail's default styling, so I can copy exported HTML into the Compose window with no reformatting:
        " --include-in-header /Users/harry/.emacs.d/resources/gmail.css"))
 
+(add-hook 'markdown-mode-hook
+          (lambda ()
+            (set-fill-column 80)))
+
 
 ;;
 ;; CSS
@@ -1526,8 +1531,8 @@
 (setq company-idle-delay nil)
 (setq company-dabbrev-downcase nil)
 (setq company-dabbrev-ignore-case t)
-(evil-define-key 'insert org-mode-map (kbd "TAB") 'company-complete-common-or-cycle)
-(evil-define-key 'insert org-mode-map (kbd "<tab>") 'company-complete-common-or-cycle)
+;; (evil-define-key 'insert org-mode-map (kbd "TAB") 'company-complete-common-or-cycle)
+;; (evil-define-key 'insert org-mode-map (kbd "<tab>") 'company-complete-common-or-cycle)
 (with-eval-after-load 'company
   (define-key company-active-map (kbd "C-n") (lambda () (interactive) (company-complete-common-or-cycle 1)))
   (define-key company-active-map (kbd "C-p") (lambda () (interactive) (company-complete-common-or-cycle -1))))
