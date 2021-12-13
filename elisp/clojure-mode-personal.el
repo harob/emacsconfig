@@ -146,3 +146,6 @@ but doesn't treat single semicolons as right-hand-side comments."
 ;; Run this again after save so we see any formatting error messages in the Emacs echo area,
 ;; because they get cloberred by Emacs's "Wrote [file]" message.
 (add-hook 'after-explicit-save-hook 'cljfmt-before-save-mutually-exclusive nil)
+
+(custom-set-variables
+  '(cider-clojure-cli-global-options "-A:liftoff:dev:nrepl"))

@@ -1033,7 +1033,7 @@
        " --from markdown --to html"
        " --metadata title='-'"
        ;; Use Gmail's default styling, so I can copy exported HTML into the Compose window with no reformatting:
-       " --include-in-header /Users/harry/.emacs.d/resources/gmail.css"))
+       " --include-in-header $HOME/.emacs.d/resources/gmail.css"))
 
 (add-hook 'markdown-mode-hook
           (lambda ()
@@ -1380,7 +1380,7 @@
 ;; All new!
 ;;
 
-(setq find-function-C-source-directory "/Users/harry/workspace/external_codebases/emacs/src")
+(setq find-function-C-source-directory "$HOME/workspace/external_codebases/emacs/src")
 
 ;; Switch across both windows (i.e. panes/splits) and frames (i.e. OS windows)!
 ;; FIXME(harry) Find a replacement package; emacs says it can't find this package...
@@ -1443,7 +1443,7 @@
 (autoload 'elisp-slime-nav-mode "elisp-slime-nav")
 (add-hook 'emacs-lisp-mode-hook (lambda () (elisp-slime-nav-mode t)))
 (eval-after-load 'elisp-slime-nav '(diminish 'elisp-slime-nav-mode " SN"))
-(setq source-directory "/Users/harry/workspace/external_codebases/emacs-mac/src")
+(setq source-directory "$HOME/workspace/external_codebases/emacs-mac/src")
 
 (setq tramp-default-method "pscp")
 

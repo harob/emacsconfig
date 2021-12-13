@@ -22,7 +22,9 @@
 (defun init-org-mode-personal ()
   ;; This enables "clean mode", such that sublists use whitespace for indentation (ala markdown) instead of
   ;; many stars.
-  (setq org-startup-indented t))
+  (setq org-startup-indented t)
+  (setq org-fontify-done-headline nil)
+  (setq org-startup-folded t))
 
 (eval-after-load 'org '(init-org-mode-personal))
 
@@ -150,3 +152,7 @@
   ;; TODO(harry) Trim whitespace from the start of the new heading
   nil)
 (add-hook 'org-metareturn-hook 'my-org-meta-return)
+
+;; Workaround for global-auto-revert-mode apparently not working for org buffers when it's called upfront on
+;; startup:
+(add-hook 'org-mode-hook (lambda () (global-auto-revert-mode)))
