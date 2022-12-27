@@ -6,4 +6,4 @@
 	url = https://github.com/timcharper/evil-surround.git
 [submodule "vendor/emacs-powerline"]
 	path = vendor/emacs-powerline
-	url = git://github.com/jonathanchu/emacs-powerline.git
+	url = https://github.com/jonathanchu/emacs-powerline.git
