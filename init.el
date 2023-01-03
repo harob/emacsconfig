@@ -60,6 +60,7 @@
                              ; http://emacsredux.com/blog/2013/09/05/a-proper-replacement-for-flet/
                       org
                       org-download
+                      org-mac-link
                       paradox ; Better package menu
                       projectile
                       protobuf-mode

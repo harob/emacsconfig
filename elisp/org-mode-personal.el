@@ -59,11 +59,13 @@
   (kbd "TAB") 'org-cycle
   (kbd "RET") 'org-open-at-point)
 
+(require 'org-mac-link)
+
 (evil-leader/set-key-for-mode 'org-mode
   "ly" 'org-store-link
   "lp" 'org-insert-link
   "lt" 'org-toggle-link-display
-  "lc" 'org-mac-grab-link
+  "lc" 'org-mac-link-get-link
   "lo" 'ace-link-org
   "oa" 'org-archive-subtree
   "od" 'org-time-stamp
@@ -124,9 +126,6 @@
  '(org-babel-load-languages '((clojure . t)
                               (emacs-lisp . t)
                               (R . t))))
-
-(add-to-list 'load-path "~/.emacs.d/vendor/org-mac-link")
-(require 'org-mac-link)
 
 (require 'org-download)
 (setq org-download-method 'directory)
