@@ -43,7 +43,6 @@
                       evil-numbers
                       evil-surround
                       evil-visualstar
-                      fill-column-indicator
                       ;framemove ;; TODO(harry) No longer available on melpa?
                       go-mode
                       goto-last-change
@@ -69,6 +68,7 @@
                       scss-mode
                       smartparens
                       swiper
+                      typescript-mode
                       undo-tree
                       wcheck-mode
                       web-mode
@@ -180,9 +180,9 @@
 ; Some modes have their own tab-width variables.
 (setq-default css-indent-offset 2)
 
-(setq-default fill-column 110) ; When wrapping with the Emacs fill commands, wrap at 110 chars.
-;; (auto-fill-mode t) ; When typing across the fill-column, hard-wrap the line as you type.
-;; (add-hook 'text-mode-hook 'turn-on-auto-fill) ; Some modes, like markdown, turn off autofill. Force it!
+(setq-default fill-column 80) ; When wrapping with the Emacs fill commands, wrap at 110 chars.
+(add-hook 'prog-mode-hook 'display-fill-column-indicator-mode)
+(add-hook 'gfm-mode-hook 'display-fill-column-indicator-mode)
 
 ;; Visually wrap long lines on word boundaries. By default, Emacs will wrap mid-word. Note that Evil doesn't
 ;; have good support for moving between visual lines versus logical lines. Here's the start of a solution:
@@ -1030,15 +1030,13 @@
 
 (setq markdown-command
       (concat
-       "/usr/local/bin/pandoc"
+       "/opt/homebrew/bin/pandoc"
        " --from markdown --to html"
        " --metadata title='-'"
        ;; Use Gmail's default styling, so I can copy exported HTML into the Compose window with no reformatting:
        " --include-in-header $HOME/.emacs.d/resources/gmail.css"))
 
-(add-hook 'markdown-mode-hook
-          (lambda ()
-            (set-fill-column 80)))
+(setq markdown-fontify-code-blocks-natively t)
 
 
 ;;
@@ -1429,10 +1427,6 @@
   (evil-yank (point) (point-at-eol)))
 (define-key evil-normal-state-map "Y" 'copy-to-end-of-line)
 
-(require 'fill-column-indicator)
-(add-hook 'prog-mode-hook 'fci-mode)
-(add-hook 'gfm-mode-hook 'fci-mode)
-
 ;; TODO(harry) Move into a .projectile file since I'm no longer using fiplr
 (eval-after-load 'fiplr
   '(setq fiplr-ignored-globs '((directories (".git" ".svn" "target" "log" ".sass-cache" "Build" ".deps"
@@ -1543,3 +1537,6 @@
           (lambda ()
             (set (make-local-variable 'company-backends)
                  '((company-dabbrev :with company-yasnippet)))))
+
+(require 'typescript-mode)
+(add-to-list 'auto-mode-alist '("\\.tsx$" . typescript-mode))
