@@ -1346,6 +1346,7 @@
 ;;
 
 (global-undo-tree-mode t)
+(setq undo-tree-auto-save-history nil)
 (global-font-lock-mode t)
 (global-linum-mode t)
 ;; (line-number-mode 1)
