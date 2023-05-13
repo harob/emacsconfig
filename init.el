@@ -1,5 +1,6 @@
 ;; Largely "inspired" by philc's .emacs: https://github.com/philc/emacs-config/blob/master/.emacs
 
+
 ;;
 ;; Package management
 ;;
@@ -63,6 +64,8 @@
                       paradox ; Better package menu
                       projectile
                       protobuf-mode
+                      quelpa
+                      quelpa-use-package
                       rainbow-delimiters
                       ruby-electric ; Insert matching delimiters; unindent end blocks after you type them.
                       scss-mode
@@ -82,6 +85,9 @@
 (dolist (p my-packages)
   (when (not (package-installed-p p))
     (package-install p)))
+
+(require 'use-package)
+(require 'quelpa-use-package)
 
 
 ;;
@@ -960,11 +966,17 @@
 ;; Powerline: improve the appearance & density of the Emacs status bar (mode line).
 ;;
 
-(add-to-list 'load-path "~/.emacs.d/vendor/emacs-powerline")
-(require 'powerline)
-(custom-set-faces
- '(mode-line ((t (:foreground "#030303" :background "#bdbdbd" :box nil))))
- '(mode-line-inactive ((t (:foreground "#f9f9f9" :background "#666666" :box nil)))))
+(use-package powerline
+  :quelpa (powerline :fetcher github
+                     :repo "jonathanchu/emacs-powerline"
+                     ;; :branch "master"
+                     ;; :files ("dist" "*.el")
+                     )
+  :config (custom-set-faces
+           '(mode-line ((t (:foreground "#030303" :background "#bdbdbd" :box nil))))
+           '(mode-line-inactive ((t (:foreground "#f9f9f9" :background "#666666" :box nil))))))
+;; (add-to-list 'load-path "~/.emacs.d/vendor/emacs-powerline")
+;; (require 'powerline)
 
 
 ;;
