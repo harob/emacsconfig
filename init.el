@@ -1344,7 +1344,7 @@
 
 ;; Github Copilot support
 ;; TODO(harry) For some reason this doesn't work. For now I'm just installing it
-;; locally manually.
+;; locally manually with `git clone https://github.com/zerolfx/copilot.el.git`
 ;; (use-package copilot
 ;;   :quelpa (copilot :fetcher github
 ;;                    :repo "zerolfx/copilot.el"
