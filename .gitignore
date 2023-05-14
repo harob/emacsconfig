@@ -3,11 +3,12 @@ abbrev_defs
 ac-comphist.dat
 amx-items
 auto-save-list
+bookmarks
 elpa
 eshell
-recentf
-bookmarks
 history
 projectile-bookmarks.eld
+quelpa
+recentf
 /tramp
 /transient
