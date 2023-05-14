@@ -361,6 +361,7 @@
   "SPC c" "Comment"
   "SPC e" "Evaluate"
   "SPC g" "Git"
+  "SPC i" "Insert"
   "SPC r" "Render"
   "SPC v" "View"
   "SPC w" "Window")
@@ -968,10 +969,7 @@
 
 (use-package powerline
   :quelpa (powerline :fetcher github
-                     :repo "jonathanchu/emacs-powerline"
-                     ;; :branch "master"
-                     ;; :files ("dist" "*.el")
-                     )
+                     :repo "jonathanchu/emacs-powerline")
   :config (custom-set-faces
            '(mode-line ((t (:foreground "#030303" :background "#bdbdbd" :box nil))))
            '(mode-line-inactive ((t (:foreground "#f9f9f9" :background "#666666" :box nil))))))
@@ -1373,22 +1371,6 @@
 
 
 ;;
-;; Emacs general autocompletion
-;;
-;; One nice feature of Emac's autocomplete mode is that it auto-populates likely completions as you type.
-;; However, in doing so, it causes my cursors to flicker in other splits while I'm typing. This makes the mode
-;; unusable.
-;; (setq ac-auto-start nil)
-(require 'auto-complete)
-(add-hook 'prog-mode-hook 'auto-complete-mode)
-(define-key ac-complete-mode-map "\C-n" 'ac-next)
-(define-key ac-complete-mode-map "\C-p" 'ac-previous)
-(setq ac-auto-start nil)
-(ac-set-trigger-key "TAB")
-(ac-linum-workaround)
-
-
-;;
 ;; All new!
 ;;
 
@@ -1535,15 +1517,15 @@
 (custom-set-variables '(neo-theme 'nerd))
 
 ;; Company mode for autocompletion
+(add-hook 'prog-mode-hook #'company-mode)
 (add-hook 'org-mode-hook #'company-mode)
 (setq company-idle-delay nil)
 (setq company-dabbrev-downcase nil)
 (setq company-dabbrev-ignore-case t)
-;; (evil-define-key 'insert org-mode-map (kbd "TAB") 'company-complete-common-or-cycle)
-;; (evil-define-key 'insert org-mode-map (kbd "<tab>") 'company-complete-common-or-cycle)
-(with-eval-after-load 'company
-  (define-key company-active-map (kbd "C-n") (lambda () (interactive) (company-complete-common-or-cycle 1)))
-  (define-key company-active-map (kbd "C-p") (lambda () (interactive) (company-complete-common-or-cycle -1))))
+(evil-define-key 'insert prog-mode-map (kbd "A-TAB") 'company-complete)
+(evil-define-key 'insert prog-mode-map (kbd "A-<tab>") 'company-complete)
+(evil-define-key 'insert org-mode-map (kbd "A-TAB") 'company-complete)
+(evil-define-key 'insert org-mode-map (kbd "A-<tab>") 'company-complete)
 ;; Make company play nice with yasnippet, from
 ;; https://github.com/company-mode/company-mode/blob/master/company-yasnippet.el#L104
 (add-hook 'ord-mode-hook
@@ -1553,3 +1535,51 @@
 
 (require 'typescript-mode)
 (add-to-list 'auto-mode-alist '("\\.tsx$" . typescript-mode))
+
+;; Github Copilot support
+;; TODO(harry) For some reason this doesn't work. For now I'm just installing it
+;; locally manually.
+;; (use-package copilot
+;;   :quelpa (copilot :fetcher github
+;;                    :repo "zerolfx/copilot.el"
+;;                    :files ("dist" "*.el")))
+(add-to-list 'load-path "~/workspace/external_codebases/copilot.el")
+(require 'dash)
+(require 's)
+(require 'editorconfig)
+(require 'copilot)
+(add-hook 'prog-mode-hook 'copilot-mode)
+(define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
+(define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
+
+;; Generic insertion of TODO et al
+
+(defun insert-todo ()
+  "Insert a TODO comment appropriate for the current mode."
+  (interactive)
+  (insert (concat (comment-string) " TODO(harry) ")))
+
+(defun insert-note ()
+  "Insert a NOTE comment appropriate for the current mode."
+  (interactive)
+  (insert (concat (comment-string) " NOTE(harry) ")))
+
+(defun insert-fixme ()
+  "Insert a FIXME comment appropriate for the current mode."
+  (interactive)
+  (insert (concat (comment-string) " FIXME(harry) ")))
+
+(defun comment-string ()
+  "Get the comment string appropriate for the current mode."
+  (cond
+   ((member major-mode '(emacs-lisp-mode lisp-mode scheme-mode clojure-mode))
+    ";;")
+   ((member major-mode '(python-mode ruby-mode sh-mode))
+    "#")
+   (t "//") ; Default
+   ))
+
+(evil-leader/set-key
+  "it" 'insert-todo
+  "in" 'insert-note
+  "if" 'insert-fixme)
