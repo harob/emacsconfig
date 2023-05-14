@@ -22,18 +22,15 @@
                       buffer-move
                       cider
                       clojure-mode
-                      coffee-mode
                       color-theme-sanityinc-tomorrow
                       company
                       counsel
                       dash
                       dash-functional
-                      deft ; Notational Velocity-style note taking
                       diminish
                       dumb-jump ; Go-to-definition for all languages, using ag
                       elisp-slime-nav
                       elscreen
-                      ess
                       evil
                       evil-anzu
                       evil-args
@@ -55,14 +52,12 @@
                       magit
                       markdown-mode
                       mustache-mode
-                      neotree
                       noflet ; Replacement for the deprecated flet macro - see
                              ; http://emacsredux.com/blog/2013/09/05/a-proper-replacement-for-flet/
                       org
                       org-download
                       org-mac-link
                       paradox ; Better package menu
-                      projectile
                       protobuf-mode
                       quelpa
                       quelpa-use-package
@@ -218,8 +213,6 @@
 (util/define-keys minibuffer-local-map
                   (kbd "C-k") 'kill-line
                   (kbd "C-e") 'end-of-line
-                  ;; NOTE(harry) I don't use this, and it conflicts with Emac's universal argument key binding:
-                  ;; (kbd "C-u") 'backward-kill-line
                   (kbd "C-d") 'delete-char
                   (kbd "C-w") 'backward-kill-word
                   (kbd "C-h") 'backward-delete-char)
@@ -330,7 +323,6 @@
   "b" 'ivy-switch-buffer
   "t" 'counsel-fzf
   "a" 'counsel-rg
-  "d" 'deft
   "/" 'swiper
   "u" 'universal-argument
   "\\" (lambda () (interactive)
@@ -346,8 +338,6 @@
           (magit-status-and-focus-unstaged))
   "gl" 'magit-log-current
   ;; "v" is a mnemonic prefix for "view X".
-  "vd" 'projectile-dired
-  "vp" 'open-root-of-project-in-dired
   "ve" (lambda () (interactive) (find-file "~/.emacs.d/init.el"))
   "vh" (lambda () (interactive) (find-file "~/workspace/src/liftoff/haggler/src/haggler/handler.clj"))
   "vk" (lambda () (interactive) (find-file "~/workspace/side_projects/qmk_firmware/keyboards/ergodox/keymaps/dvorak_harob/keymap.c"))
@@ -393,23 +383,16 @@
     (up-list (abs levels))
     (eval-last-sexp nil)))
 
-(defun backward-kill-line (arg)
-  "Delete backward (Ctrl-u) as in Bash."
-  (interactive "p")
-  (kill-line (- 1 arg)))
-
 ;; Enable the typical Bash/readline keybindings when in insert mode.
 (util/define-keys evil-insert-state-map
                   (kbd "C-h") 'backward-delete-char
                   (kbd "C-k") 'kill-line
                   (kbd "C-a") 'beginning-of-line
                   (kbd "C-e") 'end-of-line
-                  ;; (kbd "C-u") 'backward-kill-line
                   (kbd "C-d") 'delete-char
                   (kbd "C-w") 'backward-delete-word
                   (kbd "C-p") 'previous-line
                   (kbd "C-n") 'next-line)
-;; (global-set-key (kbd "C-h") 'backward-delete-char) ; Here we clobber C-h, which accesses Emacs's help.
 
 (eval-after-load 'evil
   '(progn
@@ -555,7 +538,6 @@
 (define-key minibuffer-local-must-match-map [escape] 'minibuffer-keyboard-quit)
 (define-key minibuffer-local-isearch-map [escape] 'minibuffer-keyboard-quit)
 (global-set-key [escape] 'evil-exit-emacs-state)
-
 
 
 ;;
@@ -726,6 +708,7 @@
 
 (setq counsel-fzf-cmd "fzf --exact --filter=\"%s\"")
 
+
 ;;
 ;; Dired mode - using the Emacs file browser.
 ;;
@@ -824,57 +807,6 @@
 
 
 ;;
-;; Projectile (find file from the root of the current project).
-;;
-
-(require 'projectile)
-(projectile-global-mode)
-(setq projectile-completion-system 'ivy)
-
-(setq project-folders '("~/workspace/src" "~/workspace/src/liftoff"))
-
-;; This is set to 600 by default. It shouldn't be the case, but for some reason, the filter-files-in-directory
-;; function hits this limit.
-(setq max-lisp-eval-depth 1200)
-
-(defun filter-files-in-directory (directory filter-fn include-subdirectories)
-  "Filters the files in the given directory and subdirectories using filter-fn. Excludes .git subdirectories."
-  (->> (directory-files directory t)
-       (remove-if (lambda (path)
-                    (or (string/ends-with path ".")
-                        (string/ends-with path "..")
-                        (string/ends-with path ".git"))))
-       (mapcar (lambda (file)
-                 (if (and include-subdirectories (file-directory-p file))
-                     (filter-files-in-directory file filter-fn include-subdirectories)
-                   file)))
-       flatten
-       (remove-if-not filter-fn)))
-
-(defun open-root-of-project-in-dired ()
-  "Prompts for the name of a project which exists in your common project folders and opens a dired window in
-   the root of the project folder. This is a fast way to open a new project and be able to run
-   projectile-file-file.
-   Once a project is chosen, the current elscreen-tab is set to be the name of that project."
-  (interactive)
-  (let ((all-project-folders (->> project-folders
-                                  (mapcar (lambda (file)
-                                            (filter-files-in-directory file 'file-directory-p nil)))
-                                  flatten)))
-    (let ((project-to-open (ivy-completing-read "Project folder: "
-                                                (mapcar 'file-name-nondirectory all-project-folders)
-                                                nil t)))
-      (->> all-project-folders
-           (remove-if-not (lambda (project) (string/ends-with project (concat "/" project-to-open))))
-           first
-           ((lambda (project)
-              (dired project)
-              ;; If we invoke this inside of a split, don't set the tab's title.
-              (when (= 1 (length (window-list)))
-                (elscreen-screen-nickname (file-name-nondirectory project)))))))))
-
-
-;;
 ;; elscreen (tabs on the window).
 ;;
 
@@ -903,49 +835,6 @@
 
 
 ;;
-;; Spell checking
-;;
-
-;; TODO(harry) This is breaking counsel for some reason:
-;; (require 'wcheck-mode)
-;; (setq-default wcheck-language "English")
-;; (setq-default wcheck-language-data
-;;               '(("English"
-;;                  (program . "/usr/local/bin/aspell")
-;;                  (args "list") ; -l: list only the mispellings.
-;;                  (face . hi-yellow)
-;;                  (connection . pty)
-;;                  ;; Note that I don't use this functionality of providing suggested spelling corrects, and
-;;                  ;; this config is untested. I just like to highlight mispelled words.
-;;                  (action-program . "/usr/local/bin/aspell")
-;;                  (action-args "-a") ; -a: lists alternatives.
-;;                  (action-parser . wcheck-parser-ispell-suggestions))))
-
-;; (add-hook 'text-mode-hook 'wcheck-mode)
-
-;; (define-key evil-normal-state-map (kbd "zg") 'wcheck-add-to-dictionary)
-
-;; (defvar custom-dictionary-file "~/.aspell.en.pws")
-
-;; (defun wcheck-add-to-dictionary ()
-;;   "Adds the word under the cursor to your personal dictionary. Also re-spellchecks the buffer to clear any
-;;    stale highlights."
-;;   (interactive)
-;;   (let ((word (thing-at-point 'word)))
-;;     (if (not (and custom-dictionary-file (file-writable-p custom-dictionary-file)))
-;;         (message "Couldn't locate your custom dictionary file '%s'" custom-dictionary-file)
-;;       (progn
-;;         (with-temp-buffer
-;;           (insert word) (newline)
-;;           (append-to-file (point-min) (point-max) custom-dictionary-file))
-;;         (message "Added word \"%s\" to %s" word custom-dictionary-file)
-;;         ; This is a hack to toggle the mode on and then off, to rescane the buffer and remove the mispelt
-;;         ; marker for the word that was just added to the dict.
-;;         (wcheck-mode)
-;;         (wcheck-mode)))))
-
-
-;;
 ;; Diminish - hide or shorten the names of minor modes in your modeline.
 ;; To see which minor modes you have loaded and what their modeline strings are: (message minor-mode-alist)
 ;;
@@ -955,7 +844,6 @@
 (diminish 'global-whitespace-mode "")
 ;(diminish 'global-visual-line-mode "")
 (diminish 'auto-fill-function "")
-(diminish 'projectile-mode "")
 (diminish 'yas-minor-mode "")
 (diminish 'osx-keys-minor-mode "")
 (diminish 'undo-tree-mode "")
@@ -973,8 +861,6 @@
   :config (custom-set-faces
            '(mode-line ((t (:foreground "#030303" :background "#bdbdbd" :box nil))))
            '(mode-line-inactive ((t (:foreground "#f9f9f9" :background "#666666" :box nil))))))
-;; (add-to-list 'load-path "~/.emacs.d/vendor/emacs-powerline")
-;; (require 'powerline)
 
 
 ;;
@@ -1057,38 +943,6 @@
                            ;; (autopair-mode 1) ; Auto-insert matching delimiters.
                            ;; Properly unindent a closing brace after you type it and hit enter.
                            (electric-indent-mode)))
-
-
-;;
-;; Coffeescript
-;;
-
-(setq coffee-tab-width 2)
-(evil-leader/set-key-for-mode 'coffee-mode
-  "c" nil ; Establishes "c" as a "prefix key". I found this trick here: http://www.emacswiki.org/emacs/Evil
-  ;; This compiles the file and jumps to the first error, if there is one.
-  "cc" (lambda ()
-         (interactive)
-         (save-buffer)
-         (coffee-compile-without-side-effect))
-  ;; The mnemonic for this is "compile & preview". It shows the javascript output in a new buffer.
-  "cp" 'coffee-compile-buffer)
-
-(defun coffee-compile-without-side-effect ()
-  ;; coffee-compile-file annoyingly creates a file on disk.
-  (let* ((js-file (concat (file-name-sans-extension (buffer-file-name)) ".js"))
-         (js-file-existed (file-exists-p js-file)))
-    (coffee-compile-file)
-    (when (and (not js-file-existed) (file-exists-p js-file))
-      (delete-file js-file))))
-
-;; Make return and open-line indent the cursor properly.
-(evil-define-key 'insert coffee-mode-map (kbd "RET") 'coffee-newline-and-indent)
-(evil-define-key 'normal coffee-mode-map "o" '(lambda ()
-                                                (interactive)
-                                                (end-of-line)
-                                                (evil-append nil)
-                                                (coffee-newline-and-indent)))
 
 
 ;;
@@ -1202,7 +1056,7 @@
     (goto-char p)))
 
 (evil-leader/set-key-for-mode 'html-mode
-  "i" 'indent-html-buffer
+  "ii" 'indent-html-buffer
   "rr" 'preview-html)
 
 ;; TODO(harry) If this doesn't work out try multi-web-mode or mmm-mode. See:
@@ -1242,6 +1096,7 @@
 ;;
 ;; Go mode, for writing Go code
 ;;
+
 (with-eval-after-load "go-mode"
   (evil-define-key 'normal go-mode-map
     "K" 'godef-describe))
@@ -1256,6 +1111,7 @@
 
 ;; Note that this function uses (projectile-project-root) to determine the directory to run `go` commands,
 ;; which requires that the go project have a .projectile file in it or that it be at the root of a git repo.
+;; TODO(harry) This no longer works now that I purged projectile. Fix it.
 (defun go-save-and-compile (command)
   "Saves the current buffer before invoking the given command."
   (lexical-let ((has-makefile (file-exists-p (concat (projectile-project-root) "Makefile"))))
@@ -1374,10 +1230,12 @@
 ;; All new!
 ;;
 
-(setq find-function-C-source-directory "$HOME/workspace/external_codebases/emacs/src")
+;; Run `git clone https://git.savannah.gnu.org/git/emacs.git` to get the emacs
+;; source code.
+(setq find-function-C-source-directory "~/workspace/external_codebases/emacs/src")
 
 ;; Switch across both windows (i.e. panes/splits) and frames (i.e. OS windows)!
-;; FIXME(harry) Find a replacement package; emacs says it can't find this package...
+;; TODO(harry) Find a replacement package; emacs says it can't find this package...
 ;(require 'framemove)
 ;(setq framemove-hook-into-windmove t)
 (define-key evil-normal-state-map (kbd "C-h") (lambda () (interactive) (ignore-errors (evil-window-left 1))))
@@ -1401,12 +1259,6 @@
 
 (define-key evil-normal-state-map (kbd "zz") 'evil-scroll-line-to-center)
 
-;; TODO(harry) Why doesn't this work?
-;; (dolist (state-map '(evil-normal-state-map evil-visual-state-map))
-;;   (define-key state-map (kbd ";") 'evil-ex)
-;;   (define-key state-map (kbd "H") 'evil-first-non-blank)
-;;   (define-key state-map (kbd "L") 'evil-end-of-line))
-
 (dolist (i (number-sequence 1 9))
   (lexical-let ((tab-index (- i 1)))
     (global-set-key (kbd (concat "M-" (number-to-string i)))
@@ -1422,23 +1274,12 @@
   (evil-yank (point) (point-at-eol)))
 (define-key evil-normal-state-map "Y" 'copy-to-end-of-line)
 
-;; TODO(harry) Move into a .projectile file since I'm no longer using fiplr
-(eval-after-load 'fiplr
-  '(setq fiplr-ignored-globs '((directories (".git" ".svn" "target" "log" ".sass-cache" "Build" ".deps"
-                                             "vendor" "MoPubSDK" "output" "checkouts"
-                                             "elpa"))
-                               (files (".#*" "*.so" ".DS_Store" "*.class")))))
-
 ;; Elisp go-to-definition with M-. and back again with M-,
 (autoload 'elisp-slime-nav-mode "elisp-slime-nav")
 (add-hook 'emacs-lisp-mode-hook (lambda () (elisp-slime-nav-mode t)))
 (eval-after-load 'elisp-slime-nav '(diminish 'elisp-slime-nav-mode " SN"))
-(setq source-directory "$HOME/workspace/external_codebases/emacs-mac/src")
 
 (setq tramp-default-method "pscp")
-
-(setq ag-reuse-buffers 't)
-(setq ag-reuse-window 't)
 
 ; From http://emacsredux.com/blog/2013/03/27/copy-filename-to-the-clipboard/
 (defun copy-file-path-to-clipboard ()
@@ -1481,41 +1322,6 @@
 (require 'ace-link)
 (ace-link-setup-default)
 
-;; Notational Velocity-style note taking for emacs
-(require 'deft)
-(setq deft-directory "~/Dropbox/notes")
-(setq deft-default-extension "org")
-(setq deft-use-filter-string-for-filename t)
-(setq deft-use-filename-as-title t)
-(setq deft-auto-save-interval 0)
-(evil-set-initial-state 'deft-mode 'insert)
-(evil-define-key 'insert deft-mode-map (kbd "C-h") 'deft-filter-decrement)
-(evil-define-key 'insert deft-mode-map (kbd "C-w") 'deft-filter-decrement-word)
-(evil-define-key 'insert deft-mode-map (kbd "C-n") 'next-line)
-(evil-define-key 'insert deft-mode-map (kbd "C-p") 'previous-line)
-(add-to-list 'auto-mode-alist '("/Notational Data/.*\\.txt\\'" . org-mode))
-(add-to-list 'auto-mode-alist '("/Notational Data/.*\\.txt_archive\\'" . org-mode))
-
-;; Flycheck syntax checking
-;; TODO: Broken after Emacs 25 upgrade
-;(add-hook 'after-init-hook #'global-flycheck-mode)
-;(with-eval-after-load 'flycheck
-  ;(setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc html-tidy)))
-
-;; NERDTree for Emacs
-(require 'neotree)
-(evil-leader/set-key "vn" 'neotree-toggle)
-(add-hook 'neotree-mode-hook
-          (lambda ()
-            (define-key evil-normal-state-local-map (kbd "TAB") 'neotree-enter)
-            (define-key evil-normal-state-local-map (kbd "SPC") 'neotree-enter)
-            (define-key evil-normal-state-local-map (kbd "q") 'neotree-hide)
-            (define-key evil-normal-state-local-map (kbd "RET") 'neotree-enter)))
-(add-hook 'neotree-mode-hook 'truncate-lines-hook-fun)
-(custom-set-variables '(neo-window-width 40))
-(custom-set-variables '(neo-banner-message nil))
-(custom-set-variables '(neo-theme 'nerd))
-
 ;; Company mode for autocompletion
 (add-hook 'prog-mode-hook #'company-mode)
 (add-hook 'org-mode-hook #'company-mode)
@@ -1551,6 +1357,7 @@
 (add-hook 'prog-mode-hook 'copilot-mode)
 (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
 (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
+
 
 ;; Generic insertion of TODO et al
 
