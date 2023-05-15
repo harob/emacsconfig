@@ -29,6 +29,7 @@
                       dash-functional
                       diminish
                       dumb-jump ; Go-to-definition for all languages, using ag
+                      editorconfig ; Dependency of copilot
                       elisp-slime-nav
                       elscreen
                       evil
