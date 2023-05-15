@@ -43,6 +43,7 @@
                       evil-surround
                       evil-visualstar
                       ;framemove ;; TODO(harry) No longer available on melpa?
+                      gdscript-mode
                       go-mode
                       goto-last-change
                       haskell-mode
@@ -172,7 +173,7 @@
   '(progn
      ;; (setq whitespace-line-column 110) ; When text flows past 110 chars, highlight it.
      ; whitespace mode by default marks all whitespace. Show only tabs, trailing space, and trailing lines.
-     (setq whitespace-style '(face empty trailing))))
+     (setq whitespace-style '(face empty trailing tabs))))
 ;; NOTE(harry) Flip the following two settings for editing snippets
 (add-hook 'before-explicit-save-hook 'delete-trailing-whitespace)
 ;; (setq-default mode-require-final-newline nil)
@@ -1343,6 +1344,7 @@
 (require 'typescript-mode)
 (add-to-list 'auto-mode-alist '("\\.tsx$" . typescript-mode))
 
+
 ;; Github Copilot support
 ;; TODO(harry) For some reason this doesn't work. For now I'm just installing it
 ;; locally manually with `git clone https://github.com/zerolfx/copilot.el.git`
@@ -1391,3 +1393,6 @@
   "it" 'insert-todo
   "in" 'insert-note
   "if" 'insert-fixme)
+
+
+(require 'gdscript-mode)
