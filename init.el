@@ -60,6 +60,7 @@
                       org-download
                       org-mac-link
                       paradox ; Better package menu
+                      projectile ; This is only used by counsel, which uses it to find the repo root directory
                       protobuf-mode
                       quelpa
                       quelpa-use-package
