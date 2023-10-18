@@ -345,7 +345,7 @@
   "vh" (lambda () (interactive) (find-file "~/workspace/src/liftoff/haggler/src/haggler/handler.clj"))
   "vk" (lambda () (interactive) (find-file "~/workspace/side_projects/qmk_firmware/keyboards/ergodox/keymaps/dvorak_harob/keymap.c"))
   "vi" (lambda () (interactive) (find-file "~/Dropbox/notes/inbox.org") (org-mode))
-  "vs" (lambda () (interactive) (switch-to-buffer "*scratch*"))
+  "vs" (lambda () (interactive) (find-file "~/Dropbox/notes/scratch.org") (org-mode))
   "vt" (lambda () (interactive) (find-file "~/Dropbox/notes/tasks.org") (org-mode))
   "vz" (lambda () (interactive) (find-file "~/dotfiles/.zshrc")))
 
@@ -765,6 +765,15 @@
 
 
 ;;
+;; Projectile (find file from the root of the current project).
+;;
+
+(require 'projectile)
+(projectile-global-mode)
+(setq projectile-completion-system 'ivy)
+
+
+;;
 ;; Emacs Lisp (elisp)
 ;;
 
@@ -1114,7 +1123,6 @@
 
 ;; Note that this function uses (projectile-project-root) to determine the directory to run `go` commands,
 ;; which requires that the go project have a .projectile file in it or that it be at the root of a git repo.
-;; TODO(harry) This no longer works now that I purged projectile. Fix it.
 (defun go-save-and-compile (command)
   "Saves the current buffer before invoking the given command."
   (lexical-let ((has-makefile (file-exists-p (concat (projectile-project-root) "Makefile"))))
