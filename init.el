@@ -43,7 +43,6 @@
                       evil-surround
                       evil-visualstar
                       ;framemove ;; TODO(harry) No longer available on melpa?
-                      gdscript-mode
                       go-mode
                       goto-last-change
                       haskell-mode
@@ -1402,6 +1401,3 @@
   "it" 'insert-todo
   "in" 'insert-note
   "if" 'insert-fixme)
-
-
-(require 'gdscript-mode)
