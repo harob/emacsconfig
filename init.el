@@ -1310,8 +1310,6 @@
       (kill-new filename)
       (message "Copied buffer file name '%s' to the clipboard." filename))))
 
-(setq explicit-shell-file-name "bash")
-
 (require 'dumb-jump)
 (setq dumb-jump-selector 'ivy)
 ;; Override the standard tags-based go-to-definition key bindings:
