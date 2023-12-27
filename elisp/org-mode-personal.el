@@ -37,17 +37,14 @@
            (org-todo 'done)
            (setq org-log-done original-val)))
   "o" '(lambda () (interactive)
-         (evil-end-of-line nil) ; Necessary to handle multi-visible-line headings
+         (org-insert-heading-after-current)
+         (evil-insert nil)
+         (org-end-of-line))
+  "O" '(lambda () (interactive)
+         (org-insert-heading-after-current)
          (evil-insert nil)
          (org-end-of-line)
-         (if (outline-invisible-p)
-             (org-insert-heading-respect-content)
-           (org-insert-heading)))
-  "O" '(lambda () (interactive)
-         (evil-end-of-line nil) ; Necessary to handle multi-visible-line headings
-         (org-insert-heading-respect-content)
-         (org-metaup)
-         (evil-append nil))
+         (org-metaup))
   "^" 'org-beginning-of-line
   "$" 'org-end-of-line
   "H" 'org-beginning-of-line
