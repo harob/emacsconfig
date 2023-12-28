@@ -31,7 +31,6 @@
                       dumb-jump ; Go-to-definition for all languages, using ag
                       editorconfig ; Dependency of copilot
                       elisp-slime-nav
-                      elscreen
                       evil
                       evil-anzu
                       evil-args
@@ -640,31 +639,23 @@
   (interactive)
   (call-process-region nil nil "/usr/bin/open" nil nil nil "."))
 
-; Closes the current elscreen, or if there's only one screen, use the ":q" Evil
-; command. This simulates the ":q" behavior of Vim when used with tabs.
-; http://zuttobenkyou.wordpress.com/2012/06/15/emacs-vimlike-tabwindow-navigation/
 (defun vimlike-quit ()
-  "Vimlike ':q' behavior: close current window if there are split windows;
-   otherwise, close current tab (elscreen)."
+  "Closes the current window, tab, or if there's only one tab, use the `:q` Evil
+   command. This simulates the `:q` behavior of Vim when used with tabs."
   (interactive)
-  (let ((one-elscreen (elscreen-one-screen-p))
+  (let ((one-tab (= 1 (length (tab-bar-tabs))))
         (one-window (one-window-p)))
     (cond
      ; if current tab has split windows in it, close the current live window
      ((not one-window)
       (delete-window) ; delete the current window
       (balance-windows) ; balance remaining windows
-      nil)
-     ; if there are multiple elscreens (tabs), close the current elscreen
-     ((not one-elscreen)
-      (elscreen-kill)
-      nil)
-     ; if there is only one elscreen, just try to quit (calling elscreen-kill
-     ; will not work, because elscreen-kill fails if there is only one
-     ; elscreen)
-     (one-elscreen
-      (evil-quit)
-      nil))))
+      )
+     ; if there are multiple tabs, close the current tabs
+     ((not one-tab)
+      (tab-close))
+     (one-tab
+      (evil-quit)))))
 
 (defvar before-explicit-save-hook nil)
 (defvar after-explicit-save-hook nil)
@@ -818,19 +809,16 @@
 
 
 ;;
-;; elscreen (tabs on the window).
+;; tab-bar-mode (tabs on the window).
 ;;
 
-(elscreen-start)
-(define-key evil-normal-state-map (kbd "M-}") 'elscreen-next)
-(define-key evil-normal-state-map (kbd "M-{") 'elscreen-previous)
-(define-key evil-normal-state-map (kbd "M-t") 'open-new-tab-with-current-buffer)
+(tab-bar-mode 1)
+(define-key evil-normal-state-map (kbd "M-t") 'tab-new)
+(define-key evil-normal-state-map (kbd "M-}") 'tab-next)
+(define-key evil-normal-state-map (kbd "M-{") 'tab-previous)
 
-(defun open-new-tab-with-current-buffer ()
-  (interactive)
-  (evil-change-to-initial-state)
-  (elscreen-clone)
-  (delete-other-windows))
+(setq tab-bar-select-tab-modifiers '(meta))
+(setq tab-bar-tab-hints t)
 
 
 ;;
@@ -1268,11 +1256,6 @@
 (define-key evil-visual-state-map (kbd ";") 'evil-ex)
 
 (define-key evil-normal-state-map (kbd "zz") 'evil-scroll-line-to-center)
-
-(dolist (i (number-sequence 1 9))
-  (lexical-let ((tab-index (- i 1)))
-    (global-set-key (kbd (concat "M-" (number-to-string i)))
-                    (lambda () (interactive) (elscreen-goto tab-index)))))
 
 (define-key osx-keys-minor-mode-map (kbd "M-=") 'text-scale-increase)
 (define-key osx-keys-minor-mode-map (kbd "M-+") 'text-scale-increase)
