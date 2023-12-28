@@ -812,13 +812,13 @@
 ;; tab-bar-mode (tabs on the window).
 ;;
 
+(setq tab-bar-select-tab-modifiers '(meta))
+(setq tab-bar-tab-hints t)
+
 (tab-bar-mode 1)
 (define-key evil-normal-state-map (kbd "M-t") 'tab-new)
 (define-key evil-normal-state-map (kbd "M-}") 'tab-next)
 (define-key evil-normal-state-map (kbd "M-{") 'tab-previous)
-
-(setq tab-bar-select-tab-modifiers '(meta))
-(setq tab-bar-tab-hints t)
 
 
 ;;
