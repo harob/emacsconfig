@@ -270,12 +270,11 @@
 ;; Move up and down through long, wrapped lines one visual line at a time.
 (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
 (define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
+
 (define-key evil-normal-state-map (kbd "K") 'info-lookup-symbol)
+
 ;; I use this shortcut for manually splitting lines. Note that it does not put you in insert mode.
 (define-key evil-normal-state-map (kbd "s") 'newline-and-indent)
-
-;; By default, Emacs will not indent when you hit enter/return within a comment.
-;; (define-key evil-insert-state-map (kbd "RET") 'newline-and-indent)
 
 ;; When jumping back and forth between marks, recenter the screen on the cursor.
 (define-key evil-normal-state-map (kbd "C-o")
@@ -349,26 +348,6 @@
      ;; Unbind these keys in evil so they can instead be used for code navigation.
      (define-key evil-normal-state-map (kbd "M-,") nil)
      (define-key evil-normal-state-map (kbd "M-.") nil)))
-
-(defun evil-shift-paragraph-left (beg end)
-  "Shifts a paragraph left."
-  (interactive "r")
-  (let ((region (evil-inner-paragraph)))
-    (save-excursion
-      (evil-shift-left (first region) (second region)))))
-
-(defun evil-shift-paragraph-right (beg end)
-  "Shifts a paragraph right."
-  (interactive "r")
-  (let ((region (evil-inner-paragraph)))
-    (save-excursion
-      (evil-shift-right (first region) (second region)))))
-
-(defun eval-surrounding-sexp (levels)
-  (interactive "p")
-  (save-excursion
-    (up-list (abs levels))
-    (eval-last-sexp nil)))
 
 ;; Enable the typical Bash/readline keybindings when in insert mode.
 (util/define-keys evil-insert-state-map
@@ -836,66 +815,7 @@
            '(mode-line-inactive ((t (:foreground "#f9f9f9" :background "#666666" :box nil))))))
 
 
-;;
 ;; Markdown
-;;
-
-(defun markdown-insert-list-item-below ()
-  "Inserts a new list item under the current one. markdown-insert-list-item inserts above, by default."
-  (interactive)
-  (end-of-line)
-  (call-interactively 'markdown-insert-list-item)
-  (evil-append nil))
-
-(defun insert-markdown-header (header-line-text)
-  "With the cursor focused on the header's text, insert a setext header line below that text.
-   header-line-text: either '===' or '---'"
-  (end-of-line)
-  (insert (concat "\n" header-line-text))
-  (markdown-complete)
-  ;; markdown-complete inserts a newline after the header. Remove it and move the cursor to a logical place.
-  (next-line)
-  (next-line)
-  (delete-backward-char 1)
-  (next-line)
-  (beginning-of-line))
-
-(add-to-list 'auto-mode-alist '("\\.markdown$" . gfm-mode))
-(add-to-list 'auto-mode-alist '("\\.md$" . gfm-mode))
-
-(eval-after-load 'markdown-mode
-  '(progn
-     (evil-define-key 'normal markdown-mode-map
-       ;; Autocomplete setext headers by typing "==" or "--" on the header's line in normal mode.
-       (kbd "==") '(lambda () (interactive) (insert-markdown-header "=="))
-       (kbd "--") '(lambda () (interactive) (insert-markdown-header "--"))
-       (kbd "M-h") 'evil-shift-paragraph-left
-       (kbd "M-l") 'evil-shift-paragraph-right)
-     ;; Note that while in insert mode, using "evil-shift-paragraph-right" while the cursor is at the end of a
-     ;; line will shift the paragraph incorrectly. That's why we jump to normal mode first, as a workaround.
-     (evil-define-key 'insert markdown-mode-map
-       (kbd "M-h") '(lambda ()
-                        (interactive)
-                        (evil-change-to-initial-state)
-                        (call-interactively 'evil-shift-paragraph-left)
-                        (evil-append nil))
-       (kbd "M-l") '(lambda ()
-                        (interactive)
-                        (evil-change-to-initial-state)
-                        (call-interactively 'evil-shift-paragraph-right)
-                        (evil-append nil)))
-     (mapc (lambda (state)
-             (evil-define-key state markdown-mode-map
-               (kbd "M-k") 'markdown-move-up
-               (kbd "M-j") 'markdown-move-down
-               ;; M-return creates a new todo item and enters insert mode.
-               (kbd "<M-return>") 'markdown-insert-list-item-below))
-           '(normal insert))))
-
-(mapc (lambda (mode)
-        (evil-leader/set-key-for-mode mode
-          "rr" 'markdown-preview))
-      '(gfm-mode markdown-mode))
 
 (setq markdown-command
       (concat
@@ -904,7 +824,6 @@
        " --metadata title='-'"
        ;; Use Gmail's default styling, so I can copy exported HTML into the Compose window with no reformatting:
        " --include-in-header $HOME/.emacs.d/resources/gmail.css"))
-
 (setq markdown-fontify-code-blocks-natively t)
 
 
