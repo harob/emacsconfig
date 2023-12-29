@@ -73,7 +73,6 @@
                       web-mode
                       which-key
                       yaml-mode
-                      yasnippet
                       ))
 
 (add-to-list 'package-pinned-packages '(cider . "melpa-stable") t)
@@ -92,16 +91,11 @@
 
 (require 'cl)
 (add-to-list 'load-path "~/.emacs.d/elisp")
-(require 'lisp-helpers-personal)
 (require 'emacs-utils)
-
-;; Anecdotally, this reduces the amount of display flicker on some Emacs startup.
-(setq redisplay-dont-pause t)
 
 ;; Turn off graphical toolbars.
 (if (display-graphic-p) (menu-bar-mode 1) (menu-bar-mode -1))
 (when (and (fboundp 'tool-bar-mode) tool-bar-mode) (tool-bar-mode -1))
-(when (and (fboundp 'scroll-bar-mode) scroll-bar-mode) (scroll-bar-mode -1))
 
 (setq initial-scratch-message "") ; When opening a new buffer, don't show the scratch message.
 
@@ -133,10 +127,9 @@
 (setq ring-bell-function 'ignore)
 (setq mac-option-modifier 'alt)
 (setq mac-command-modifier 'meta)
-(setq mac-pass-command-to-system nil) ; Avoid e.g. M-h performing OSX's "Hide window" command
 (add-to-list 'default-frame-alist '(ns-appearance . dark))
 
-;; Require typing only "y" or"n" instead of the full "yes" to confirm destructive actions.
+;; Require typing only "y" or "n" instead of the full "yes" to confirm destructive actions.
 (defalias 'yes-or-no-p 'y-or-n-p)
 
 (setq make-backup-files nil)
@@ -173,29 +166,25 @@
      ;; (setq whitespace-line-column 110) ; When text flows past 110 chars, highlight it.
      ; whitespace mode by default marks all whitespace. Show only tabs, trailing space, and trailing lines.
      (setq whitespace-style '(face empty trailing tabs))))
-;; NOTE(harry) Flip the following two settings for editing snippets
 (add-hook 'before-explicit-save-hook 'delete-trailing-whitespace)
-;; (setq-default mode-require-final-newline nil)
 
 (setq-default tab-width 2)
 (setq-default evil-shift-width 2)
 ; Some modes have their own tab-width variables.
 (setq-default css-indent-offset 2)
 
-(setq-default fill-column 80) ; When wrapping with the Emacs fill commands, wrap at 110 chars.
+(setq-default fill-column 80)
 (add-hook 'prog-mode-hook 'display-fill-column-indicator-mode)
 (add-hook 'gfm-mode-hook 'display-fill-column-indicator-mode)
 
-;; Visually wrap long lines on word boundaries. By default, Emacs will wrap mid-word. Note that Evil doesn't
-;; have good support for moving between visual lines versus logical lines. Here's the start of a solution:
-;; https://lists.ourproject.org/pipermail/implementations-list/2011-December/001430.html
+;; Visually wrap long lines on word boundaries. By default, Emacs will wrap mid-word.
 (global-visual-line-mode t)
 
 ;; Highlight the line the cursor is on. This is mostly to make it easier to tell which split is active.
 (global-hl-line-mode t)
 
 ;; Don't use tabs by default. Modes that really need tabs should enable indent-tabs-mode explicitly.
-;; Makefile-mode already does that, for example.If indent-tabs-mode is off, untabify before saving.
+;; Makefile-mode already does that, for example. If indent-tabs-mode is off, untabify before saving.
 (setq-default indent-tabs-mode nil)
 (add-hook 'write-file-hooks
           (lambda ()
@@ -210,27 +199,24 @@
   (delete-region (point) (progn (forward-word -1) (point))))
 
 ;; Enable the common Bash text-editing shortcuts in the minibuffer.
-;; Enable the common Bash text-editing shortcuts in the minibuffer.
 (util/define-keys minibuffer-local-map
                   (kbd "C-k") 'kill-line
                   (kbd "C-e") 'end-of-line
                   (kbd "C-d") 'delete-char
-                  (kbd "C-w") 'backward-kill-word
+                  (kbd "C-w") 'backward-delete-word
                   (kbd "C-h") 'backward-delete-char)
 
 ;; Disable the prompt we get when killing a buffer with a process. This affects clojure mode in particular,
 ;; when we want to restart the nrepl process.
 (setq kill-buffer-query-functions (remq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
-;; ;; Use amx to show the M-x command prompt. It has better completion support than the default M-x.
+;; Use amx to show the M-x command prompt. It has better completion support than the default M-x.
 (require 'amx)
 (amx-mode 1)
-;; (require 'counsel)
-;; (global-set-key (kbd "M-x") 'counsel-M-x)
 
 ;; RecentF mode is the Emacs minor mode used when opening files via C-x C-f.
 (require 'recentf)
-(define-key recentf-mode-map (kbd "C-w") 'backward-kill-word)
+(define-key recentf-mode-map (kbd "C-w") 'backward-delete-word)
 (define-key recentf-mode-map (kbd "C-h") 'backward-delete-char)
 
 ;; The poorly-named winner mode saves the history of your window splits, so you can undo and redo changes to
@@ -822,18 +808,6 @@
 
 
 ;;
-;; Snippets
-;;
-
-;; "Ignore the default snippets that come with yasnippet. My own are all I need, and I don't want any
-;; conflicts."
-(setq yas-snippet-dirs '("~/.emacs.d/snippets"))
-(require 'yasnippet)
-(yas-global-mode 1)
-(define-key yas-keymap (kbd "ESC") 'yas-abort-snippet)
-
-
-;;
 ;; Diminish - hide or shorten the names of minor modes in your modeline.
 ;; To see which minor modes you have loaded and what their modeline strings are: (message minor-mode-alist)
 ;;
@@ -1323,12 +1297,6 @@
 (evil-define-key 'insert prog-mode-map (kbd "A-<tab>") 'company-complete)
 (evil-define-key 'insert org-mode-map (kbd "A-TAB") 'company-complete)
 (evil-define-key 'insert org-mode-map (kbd "A-<tab>") 'company-complete)
-;; Make company play nice with yasnippet, from
-;; https://github.com/company-mode/company-mode/blob/master/company-yasnippet.el#L104
-(add-hook 'ord-mode-hook
-          (lambda ()
-            (set (make-local-variable 'company-backends)
-                 '((company-dabbrev :with company-yasnippet)))))
 
 (require 'typescript-mode)
 (add-to-list 'auto-mode-alist '("\\.tsx$" . typescript-mode))
