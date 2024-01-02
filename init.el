@@ -381,9 +381,6 @@
 (require 'evil-matchit)
 (global-evil-matchit-mode 1)
 
-(require 'evil-anzu)
-(set-face-attribute 'anzu-mode-line nil :foreground "black" :weight 'bold)
-
 (require 'evil-args)
 (define-key evil-inner-text-objects-map "a" 'evil-inner-arg)
 (define-key evil-outer-text-objects-map "a" 'evil-outer-arg)
@@ -1275,5 +1272,7 @@
   :ensure t)
 
 ;; Custom modeline -- run M-x nerd-icons-install-fonts to install the fonts
+(require 'evil-anzu) ;; To display search result count in modeline
+(global-anzu-mode t)
 (require 'doom-modeline)
 (doom-modeline-mode 1)
