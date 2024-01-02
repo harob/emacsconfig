@@ -779,6 +779,8 @@
 
 (setq tab-bar-select-tab-modifiers '(meta))
 (setq tab-bar-tab-hints t)
+(setq tab-bar-show 1) ;; hide bar if <= 1 tabs open
+(setq tab-bar-close-button-show nil)
 
 (tab-bar-mode 1)
 (define-key evil-normal-state-map (kbd "M-t") 'tab-new)
@@ -824,6 +826,7 @@
        " --metadata title='-'"
        ;; Use Gmail's default styling, so I can copy exported HTML into the Compose window with no reformatting:
        " --include-in-header $HOME/.emacs.d/resources/gmail.css"))
+
 (setq markdown-fontify-code-blocks-natively t)
 
 
