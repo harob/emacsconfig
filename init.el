@@ -28,6 +28,7 @@
                       dash
                       dash-functional
                       diminish
+                      doom-modeline
                       dumb-jump ; Go-to-definition for all languages, using ag
                       editorconfig ; Dependency of copilot
                       elisp-slime-nav
@@ -805,18 +806,6 @@
 (diminish 'company-mode "")
 
 
-;;
-;; Powerline: improve the appearance & density of the Emacs status bar (mode line).
-;;
-
-(use-package powerline
-  :quelpa (powerline :fetcher github
-                     :repo "jonathanchu/emacs-powerline")
-  :config (custom-set-faces
-           '(mode-line ((t (:foreground "#030303" :background "#bdbdbd" :box nil))))
-           '(mode-line-inactive ((t (:foreground "#f9f9f9" :background "#666666" :box nil))))))
-
-
 ;; Markdown
 
 (setq markdown-command
@@ -1284,3 +1273,7 @@
 (use-package treemacs-projectile
   :after (treemacs projectile)
   :ensure t)
+
+;; Custom modeline -- run M-x nerd-icons-install-fonts to install the fonts
+(require 'doom-modeline)
+(doom-modeline-mode 1)

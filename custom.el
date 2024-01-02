@@ -15,7 +15,7 @@
  '(org-modules
    '(ol-bbdb ol-bibtex ol-docview ol-gnus ol-info ol-irc ol-mhe ol-rmail ol-w3m org-mac-link))
  '(package-selected-packages
-   '(treemacs-projectile posframe treemacs-evil treemacs gdscript-mode editorconfig powerline quelpa-use-package typescript-mode cider htmlize org-download wcheck-mode evil-numbers swiper counsel-projectile ace-link avy ox-gfm counsel amx ivy dumb-jump which-key evil-exchange evil-args company yaml-mode web-mode twilight-theme twilight-anti-bright-theme tree-mode surround smex smartparens scss-mode rust-mode ruby-electric request rainbow-identifiers rainbow-delimiters protobuf-mode projectile pcre2el paradox org noflet neotree mustache-mode mo-git-blame midje-mode markdown-mode magit lua-mode less-css-mode ido-vertical-mode ido-ubiquitous haskell-mode goto-last-change go-mode git-gutter-fringe+ framemove flycheck flx-ido fiplr fill-column-indicator exec-path-from-shell evil-visualstar evil-nerd-commenter evil-matchit evil-leader evil-anzu ess epresent elscreen elisp-slime-nav dired-details+ diminish deft csv-mode column-marker color-theme-solarized color-theme-sanityinc-tomorrow color-identifiers-mode coffee-mode buffer-move browse-at-remote base16-theme ag ack-and-a-half ace-jump-buffer ac-nrepl))
+   '(nerd-icons doom-modeline treemacs-projectile posframe treemacs-evil treemacs gdscript-mode editorconfig quelpa-use-package typescript-mode cider htmlize org-download wcheck-mode evil-numbers swiper counsel-projectile ace-link avy ox-gfm counsel amx ivy dumb-jump which-key evil-exchange evil-args company yaml-mode web-mode twilight-theme twilight-anti-bright-theme tree-mode surround smex smartparens scss-mode rust-mode ruby-electric request rainbow-identifiers rainbow-delimiters protobuf-mode projectile pcre2el paradox org noflet neotree mustache-mode mo-git-blame midje-mode markdown-mode magit lua-mode less-css-mode ido-vertical-mode ido-ubiquitous haskell-mode goto-last-change go-mode git-gutter-fringe+ framemove flycheck flx-ido fiplr fill-column-indicator exec-path-from-shell evil-visualstar evil-nerd-commenter evil-matchit evil-leader evil-anzu ess epresent elscreen elisp-slime-nav dired-details+ diminish deft csv-mode column-marker color-theme-solarized color-theme-sanityinc-tomorrow color-identifiers-mode coffee-mode buffer-move browse-at-remote base16-theme ag ack-and-a-half ace-jump-buffer ac-nrepl))
  '(paradox-github-token t))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -23,7 +23,5 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(linum ((t (:inherit (shadow default) :background "#2a2a2a" :foreground "gray50"))))
- '(mode-line ((t (:foreground "#030303" :background "#bdbdbd" :box nil))))
- '(mode-line-inactive ((t (:foreground "#f9f9f9" :background "#666666" :box nil))))
  '(org-level-3 ((t (:foreground "goldenrod1"))))
  '(org-table ((t (:foreground "gray90")))))
