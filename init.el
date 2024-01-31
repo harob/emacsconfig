@@ -328,9 +328,9 @@
   "ve" (lambda () (interactive) (find-file "~/.emacs.d/init.el"))
   "vh" (lambda () (interactive) (find-file "~/workspace/src/liftoff/haggler/src/haggler/handler.clj"))
   "vk" (lambda () (interactive) (find-file "~/workspace/side_projects/qmk_firmware/keyboards/ergodox/keymaps/dvorak_harob/keymap.c"))
-  "vi" (lambda () (interactive) (find-file "~/Dropbox/notes/inbox.org") (org-mode))
-  "vs" (lambda () (interactive) (find-file "~/Dropbox/notes/scratch.org") (org-mode))
-  "vt" (lambda () (interactive) (find-file "~/Dropbox/notes/tasks.org") (org-mode))
+  "vi" (lambda () (interactive) (find-file "~/Documents/notes/inbox.org") (org-mode))
+  "vs" (lambda () (interactive) (find-file "~/Documents/notes/scratch.org") (org-mode))
+  "vt" (lambda () (interactive) (find-file "~/Documents/notes/tasks.org") (org-mode))
   "vz" (lambda () (interactive) (find-file "~/dotfiles/.zshrc")))
 
 ;; TODO(harry) Write a macro to prepend the evil-leader key instead of manually specifying SPC.
