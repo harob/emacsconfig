@@ -66,15 +66,21 @@
   "lo" 'ace-link-org
   "oa" 'org-archive-subtree
   "od" 'org-time-stamp
+  "oo" 'my-org-insert-subheading
   "or" 'avy-org-refile-as-child
   "ot" 'org-set-tags-command
-  "vT" 'org-show-todo-tree
   "va" 'org-agenda
   "rr" 'org-export-dispatch)
 
 (which-key-add-major-mode-key-based-replacements 'org-mode
   "SPC l" "org-Links"
   "SPC o" "Org")
+
+(defun my-org-insert-subheading ()
+  (interactive)
+  (org-end-of-line)
+  (org-insert-subheading nil)
+  (evil-insert nil))
 
 ;; normal & insert state shortcuts.
 (mapc (lambda (state)
