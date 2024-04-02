@@ -39,16 +39,12 @@
   "o" '(lambda () (interactive)
          (org-insert-heading-after-current)
          (evil-insert nil)
-         (org-end-of-line))
+         (evil-end-of-line))
   "O" '(lambda () (interactive)
          (org-insert-heading-after-current)
          (evil-insert nil)
-         (org-end-of-line)
+         (evil-end-of-line)
          (org-metaup))
-  "^" 'org-beginning-of-line
-  "$" 'org-end-of-line
-  "H" 'org-beginning-of-line
-  "L" 'org-end-of-line
   "{" 'org-backward-heading-same-level
   "}" 'org-forward-heading-same-level
   "gu" 'outline-up-heading
@@ -78,7 +74,7 @@
 
 (defun my-org-insert-subheading ()
   (interactive)
-  (org-end-of-line)
+  (evil-end-of-line)
   (org-insert-subheading nil)
   (evil-insert nil))
 
