@@ -38,13 +38,13 @@
            (setq org-log-done original-val)))
   "o" '(lambda () (interactive)
          (org-insert-heading-after-current)
-         (evil-insert nil)
-         (evil-end-of-line))
+         (evil-end-of-line)
+         (evil-append nil))
   "O" '(lambda () (interactive)
          (org-insert-heading-after-current)
-         (evil-insert nil)
          (evil-end-of-line)
-         (org-metaup))
+         (org-metaup)
+         (evil-append nil))
   "{" 'org-backward-heading-same-level
   "}" 'org-forward-heading-same-level
   "gu" 'outline-up-heading
