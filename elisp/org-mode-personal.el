@@ -55,6 +55,7 @@
 (require 'org-mac-link)
 
 (evil-leader/set-key-for-mode 'org-mode
+  "li" 'org-insert-link
   "ly" 'org-store-link
   "lp" 'org-insert-link
   "lt" 'org-toggle-link-display
@@ -75,8 +76,8 @@
 (defun my-org-insert-subheading ()
   (interactive)
   (evil-end-of-line)
-  (org-insert-subheading nil)
-  (evil-insert nil))
+  (evil-append nil)
+  (org-insert-subheading nil))
 
 ;; normal & insert state shortcuts.
 (mapc (lambda (state)
