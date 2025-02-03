@@ -108,9 +108,11 @@
 ;; when launching from Spotlight, LaunchBar, etc.
 (defun sync-env ()
   (when (memq window-system '(mac ns x))
-    (let ((env-pair-re "^\\([^=[:space:]]+\\)=\\(.*\\)$"))
+    ;; NOTE(harry) Use ZSH instead of shell-file-name because that points to sh
+    (let ((zsh-path "/opt/homebrew/bin/zsh")
+          (env-pair-re "^\\([^=[:space:]]+\\)=\\(.*\\)$"))
       (with-temp-buffer
-        (shell-command (concat shell-file-name " -i -c env") t)
+        (shell-command (concat zsh-path " -i -c env") t)
         (goto-char (point-min))
         (while (re-search-forward env-pair-re nil t)
           (let ((name (match-string 1))
@@ -1209,17 +1211,23 @@
 
 
 ;; Github Copilot support
-;; TODO(harry) For some reason this doesn't work. For now I'm just installing it
-;; locally manually with `git clone https://github.com/zerolfx/copilot.el.git`
+;; Run `M-x copilot-login` first. Check `M-x copilot-diagnose` if there's an issue.
+
+;; NOTE(harry) This doesn't work atm because it requires node v18+ and I'm
+;; pinned to v16. For now I'm just installing it locally manually with
+;; `git clone https://github.com/zerolfx/copilot.el.git`
 ;; (use-package copilot
 ;;   :quelpa (copilot :fetcher github
-;;                    :repo "zerolfx/copilot.el"
-;;                    :files ("dist" "*.el")))
+;;                    :repo "copilot-emacs/copilot.el"
+;;                    :branch "main"
+;;                    :files ("*.el")))
+
 (add-to-list 'load-path "~/workspace/external_codebases/copilot.el")
 (require 'dash)
 (require 's)
 (require 'editorconfig)
 (require 'copilot)
+
 (add-hook 'prog-mode-hook 'copilot-mode)
 (define-key copilot-completion-map (kbd "A-<tab>") 'copilot-accept-completion)
 (define-key copilot-completion-map (kbd "A-TAB") 'copilot-accept-completion)
