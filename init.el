@@ -1176,10 +1176,9 @@
       (message "Copied buffer file name '%s' to the clipboard." filename))))
 
 (require 'dumb-jump)
-(setq dumb-jump-selector 'ivy)
-;; Override the standard tags-based go-to-definition key bindings:
-(global-set-key (kbd "M-.") 'dumb-jump-go)
-(global-set-key (kbd "M-,") 'dumb-jump-back)
+; Forcing the use of ripgrep because for some reason the default git-grep doesn't work
+(setq dumb-jump-force-searcher 'rg)
+(add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
 
 (require 'avy)
 (setq avy-keys (number-sequence ?a ?z))
@@ -1201,10 +1200,10 @@
 (setq company-idle-delay nil)
 (setq company-dabbrev-downcase nil)
 (setq company-dabbrev-ignore-case t)
-(evil-define-key 'insert prog-mode-map (kbd "A-TAB") 'company-complete)
-(evil-define-key 'insert prog-mode-map (kbd "A-<tab>") 'company-complete)
-(evil-define-key 'insert org-mode-map (kbd "A-TAB") 'company-complete)
-(evil-define-key 'insert org-mode-map (kbd "A-<tab>") 'company-complete)
+(evil-define-key 'insert prog-mode-map (kbd "TAB") 'company-complete)
+(evil-define-key 'insert prog-mode-map (kbd "<tab>") 'company-complete)
+(evil-define-key 'insert org-mode-map (kbd "TAB") 'company-complete)
+(evil-define-key 'insert org-mode-map (kbd "<tab>") 'company-complete)
 
 (require 'typescript-mode)
 (add-to-list 'auto-mode-alist '("\\.tsx$" . typescript-mode))
@@ -1223,8 +1222,8 @@
 (require 'editorconfig)
 (require 'copilot)
 (add-hook 'prog-mode-hook 'copilot-mode)
-(define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
-(define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
+(define-key copilot-completion-map (kbd "A-<tab>") 'copilot-accept-completion)
+(define-key copilot-completion-map (kbd "A-TAB") 'copilot-accept-completion)
 
 
 ;; Generic insertion of TODO et al
@@ -1261,18 +1260,41 @@
 
 
 ;; Treemacs file browser pane -- start with M-x treemacs-projectile
-(use-package treemacs
-  :ensure t
-  :defer t)
-(use-package treemacs-evil
-  :after (treemacs evil)
-  :ensure t)
-(use-package treemacs-projectile
-  :after (treemacs projectile)
-  :ensure t)
+(use-package treemacs :ensure t :defer t)
+(use-package treemacs-evil :after (treemacs evil) :ensure t)
+(use-package treemacs-projectile :after (treemacs projectile) :ensure t)
+
 
 ;; Custom modeline -- run M-x nerd-icons-install-fonts to install the fonts
 (require 'evil-anzu) ;; To display search result count in modeline
 (global-anzu-mode t)
 (require 'doom-modeline)
 (doom-modeline-mode 1)
+
+
+;;
+;; Python dev
+;;
+
+; Configuration inspired by https://www.naiquev.in/understanding-emacs-packages-for-python.html
+
+; First run `pip install -U jedi-language-server`
+(use-package eglot
+  :ensure t
+  :config
+  (add-to-list 'eglot-server-programs
+               '(python-mode . ("jedi-language-server"))))
+(add-hook 'python-mode-hook 'eglot-ensure)
+
+;; TODO(harry)
+;; (add-hook 'python-base-mode-hook 'flymake-mode)
+;; (setq python-flymake-command '("ruff" "--quiet" "--stdin-filename=stdin" "-"))
+
+(use-package reformatter :ensure t :defer t
+  :hook
+  (python-mode . ruff-format-on-save-mode)
+  (python-ts-mode . ruff-format-on-save-mode)
+  :config
+  (reformatter-define ruff-format
+    :program "ruff"
+    :args `("format" "--stdin-filename" ,buffer-file-name "-")))
