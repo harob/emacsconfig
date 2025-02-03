@@ -322,7 +322,7 @@
         (balance-windows))
   "gs" (lambda() (interactive)
           (util/save-buffer-if-dirty)
-          (magit-status-and-focus-unstaged))
+          (magit-status))
   "gl" 'magit-log-current
   ;; "v" is a mnemonic prefix for "view X".
   "ve" (lambda () (interactive) (find-file "~/.emacs.d/init.el"))
@@ -402,8 +402,6 @@
 (setq split-height-threshold 40)
 (setq split-width-threshold 200)
 (setq split-window-preferred-function 'split-window-sensibly-reverse)
-;; Ensure these open in the selected window, not a new popup.
-(setq same-window-buffer-names '("*magit-log*"))
 
 ;; "I manage my windows in a 4x4 grid. I want ephemeral or status-based buffers to always show in the
 ;; lower-right or right window, in that order of preference."
@@ -1057,7 +1055,8 @@
 ;; Magit - for staging hunks and making commits to git
 ;;
 
-(require 'magit-config)
+; TODO(harry Magit mode is pretty broken for me currently. Restart from scratch
+;; (require 'magit-config)
 
 
 ;;
