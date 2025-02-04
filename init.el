@@ -1289,13 +1289,13 @@
 (use-package eglot
   :ensure t
   :config
-  (add-to-list 'eglot-server-programs
-               '(python-mode . ("jedi-language-server"))))
+  (add-to-list 'eglot-server-programs '(python-mode . ("jedi-language-server")))
+  (add-to-list 'eglot-stay-out-of 'flaymake))
 (add-hook 'python-mode-hook 'eglot-ensure)
 
-;; TODO(harry)
-;; (add-hook 'python-base-mode-hook 'flymake-mode)
-;; (setq python-flymake-command '("ruff" "--quiet" "--stdin-filename=stdin" "-"))
+;; FIXME(harry) This is not working for some reason
+(add-hook 'python-base-mode-hook 'flymake-mode)
+(setq python-flymake-command '("ruff" "--quiet" "--stdin-filename=stdin" "-"))
 
 (use-package reformatter :ensure t :defer t
   :hook
@@ -1305,3 +1305,5 @@
   (reformatter-define ruff-format
     :program "ruff"
     :args `("format" "--stdin-filename" ,buffer-file-name "-")))
+
+(add-hook 'python-mode-hook (lambda () (interactive) (set-fill-column 88)))
