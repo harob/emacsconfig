@@ -1311,3 +1311,11 @@
     :args `("format" "--stdin-filename" ,buffer-file-name "-")))
 
 (add-hook 'python-mode-hook (lambda () (interactive) (set-fill-column 88)))
+
+(use-package pytest
+  :quelpa (pytest :fetcher github
+                  :repo "ionrock/pytest-el"
+                  :branch "master"
+                  :files ("*.el")))
+;; FIXME(harry)
+(add-to-list 'pytest-project-names "kirin test")
