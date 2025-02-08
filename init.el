@@ -1225,9 +1225,11 @@
 
 (use-package copilot-chat :ensure t :defer t)
 (evil-leader/set-key
-  "Ca" 'copilot-chat-add-current-buffer
-  "Cc" 'copilot-chat-display
-  "Ce" 'copilot-chat-explain)
+  "Ca" 'copilot-chat-add-current-buffer  ; Add the current buffer to the Copilot chat list
+  "Cc" 'copilot-chat-display             ; Display the Copilot chat window
+  "Ce" 'copilot-chat-explain             ; Explain the selected region using Copilot chat
+  "Cp" 'copilot-chat-custom-prompt-selection)  ; Send a custom prompt followed by
+                                               ; the selected region to Copilot chat
 
 
 ;; Generic insertion of TODO et al
