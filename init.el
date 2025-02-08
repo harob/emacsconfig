@@ -13,10 +13,6 @@
   (package-refresh-contents))
 
 (defvar my-packages '(
-                      ace-link
-                      ag
-                      amx ; A fork of smex, which upgrades M-x
-                      auto-complete
                       avy
                       browse-at-remote
                       buffer-move
@@ -26,10 +22,9 @@
                       company
                       counsel
                       dash
-                      dash-functional
                       diminish
                       doom-modeline
-                      dumb-jump ; Go-to-definition for all languages, using ag
+                      dumb-jump ; Go-to-definition for all languages, using rg
                       editorconfig ; Dependency of copilot
                       elisp-slime-nav
                       evil
@@ -39,18 +34,13 @@
                       evil-leader
                       evil-matchit
                       evil-nerd-commenter
-                      evil-numbers
                       evil-surround
                       evil-visualstar
-                      ;framemove ;; TODO(harry) No longer available on melpa?
                       go-mode
                       goto-last-change
-                      haskell-mode
-                      htmlize
                       ivy
                       less-css-mode
                       lua-mode
-                      magit
                       markdown-mode
                       mustache-mode
                       noflet ; Replacement for the deprecated flet macro - see
@@ -59,18 +49,17 @@
                       org-download
                       org-mac-link
                       paradox ; Better package menu
-                      projectile ; This is only used by counsel, which uses it to find the repo root directory
+                      projectile ; This is only used by counsel, which uses it
+                                 ; to find the repo root directory
                       protobuf-mode
                       quelpa
                       quelpa-use-package
                       rainbow-delimiters
-                      ruby-electric ; Insert matching delimiters; unindent end blocks after you type them.
                       scss-mode
                       smartparens
                       swiper
                       typescript-mode
                       undo-tree
-                      wcheck-mode
                       web-mode
                       which-key
                       yaml-mode
@@ -214,8 +203,10 @@
 (setq kill-buffer-query-functions (remq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
 ;; Use amx to show the M-x command prompt. It has better completion support than the default M-x.
-(require 'amx)
-(amx-mode 1)
+(use-package amx
+  :ensure t
+  :config
+  (amx-mode 1))
 
 ;; RecentF mode is the Emacs minor mode used when opening files via C-x C-f.
 (require 'recentf)
@@ -387,14 +378,6 @@
 (require 'evil-args)
 (define-key evil-inner-text-objects-map "a" 'evil-inner-arg)
 (define-key evil-outer-text-objects-map "a" 'evil-outer-arg)
-
-;; gx to swap two text objects:
-(require 'evil-exchange)
-(evil-exchange-install)
-
-(require 'evil-numbers)
-(define-key evil-normal-state-map (kbd "C-a") 'evil-numbers/inc-at-pt)
-(define-key evil-normal-state-map (kbd "C-S-a") 'evil-numbers/dec-at-pt)
 
 
 ;;
@@ -1119,10 +1102,7 @@
 ;; source code.
 (setq find-function-C-source-directory "~/workspace/external_codebases/emacs/src")
 
-;; Switch across both windows (i.e. panes/splits) and frames (i.e. OS windows)!
-;; TODO(harry) Find a replacement package; emacs says it can't find this package...
-;(require 'framemove)
-;(setq framemove-hook-into-windmove t)
+;; Switch across windows (i.e. panes/splits)
 (define-key evil-normal-state-map (kbd "C-h") (lambda () (interactive) (ignore-errors (evil-window-left 1))))
 (define-key evil-normal-state-map (kbd "C-j") (lambda () (interactive) (ignore-errors (evil-window-down 1))))
 (define-key evil-normal-state-map (kbd "C-k") (lambda () (interactive) (ignore-errors (evil-window-up 1))))
@@ -1196,8 +1176,10 @@
 (define-key evil-visual-state-map (kbd "Z") 'avy-goto-line)
 
 ;; Open links vimium-style with `o` in various help-like modes
-(require 'ace-link)
-(ace-link-setup-default)
+(use-package ace-link
+  :ensure t
+  :config
+  (ace-link-setup-default))
 
 ;; Company mode for autocompletion
 (add-hook 'prog-mode-hook #'company-mode)
@@ -1242,7 +1224,7 @@
 (evil-leader/set-key
   "Ca" 'copilot-chat-add-current-buffer
   "Cc" 'copilot-chat-display
-  "Ce" 'copilot-chat-explain-symbol-at-line)
+  "Ce" 'copilot-chat-explain)
 
 
 ;; Generic insertion of TODO et al
