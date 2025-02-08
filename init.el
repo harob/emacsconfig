@@ -1048,7 +1048,8 @@
 ;; (require 'magit-config)
 (use-package magit :ensure t :defer t
   :config
-  (setq magit-commit-show-diff nil))
+  (setq magit-commit-show-diff nil)
+  (add-hook 'git-commit-mode-hook 'evil-insert-state))
 
 
 ;;
