@@ -343,7 +343,8 @@
   "SPC i" "Insert"
   "SPC r" "Render"
   "SPC v" "View"
-  "SPC w" "Window")
+  "SPC w" "Window"
+  "SPC C" "Copilot chat")
 
 (eval-after-load 'evil
   '(progn
@@ -1059,6 +1060,9 @@
 
 ; TODO(harry Magit mode is pretty broken for me currently. Restart from scratch
 ;; (require 'magit-config)
+(use-package magit :ensure t :defer t
+  :config
+  (setq magit-commit-show-diff nil))
 
 
 ;;
@@ -1231,6 +1235,14 @@
 (add-hook 'prog-mode-hook 'copilot-mode)
 (define-key copilot-completion-map (kbd "A-<tab>") 'copilot-accept-completion)
 (define-key copilot-completion-map (kbd "A-TAB") 'copilot-accept-completion)
+(define-key copilot-completion-map (kbd "A-S-<tab>") 'copilot-accept-completion-by-word)
+(define-key copilot-completion-map (kbd "A-S-TAB") 'copilot-accept-completion-by-word)
+
+(use-package copilot-chat :ensure t :defer t)
+(evil-leader/set-key
+  "Ca" 'copilot-chat-add-current-buffer
+  "Cc" 'copilot-chat-display
+  "Ce" 'copilot-chat-explain-symbol-at-line)
 
 
 ;; Generic insertion of TODO et al
