@@ -326,16 +326,22 @@
   "vt" (lambda () (interactive) (find-file "~/Dropbox/notes/tasks.org") (org-mode))
   "vz" (lambda () (interactive) (find-file "~/dotfiles/.zshrc")))
 
-;; TODO(harry) Write a macro to prepend the evil-leader key instead of manually specifying SPC.
-(which-key-add-key-based-replacements
-  "SPC c" "Comment"
-  "SPC e" "Evaluate"
-  "SPC g" "Git"
-  "SPC i" "Insert"
-  "SPC r" "Render"
-  "SPC v" "View"
-  "SPC w" "Window"
-  "SPC C" "Copilot chat")
+(defmacro which-key-with-evil-leader (&rest key-desc-pairs)
+  `(progn
+     ,@(mapcar (lambda (pair)
+                 `(which-key-add-key-based-replacements
+                    (concat evil-leader/leader " " ,(car pair)) ,(cadr pair)))
+               (seq-partition key-desc-pairs 2))))
+
+(which-key-with-evil-leader
+  "c" "Comment"
+  "e" "Evaluate"
+  "g" "Git"
+  "i" "Insert"
+  "r" "Render"
+  "v" "View"
+  "w" "Window"
+  "C" "Copilot chat")
 
 (eval-after-load 'evil
   '(progn
