@@ -288,9 +288,7 @@
   ;; `forward-paragraph`, which uses these variables.
   (let ((paragraph-start "\f\\|[     ]*$")
         (paragraph-separate "[  ]*$"))
-    ;; TODO(harry) Change to the following after upgrading evil:
-    ;; (evil-select-an-object 'evil-paragraph beg end type count)))
-    (evil-an-object-range count beg end type #'evil-move-paragraph nil nil t)))
+    (evil-select-an-object 'evil-paragraph beg end type count)))
 
 (define-key evil-outer-text-objects-map "p" 'evil-paragraph-from-newlines)
 (define-key evil-outer-text-objects-map "P" 'evil-a-paragraph)
@@ -326,14 +324,14 @@
   "vt" (lambda () (interactive) (find-file "~/Dropbox/notes/tasks.org") (org-mode))
   "vz" (lambda () (interactive) (find-file "~/dotfiles/.zshrc")))
 
-(defmacro which-key-with-evil-leader (&rest key-desc-pairs)
+(defmacro my-which-key-with-evil-leader (&rest key-desc-pairs)
   `(progn
      ,@(mapcar (lambda (pair)
                  `(which-key-add-key-based-replacements
                     (concat evil-leader/leader " " ,(car pair)) ,(cadr pair)))
                (seq-partition key-desc-pairs 2))))
 
-(which-key-with-evil-leader
+(my-which-key-with-evil-leader
   "c" "Comment"
   "e" "Evaluate"
   "g" "Git"
@@ -641,8 +639,6 @@
 (setq ivy-wrap t)
 (setq ivy-re-builders-alist '((t . ivy--regex-ignore-order)))
 (setq ivy-use-selectable-prompt t)
-;; TODO(harry) Remove some of the default "^"'s in this var:
-;; (setq ivy-initial-inputs-alist )
 (define-key ivy-mode-map (kbd "C-h") 'backward-delete-char)
 (define-key ivy-mode-map (kbd "C-w") 'backward-delete-word)
 
@@ -755,7 +751,7 @@
 
 
 ;;
-;; Org mode, for TODOs and note taking.
+;; Org mode, for GTD and note taking.
 ;;
 
 (require 'org-mode-personal)
@@ -930,7 +926,7 @@
   "ii" 'indent-html-buffer
   "rr" 'preview-html)
 
-;; TODO(harry) If this doesn't work out try multi-web-mode or mmm-mode. See:
+;; NOTE(harry) If this doesn't work out try multi-web-mode or mmm-mode. See:
 ;; http://www.emacswiki.org/emacs/MultipleModes
 ;; http://stackoverflow.com/questions/4462393/how-do-i-configure-emacs-for-editing-html-files-that-contain-javascript
 (require 'web-mode)
@@ -1047,7 +1043,8 @@
 ;; Magit - for staging hunks and making commits to git
 ;;
 
-; TODO(harry Magit mode is pretty broken for me currently. Restart from scratch
+; NOTE(harry Magit mode is pretty broken for me currently. So I'm restarting
+; from scratch
 ;; (require 'magit-config)
 (use-package magit :ensure t :defer t
   :config

@@ -142,12 +142,6 @@
 ;; Use Gmail's default styling, so I can copy exported HTML into the Compose window with no reformatting:
 (setq org-html-head "<style type=\"text/css\">body {font-size: small; font-family: arial, helvetica, sans-serif; line-height: 1.5;}</style>")
 
-(defun my-org-meta-return (&optional arg)
-  (message "my-org-meta-return" arg)
-  ;; TODO(harry) Trim whitespace from the start of the new heading
-  nil)
-(add-hook 'org-metareturn-hook 'my-org-meta-return)
-
 ;; Workaround for global-auto-revert-mode apparently not working for org buffers when it's called upfront on
 ;; startup:
 (add-hook 'org-mode-hook (lambda () (global-auto-revert-mode)))
