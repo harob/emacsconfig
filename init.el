@@ -1226,6 +1226,7 @@
 
 (use-package copilot-chat :after (magit) :ensure t :defer t)
 (evil-leader/set-key
+  "CC" 'copilot-chat-transient           ; Show menu
   "Ca" 'copilot-chat-add-current-buffer  ; Add the current buffer to the Copilot chat list
   "Cc" 'copilot-chat-display             ; Display the Copilot chat window
   "Ce" 'copilot-chat-explain             ; Explain the selected region using Copilot chat
