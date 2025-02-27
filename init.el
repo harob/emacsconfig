@@ -1224,7 +1224,7 @@
 (define-key copilot-completion-map (kbd "A-S-<tab>") 'copilot-accept-completion-by-word)
 (define-key copilot-completion-map (kbd "A-S-TAB") 'copilot-accept-completion-by-word)
 
-(use-package copilot-chat :ensure t :defer t)
+(use-package copilot-chat :after (magit) :ensure t :defer t)
 (evil-leader/set-key
   "Ca" 'copilot-chat-add-current-buffer  ; Add the current buffer to the Copilot chat list
   "Cc" 'copilot-chat-display             ; Display the Copilot chat window
@@ -1255,7 +1255,7 @@
   (cond
    ((member major-mode '(emacs-lisp-mode lisp-mode scheme-mode clojure-mode))
     ";;")
-   ((member major-mode '(python-mode ruby-mode sh-mode))
+   ((member major-mode '(python-mode ruby-mode sh-mode conf-toml-mode))
     "#")
    (t "//") ; Default
    ))
