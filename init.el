@@ -1293,13 +1293,11 @@
   (add-to-list 'eglot-stay-out-of 'flaymake))
 (add-hook 'python-mode-hook 'eglot-ensure)
 
-;; FIXME(harry) This is not working for some reason
-(add-hook 'python-base-mode-hook 'flymake-mode)
-(setq python-flymake-command '("ruff" "--quiet" "--stdin-filename=stdin" "-"))
-(add-hook 'eglot-managed-mode-hook
-          (lambda () (when (derived-mode-p 'python-base-mode)
-                       (add-hook 'flymake-diagnostic-functions 'python-flymake nil t))))
-(setq flymake-no-changes-timeout nil)
+(use-package flymake-ruff
+  :ensure t
+  :hook (eglot-managed-mode . flymake-ruff-load))
+;; This makes flymake only run on save:
+;; (setq flymake-no-changes-timeout nil)
 
 (use-package reformatter :ensure t :defer t
   :hook
