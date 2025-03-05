@@ -1291,14 +1291,28 @@
   :ensure t
   :config
   (add-to-list 'eglot-server-programs '(python-mode . ("jedi-language-server")))
-  (add-to-list 'eglot-stay-out-of 'flaymake))
-(add-hook 'python-mode-hook 'eglot-ensure)
+  ;; (add-to-list 'eglot-stay-out-of 'flymake)
+  :hook (python-mode . eglot-ensure))
 
 (use-package flymake-ruff
   :ensure t
   :hook (eglot-managed-mode . flymake-ruff-load))
 ;; This makes flymake only run on save:
 ;; (setq flymake-no-changes-timeout nil)
+;; This would be nice, but apparently it's only in Emacs 30:
+;; (setq flymake-show-diagnostics-at-end-of-line t)
+
+(use-package flymake-cursor :after (flymake) :ensure t
+  :hook (python-mode-hook . flymake-cursor-mode))
+(add-hook 'eglot-managed-mode-hook
+          (lambda ()
+            (message "Setting up eglot-managed-mode-hook")
+            ;; Show flymake diagnostics first.
+            (setq eldoc-documentation-functions
+                  (cons #'flymake-eldoc-function
+                        (remove #'flymake-eldoc-function eldoc-documentation-functions)))
+            ;; Show all eldoc feedback.
+            (setq eldoc-documentation-strategy #'eldoc-documentation-compose)))
 
 (use-package reformatter :ensure t :defer t
   :hook
@@ -1318,3 +1332,11 @@
                   :files ("*.el")))
 ;; FIXME(harry)
 (add-to-list 'pytest-project-names "kirin test")
+
+(defun ruff-fix-imports ()
+  "Run `ruff check` on the current file with `--select I --fix`."
+  (interactive)
+  (if buffer-file-name
+      (let ((command (format "ruff check %s --select I --fix" (shell-quote-argument buffer-file-name))))
+        (shell-command command))
+    (message "No file is associated with the current buffer.")))
