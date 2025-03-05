@@ -237,10 +237,16 @@
 ;; Evil mode -- Vim keybindings for Emacs.
 ;;
 
+(require 'evil)
+;; Use the "symbol" as the text object for `*` and `#` rather than the "word"
+;; (e.g. the full variable in Python including underscores, rather than the part
+;; between underscores). This corresponds to the `o` text object over `w`
+(setq evil-symbol-word-search t)
 (setq evil-want-C-u-scroll t)
 (setq evil-undo-system 'undo-tree)
-(require 'evil)
+
 (require 'evil-nerd-commenter)
+
 (require 'goto-last-change)
 
 (require 'evil-leader) ; Provide configuration functions for assigning actions to a Vim leader key.
