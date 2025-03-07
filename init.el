@@ -13,19 +13,12 @@
   (package-refresh-contents))
 
 (defvar my-packages '(
-                      avy
                       browse-at-remote
-                      buffer-move
                       cider
                       clojure-mode
                       color-theme-sanityinc-tomorrow
                       company
                       counsel
-                      dash
-                      diminish
-                      dumb-jump ; Go-to-definition for all languages, using rg
-                      editorconfig ; Dependency of copilot
-                      elisp-slime-nav
                       evil-args
                       evil-exchange
                       evil-leader
@@ -590,7 +583,7 @@
   "Try to ensure that osx keybindings always have priority."
   (if (not (eq (car (car minor-mode-map-alist)) 'osx-keys-minor-mode))
       (let ((osx-keys (assq 'osx-keys-minor-mode minor-mode-map-alist)))
-        (assq-delete-all 'osx-keys-minor-mode minor-mode-map-alist)
+        (setq minor-mode-map-alist (assq-delete-all 'osx-keys-minor-mode minor-mode-map-alist))
         (add-to-list 'minor-mode-map-alist osx-keys))))
 (ad-activate 'load)
 
@@ -792,16 +785,16 @@
 ;; To see which minor modes you have loaded and what their modeline strings are: (message minor-mode-alist)
 ;;
 
-(require 'diminish)
-(diminish 'visual-line-mode "")
-(diminish 'global-whitespace-mode "")
-;(diminish 'global-visual-line-mode "")
-(diminish 'auto-fill-function "")
-(diminish 'yas-minor-mode "")
-(diminish 'osx-keys-minor-mode "")
-(diminish 'undo-tree-mode "")
-(diminish 'ivy-mode "")
-(diminish 'company-mode "")
+(use-package diminish :ensure t
+  :config
+  (diminish 'visual-line-mode "")
+  (diminish 'global-whitespace-mode "")
+  (diminish 'auto-fill-function "")
+  (diminish 'yas-minor-mode "")
+  (diminish 'osx-keys-minor-mode "")
+  (diminish 'undo-tree-mode "")
+  (diminish 'ivy-mode "")
+  (diminish 'company-mode ""))
 
 
 ;; Markdown
@@ -1127,11 +1120,12 @@
 (define-key evil-normal-state-map (kbd "C-k") (lambda () (interactive) (ignore-errors (evil-window-up 1))))
 (define-key evil-normal-state-map (kbd "C-l") (lambda () (interactive) (ignore-errors (evil-window-right 1))))
 
-(require 'buffer-move)
-(global-set-key (kbd "C-S-k") 'buf-move-up)
-(global-set-key (kbd "C-S-j") 'buf-move-down)
-(global-set-key (kbd "C-S-h") 'buf-move-left)
-(global-set-key (kbd "C-S-l") 'buf-move-right)
+(use-package buffer-move
+  :ensure t
+  :bind (("C-S-k" . buf-move-up)
+         ("C-S-j" . buf-move-down)
+         ("C-S-h" . buf-move-left)
+         ("C-S-l" . buf-move-right)))
 
 (define-key evil-normal-state-map (kbd "H") 'evil-first-non-blank)
 (define-key evil-visual-state-map (kbd "H") 'evil-first-non-blank)
@@ -1154,9 +1148,12 @@
 (define-key evil-normal-state-map "Y" 'copy-to-end-of-line)
 
 ;; Elisp go-to-definition with M-. and back again with M-,
-(autoload 'elisp-slime-nav-mode "elisp-slime-nav")
-(add-hook 'emacs-lisp-mode-hook (lambda () (elisp-slime-nav-mode t)))
-(eval-after-load 'elisp-slime-nav '(diminish 'elisp-slime-nav-mode " SN"))
+(use-package elisp-slime-nav :ensure t :defer t
+  :hook
+  (emacs-lisp-mode-hook . elisp-slime-nav-mode)
+  (ielm-mode-hook . elisp-slime-nav-mode)
+  :config
+  (diminish 'elisp-slime-nav-mode " SN"))
 
 (setq tramp-default-method "pscp")
 
@@ -1179,20 +1176,24 @@
       (kill-new filename)
       (message "Copied buffer file name '%s' to the clipboard." filename))))
 
-(require 'dumb-jump)
-; Forcing the use of ripgrep because for some reason the default git-grep doesn't work
-(setq dumb-jump-force-searcher 'rg)
-(add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
+;; Go-to-definition for all languages, using rg
+(use-package dumb-jump :ensure t :defer t
+  :config
+  ;; Forcing the use of ripgrep because for some reason the default git-grep doesn't work
+  (setq dumb-jump-force-searcher 'rg)
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
 
-(require 'avy)
-(setq avy-keys (number-sequence ?a ?z))
-(setq avy-all-windows 'all-frames)
-(evil-leader/set-key "z" 'avy-goto-word-0)
-(define-key evil-motion-state-map (kbd "z") 'avy-goto-word-0)
-(define-key evil-visual-state-map (kbd "z") 'avy-goto-word-0)
-(evil-leader/set-key "Z" 'avy-goto-line)
-(define-key evil-motion-state-map (kbd "Z") 'avy-goto-line)
-(define-key evil-visual-state-map (kbd "Z") 'avy-goto-line)
+(use-package avy
+  :ensure t
+  :config
+  (setq avy-keys (number-sequence ?a ?z)
+        avy-all-windows 'all-frames)
+  (evil-leader/set-key "z" 'avy-goto-word-0)
+  (define-key evil-motion-state-map (kbd "z") 'avy-goto-word-0)
+  (define-key evil-visual-state-map (kbd "z") 'avy-goto-word-0)
+  (evil-leader/set-key "Z" 'avy-goto-line)
+  (define-key evil-motion-state-map (kbd "Z") 'avy-goto-line)
+  (define-key evil-visual-state-map (kbd "Z") 'avy-goto-line))
 
 ;; Open links vimium-style with `o` in various help-like modes
 (use-package ace-link
@@ -1344,9 +1345,9 @@
 ;;                    :files ("*.el")))
 
 (add-to-list 'load-path "~/workspace/external_codebases/copilot.el")
-(require 'dash)
-(require 's)
-(require 'editorconfig)
+(use-package dash :ensure t)
+(use-package s :ensure t)
+(use-package editorconfig :ensure t)
 (require 'copilot)
 
 (add-hook 'prog-mode-hook 'copilot-mode)
