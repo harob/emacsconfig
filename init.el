@@ -19,11 +19,6 @@
                       color-theme-sanityinc-tomorrow
                       company
                       counsel
-                      go-mode
-                      goto-last-change
-                      ivy
-                      less-css-mode
-                      lua-mode
                       markdown-mode
                       mustache-mode
                       noflet ; Replacement for the deprecated flet macro - see
@@ -40,7 +35,6 @@
                       rainbow-delimiters
                       scss-mode
                       smartparens
-                      swiper
                       typescript-mode
                       undo-tree
                       web-mode
@@ -239,7 +233,7 @@
   (define-key evil-normal-state-map " cc" 'evilnc-comment-or-uncomment-lines)
   (define-key evil-visual-state-map " cc" 'evilnc-comment-operator))
 
-(require 'goto-last-change)
+(use-package goto-last-change :ensure t)
 
 ;; Provide configuration functions for assigning actions to a Vim leader key.
 (use-package evil-leader :ensure t
@@ -626,22 +620,24 @@
 ;; Filename completions (i.e. CTRL-P or CMD-T in other editors)
 ;;
 
-(require 'ivy)
-(ivy-mode 1)
-(setq ivy-use-virtual-buffers t)
-(setq enable-recursive-minibuffers t)
-(setq ivy-height 20)
-(setq ivy-wrap t)
-(setq ivy-re-builders-alist '((t . ivy--regex-ignore-order)))
-(setq ivy-use-selectable-prompt t)
-(define-key ivy-mode-map (kbd "C-h") 'backward-delete-char)
-(define-key ivy-mode-map (kbd "C-w") 'backward-delete-word)
+(use-package ivy :ensure t
+  :config
+  (ivy-mode 1)
+  (setq ivy-use-virtual-buffers t)
+  (setq enable-recursive-minibuffers t)
+  (setq ivy-height 20)
+  (setq ivy-wrap t)
+  (setq ivy-re-builders-alist '((t . ivy--regex-ignore-order)))
+  (setq ivy-use-selectable-prompt t)
+  (define-key ivy-mode-map (kbd "C-h") 'backward-delete-char)
+  (define-key ivy-mode-map (kbd "C-w") 'backward-delete-word))
 
-(require 'swiper)
-(define-key ivy-minibuffer-map [escape] 'minibuffer-keyboard-quit)
-(define-key swiper-map [escape] 'minibuffer-keyboard-quit)
-(define-key swiper-map (kbd "C-h") 'backward-delete-char)
-(define-key swiper-map (kbd "C-w") 'backward-delete-word)
+(use-package swiper :ensure t :after (ivy)
+  :config
+  (define-key ivy-minibuffer-map [escape] 'minibuffer-keyboard-quit)
+  (define-key swiper-map [escape] 'minibuffer-keyboard-quit)
+  (define-key swiper-map (kbd "C-h") 'backward-delete-char)
+  (define-key swiper-map (kbd "C-w") 'backward-delete-word))
 
 (setq counsel-fzf-cmd "fzf --exact --filter=\"%s\"")
 
@@ -965,9 +961,9 @@
 ;; Go mode, for writing Go code
 ;;
 
-(with-eval-after-load "go-mode"
-  (evil-define-key 'normal go-mode-map
-    "K" 'godef-describe))
+(use-package go-mode :ensure t :defer t
+  :config
+  (evil-define-key 'normal go-mode-map "K" 'godef-describe))
 
 (defun go-save-and-compile-fn (command)
   "Returns a function for the purpose of binding to a key which saves the current buffer and then
