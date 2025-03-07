@@ -23,12 +23,9 @@
                       counsel
                       dash
                       diminish
-                      doom-modeline
                       dumb-jump ; Go-to-definition for all languages, using rg
                       editorconfig ; Dependency of copilot
                       elisp-slime-nav
-                      evil
-                      evil-anzu
                       evil-args
                       evil-exchange
                       evil-leader
@@ -219,7 +216,7 @@
 
 ;; Save buffers whenever they lose focus.
 ;; This obviates the need to hit the Save key thousands of times a day. Inspired by http://goo.gl/2z0g5O.
-(add-hook 'focus-out-hook 'util/save-buffer-if-dirty) ; This hook is only available in Emacs 24.4+.
+(add-hook 'focus-out-hook 'util/save-buffer-if-dirty)
 (defadvice windmove-up (before other-window-now activate) (util/save-buffer-if-dirty))
 (defadvice windmove-down (before other-window-now activate) (util/save-buffer-if-dirty))
 (defadvice windmove-left (before other-window-now activate) (util/save-buffer-if-dirty))
@@ -237,13 +234,19 @@
 ;; Evil mode -- Vim keybindings for Emacs.
 ;;
 
-(require 'evil)
-;; Use the "symbol" as the text object for `*` and `#` rather than the "word"
-;; (e.g. the full variable in Python including underscores, rather than the part
-;; between underscores). This corresponds to the `o` text object over `w`
-(setq evil-symbol-word-search t)
-(setq evil-want-C-u-scroll t)
-(setq evil-undo-system 'undo-tree)
+(use-package evil :ensure t
+  :init
+  (setq evil-want-C-u-scroll t)
+  :config
+  ;; Use the "symbol" as the text object for `*` and `#` rather than the "word"
+  ;; (e.g. the full variable in Python including underscores, rather than the part
+  ;; between underscores). This corresponds to the `o` text object over `w`
+  (setq evil-symbol-word-search t)
+  (setq evil-undo-system 'undo-tree)
+  (evil-mode t))
+
+;; Use M-u since I use vim's C-u for page-up
+(global-set-key (kbd "M-u") 'universal-argument)
 
 (require 'evil-nerd-commenter)
 
@@ -256,8 +259,6 @@
 ;; Ensure evil-leader works in non-editing modes like magit. This is referenced from evil-leader's README.
 (setq evil-leader/no-prefix-mode-rx '("magit-.*-mode"))
 (global-evil-leader-mode)
-
-(evil-mode t)
 
 (require 'which-key)
 (which-key-mode)
@@ -579,7 +580,9 @@
 
 (define-minor-mode osx-keys-minor-mode
   "A minor-mode for emulating osx keyboard shortcuts."
-  t " osx" osx-keys-minor-mode-map)
+  :global t
+  :lighter " osx"
+  :keymap osx-keys-minor-mode-map)
 
 (osx-keys-minor-mode t)
 
@@ -1252,10 +1255,14 @@
 
 
 ;; Custom modeline -- run M-x nerd-icons-install-fonts to install the fonts
-(require 'evil-anzu) ;; To display search result count in modeline
-(global-anzu-mode t)
-(require 'doom-modeline)
-(doom-modeline-mode 1)
+(use-package evil-anzu :ensure t
+  :config
+  ;; To display search result count in modeline
+  (global-anzu-mode t))
+
+(use-package doom-modeline :after (evil-anzu) :ensure t
+  :config
+  (doom-modeline-mode 1))
 
 
 ;;
@@ -1363,5 +1370,4 @@
 ;; Main commands: gptel-send, gptel-rewrite, gptel-menu
 (use-package gptel :ensure t :defer t
   :config
-  ;; NOTE(harry) This requires Org 9.7+, which comes with Emacs 30.
   (setq gptel-org-branching-context t))
