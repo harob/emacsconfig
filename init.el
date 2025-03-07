@@ -19,13 +19,6 @@
                       color-theme-sanityinc-tomorrow
                       company
                       counsel
-                      evil-args
-                      evil-exchange
-                      evil-leader
-                      evil-matchit
-                      evil-nerd-commenter
-                      evil-surround
-                      evil-visualstar
                       go-mode
                       goto-last-change
                       ivy
@@ -241,17 +234,22 @@
 ;; Use M-u since I use vim's C-u for page-up
 (global-set-key (kbd "M-u") 'universal-argument)
 
-(require 'evil-nerd-commenter)
+(use-package evil-nerd-commenter :ensure t
+  :config
+  (define-key evil-normal-state-map " cc" 'evilnc-comment-or-uncomment-lines)
+  (define-key evil-visual-state-map " cc" 'evilnc-comment-operator))
 
 (require 'goto-last-change)
 
-(require 'evil-leader) ; Provide configuration functions for assigning actions to a Vim leader key.
-(setq evil-leader/leader "SPC")
-;; Access leader with C-SPC in insert mode:
-(setq evil-leader/in-all-states t)
-;; Ensure evil-leader works in non-editing modes like magit. This is referenced from evil-leader's README.
-(setq evil-leader/no-prefix-mode-rx '("magit-.*-mode"))
-(global-evil-leader-mode)
+;; Provide configuration functions for assigning actions to a Vim leader key.
+(use-package evil-leader :ensure t
+  :config
+  (setq evil-leader/leader "SPC")
+  ;; Access leader with C-SPC in insert mode:
+  (setq evil-leader/in-all-states t)
+  ;; Ensure evil-leader works in non-editing modes like magit. This is referenced from evil-leader's README.
+  (setq evil-leader/no-prefix-mode-rx '("magit-.*-mode"))
+  (global-evil-leader-mode))
 
 (require 'which-key)
 (which-key-mode)
@@ -359,29 +357,24 @@
                   (kbd "C-p") 'previous-line
                   (kbd "C-n") 'next-line)
 
-(eval-after-load 'evil
-  '(progn
-     (define-key evil-normal-state-map " cc" 'evilnc-comment-or-uncomment-lines)
-     (define-key evil-visual-state-map " cc" 'evilnc-comment-operator)))
+(use-package evil-surround :ensure t
+  :config
+  (evil-define-key 'visual evil-surround-mode-map "s" 'evil-surround-region)
+  (evil-define-key 'visual evil-surround-mode-map "gs" 'evil-Surround-region)
+  (global-evil-surround-mode 1))
 
-(require 'evil-surround)
-(evil-define-key 'visual evil-surround-mode-map "s" 'evil-surround-region)
-(evil-define-key 'visual evil-surround-mode-map "gs" 'evil-Surround-region)
-(define-global-minor-mode global-surround-mode-with-exclusions global-evil-surround-mode
-  (lambda ()
-    (when (not (memq major-mode (list 'magit-status-mode)))
-      (evil-surround-mode 1))))
-(global-surround-mode-with-exclusions 1)
+(use-package evil-visualstar :ensure t
+  :config
+  (global-evil-visualstar-mode))
 
-(require 'evil-visualstar)
-(global-evil-visualstar-mode)
+(use-package evil-matchit :ensure t
+  :config
+  (global-evil-matchit-mode 1))
 
-(require 'evil-matchit)
-(global-evil-matchit-mode 1)
-
-(require 'evil-args)
-(define-key evil-inner-text-objects-map "a" 'evil-inner-arg)
-(define-key evil-outer-text-objects-map "a" 'evil-outer-arg)
+(use-package evil-args :ensure t
+  :config
+  (define-key evil-inner-text-objects-map "a" 'evil-inner-arg)
+  (define-key evil-outer-text-objects-map "a" 'evil-outer-arg))
 
 
 ;;
