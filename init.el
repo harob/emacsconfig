@@ -1212,40 +1212,6 @@
 (add-to-list 'auto-mode-alist '("\\.tsx$" . typescript-mode))
 
 
-;; Github Copilot support
-;; Run `M-x copilot-login` first. Check `M-x copilot-diagnose` if there's an issue.
-
-;; NOTE(harry) This doesn't work atm because it requires node v18+ and I'm
-;; pinned to v16. For now I'm just installing it locally manually with
-;; `git clone https://github.com/zerolfx/copilot.el.git`
-;; (use-package copilot
-;;   :quelpa (copilot :fetcher github
-;;                    :repo "copilot-emacs/copilot.el"
-;;                    :branch "main"
-;;                    :files ("*.el")))
-
-(add-to-list 'load-path "~/workspace/external_codebases/copilot.el")
-(require 'dash)
-(require 's)
-(require 'editorconfig)
-(require 'copilot)
-
-(add-hook 'prog-mode-hook 'copilot-mode)
-(define-key copilot-completion-map (kbd "A-<tab>") 'copilot-accept-completion)
-(define-key copilot-completion-map (kbd "A-TAB") 'copilot-accept-completion)
-(define-key copilot-completion-map (kbd "A-S-<tab>") 'copilot-accept-completion-by-word)
-(define-key copilot-completion-map (kbd "A-S-TAB") 'copilot-accept-completion-by-word)
-
-(use-package copilot-chat :after (magit) :ensure t :defer t)
-(evil-leader/set-key
-  "CC" 'copilot-chat-transient           ; Show menu
-  "Ca" 'copilot-chat-add-current-buffer  ; Add the current buffer to the Copilot chat list
-  "Cc" 'copilot-chat-display             ; Display the Copilot chat window
-  "Ce" 'copilot-chat-explain             ; Explain the selected region using Copilot chat
-  "Cp" 'copilot-chat-custom-prompt-selection)  ; Send a custom prompt followed by
-                                               ; the selected region to Copilot chat
-
-
 ;; Generic insertion of TODO et al
 
 (defun insert-todo ()
@@ -1352,3 +1318,50 @@
       (let ((command (format "ruff check %s --select I --fix" (shell-quote-argument buffer-file-name))))
         (shell-command command))
     (message "No file is associated with the current buffer.")))
+
+
+;;
+;; AI
+;;
+
+;; Github Copilot support
+;; Run `M-x copilot-login` first. Check `M-x copilot-diagnose` if there's an issue.
+
+;; NOTE(harry) This doesn't work atm because it requires node v18+ and I'm
+;; pinned to v16. For now I'm just installing it locally manually with
+;; `git clone https://github.com/zerolfx/copilot.el.git`
+;; (use-package copilot
+;;   :quelpa (copilot :fetcher github
+;;                    :repo "copilot-emacs/copilot.el"
+;;                    :branch "main"
+;;                    :files ("*.el")))
+
+(add-to-list 'load-path "~/workspace/external_codebases/copilot.el")
+(require 'dash)
+(require 's)
+(require 'editorconfig)
+(require 'copilot)
+
+(add-hook 'prog-mode-hook 'copilot-mode)
+(define-key copilot-completion-map (kbd "A-<tab>") 'copilot-accept-completion)
+(define-key copilot-completion-map (kbd "A-TAB") 'copilot-accept-completion)
+(define-key copilot-completion-map (kbd "A-S-<tab>") 'copilot-accept-completion-by-word)
+(define-key copilot-completion-map (kbd "A-S-TAB") 'copilot-accept-completion-by-word)
+
+(use-package copilot-chat :after (magit) :ensure t :defer t)
+(evil-leader/set-key
+  "CC" 'copilot-chat-transient           ; Show menu
+  "Ca" 'copilot-chat-add-current-buffer  ; Add the current buffer to the Copilot chat list
+  "Cc" 'copilot-chat-display             ; Display the Copilot chat window
+  "Ce" 'copilot-chat-explain             ; Explain the selected region using Copilot chat
+  "Cp" 'copilot-chat-custom-prompt-selection)  ; Send a custom prompt followed by
+                                               ; the selected region to Copilot chat
+
+;; To set up gptel, add this line to ~/.authinfo:
+;; machine api.openai.com login apikey password <openai dev token>
+;;
+;; Main commands: gptel-send, gptel-rewrite, gptel-menu
+(use-package gptel :ensure t :defer t
+  :config
+  ;; NOTE(harry) This requires Org 9.7+, which comes with Emacs 30.
+  (setq gptel-org-branching-context t))
