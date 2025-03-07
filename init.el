@@ -656,6 +656,12 @@
 
 (setq counsel-fzf-cmd "fzf --exact --filter=\"%s\"")
 
+;; Allows batch find-and-replace with
+;; counsel-rg -> ivy-occur -> ivy-wgrep-change-to-wgrep-mode -> C-x C-s
+(use-package wgrep :ensure t :defer t
+  :config
+  (setq wgrep-auto-save-buffer t))
+
 
 ;;
 ;; Dired mode - using the Emacs file browser.
