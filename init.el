@@ -1322,36 +1322,37 @@
 ;;
 
 ;; Github Copilot support
-;; Run `M-x copilot-login` first. Check `M-x copilot-diagnose` if there's an issue.
+;; Run `M-x copilot-install-server` then `M-x copilot-login` first.
+;; Check `M-x copilot-diagnose` if there's an issue.
 
-;; NOTE(harry) This doesn't work atm because it requires node v18+ and I'm
-;; pinned to v16. For now I'm just installing it locally manually with
-;; `git clone https://github.com/zerolfx/copilot.el.git`
-;; (use-package copilot
-;;   :quelpa (copilot :fetcher github
-;;                    :repo "copilot-emacs/copilot.el"
-;;                    :branch "main"
-;;                    :files ("*.el")))
+;; copilot is broken by default because the Github Copilot Server requires node
+;; 18, but my work repo forces node 16. I'm hacking it by editing
+;; ~/.emacs.d/.cache/copilot/bin/copilot-language-server to use
+;; the homebrew-installed version, currently
+;; #!/opt/homebrew/Cellar/node/23.9.0/bin/node
+(use-package copilot
+  :quelpa
+  (copilot :fetcher github
+           :repo "copilot-emacs/copilot.el"
+           :branch "main"
+           :files ("*.el"))
+  :config
+  (add-hook 'prog-mode-hook 'copilot-mode)
+  :bind
+  (:map copilot-completion-map
+        ("A-<tab>" . 'copilot-accept-completion)
+        ("A-TAB" . 'copilot-accept-completion)
+        ("A-S-<tab>" . 'copilot-accept-completion-by-word)
+        ("A-S-TAB" . 'copilot-accept-completion-by-word)))
 
-(add-to-list 'load-path "~/workspace/external_codebases/copilot.el")
-(use-package dash :ensure t)
-(use-package s :ensure t)
-(use-package editorconfig :ensure t)
-(require 'copilot)
-
-(add-hook 'prog-mode-hook 'copilot-mode)
-(define-key copilot-completion-map (kbd "A-<tab>") 'copilot-accept-completion)
-(define-key copilot-completion-map (kbd "A-TAB") 'copilot-accept-completion)
-(define-key copilot-completion-map (kbd "A-S-<tab>") 'copilot-accept-completion-by-word)
-(define-key copilot-completion-map (kbd "A-S-TAB") 'copilot-accept-completion-by-word)
-
-(use-package copilot-chat :after (magit) :ensure t :defer t)
-(evil-leader/set-key
-  "CC" 'copilot-chat-transient           ; Show menu
-  "Ca" 'copilot-chat-add-current-buffer  ; Add the current buffer to the Copilot chat list
-  "Cc" 'copilot-chat-display             ; Display the Copilot chat window
-  "Ce" 'copilot-chat-explain             ; Explain the selected region using Copilot chat
-  "Cp" 'copilot-chat-custom-prompt-selection)  ; Send a custom prompt followed by
+(use-package copilot-chat :after (magit) :ensure t :defer t
+  :config
+  (evil-leader/set-key
+    "CC" 'copilot-chat-transient           ; Show menu
+    "Ca" 'copilot-chat-add-current-buffer  ; Add the current buffer to the Copilot chat list
+    "Cc" 'copilot-chat-display             ; Display the Copilot chat window
+    "Ce" 'copilot-chat-explain             ; Explain the selected region using Copilot chat
+    "Cp" 'copilot-chat-custom-prompt-selection))  ; Send a custom prompt followed by
                                                ; the selected region to Copilot chat
 
 ;; To set up gptel, add this line to ~/.authinfo:
