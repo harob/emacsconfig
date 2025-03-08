@@ -31,8 +31,8 @@
 (setq initial-major-mode 'markdown-mode)
 
 ;; Sync environment variables.
-;; NOTE(harry) On OSX, run the commands from https://gist.github.com/mcandre/7235205 to properly set the PATH
-;; when launching from Spotlight, LaunchBar, etc.
+;; NOTE(harry) On OSX, run the commands from https://gist.github.com/mcandre/7235205
+;; to properly set the PATH when launching from Spotlight, LaunchBar, etc.
 (defun sync-env ()
   (when (memq window-system '(mac ns x))
     ;; NOTE(harry) Use ZSH instead of shell-file-name because that points to sh
@@ -1194,7 +1194,7 @@
 ;; Treemacs file browser pane -- start with M-x treemacs-projectile
 (use-package treemacs :ensure t :defer t)
 (use-package treemacs-evil :after (treemacs evil) :ensure t)
-(use-package treemacs-projectile :after (treemacs projectile) :ensure t)
+(use-package treemacs-projectile :after (treemacs projectile) :ensure t :defer t)
 
 
 ;; Custom modeline -- run M-x nerd-icons-install-fonts to install the fonts
