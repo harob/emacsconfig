@@ -1,6 +1,3 @@
-;; Largely "inspired" by philc's .emacs: https://github.com/philc/emacs-config/blob/master/.emacs
-
-
 ;;
 ;; Package management
 ;;
@@ -1326,4 +1323,5 @@
 
   :config
   (add-hook 'prog-mode-hook 'copilot-mode)
-  (setq copilot-indent-offset-warning-disable t))
+  (setq copilot-indent-offset-warning-disable t
+        copilot-max-char-warning-disabled t))
