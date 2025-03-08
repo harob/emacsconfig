@@ -47,9 +47,9 @@
 (dolist (p my-packages)
   (when (not (package-installed-p p))
     (package-install p)))
-
 (require 'use-package)
-(require 'quelpa-use-package)
+(use-package quelpa :ensure t)
+(use-package quelpa-use-package :ensure t)
 
 
 ;;
@@ -67,6 +67,7 @@
 (setq initial-scratch-message "") ; When opening a new buffer, don't show the scratch message.
 
 ;; Make it so that the scratch buffer uses markdown. By default it uses Emacs Lisp mode.
+(use-package markdown-mode :ensure t :defer t)
 (setq initial-major-mode 'markdown-mode)
 
 ;; Sync environment variables.
@@ -125,7 +126,9 @@
 (load custom-file t)
 
 ;; Colorscheme
-(load-theme 'sanityinc-tomorrow-bright t)
+(use-package color-theme-sanityinc-tomorrow :ensure t
+  :config
+  (load-theme 'sanityinc-tomorrow-bright t))
 (set-face-attribute 'default nil :family "Consolas" :height 150)
 
 ;; Whitespace & line wrapping.
@@ -214,7 +217,11 @@
 ;; Evil mode -- Vim keybindings for Emacs.
 ;;
 
-(use-package evil :ensure t
+(use-package undo-tree :ensure t
+  :config
+  (global-undo-tree-mode))
+
+(use-package evil :ensure t :after (undo-tree)
   :init
   (setq evil-want-C-u-scroll t)
   :config
@@ -245,10 +252,11 @@
   (setq evil-leader/no-prefix-mode-rx '("magit-.*-mode"))
   (global-evil-leader-mode))
 
-(require 'which-key)
-(which-key-mode)
-(setq which-key-allow-evil-operators t)
-(setq which-key-show-operator-state-maps t)
+(use-package which-key :ensure t
+  :config
+  (which-key-mode)
+  (setq which-key-allow-evil-operators t)
+  (setq which-key-show-operator-state-maps t))
 
 ;; When opening new lines, indent according to the previous line.
 (setq evil-auto-indent t)
@@ -639,13 +647,21 @@
   (define-key swiper-map (kbd "C-h") 'backward-delete-char)
   (define-key swiper-map (kbd "C-w") 'backward-delete-word))
 
-(setq counsel-fzf-cmd "fzf --exact --filter=\"%s\"")
-
 ;; Allows batch find-and-replace with
 ;; counsel-rg -> ivy-occur -> ivy-wgrep-change-to-wgrep-mode -> C-x C-s
 (use-package wgrep :ensure t :defer t
   :config
   (setq wgrep-auto-save-buffer t))
+
+;; Projectile is only used by counsel, which uses it to find the repo root directory
+(use-package projectile :ensure t
+  :config
+  (projectile-global-mode)
+  (setq projectile-completion-system 'ivy))
+
+(use-package counsel :ensure t :defer t
+  :config
+  (setq counsel-fzf-cmd "fzf --exact --filter=\"%s\""))
 
 
 ;;
@@ -698,15 +714,6 @@
     (when new
       (dired-add-file new)
       (dired-move-to-filename))))
-
-
-;;
-;; Projectile (find file from the root of the current project).
-;;
-
-(require 'projectile)
-(projectile-global-mode)
-(setq projectile-completion-system 'ivy)
 
 
 ;;
@@ -829,30 +836,30 @@
 ;; Rainbow-delimiters: highlight parentheses in rainbow colors.
 ;;
 
-(require 'rainbow-delimiters)
-(add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+(use-package rainbow-delimiters :ensure t :defer t
+  :hook (prog-mode . rainbow-delimiters-mode))
 
 
 ;;
 ;; Smartparens utility functions
 ;;
 
-(require 'smartparens)
+(use-package smartparens :ensure t
+  :config
+  (require 'smartparens-config)
+  (smartparens-global-mode t)
+  (sp-pair "'" nil :actions :rem)
+  (setq sp-autoescape-string-quote nil)
 
-(require 'smartparens-config)
-(smartparens-global-mode t)
-(sp-pair "'" nil :actions :rem)
-(setq sp-autoescape-string-quote nil)
+  (sp-with-modes '(clojure-mode)
+    (sp-local-pair "`" "`" :when '(sp-in-string-p)))
 
-(sp-with-modes '(clojure-mode)
-  (sp-local-pair "`" "`" :when '(sp-in-string-p)))
+  (sp-with-modes '(org-mode)
+    (sp-local-pair "=" nil :actions :rem)
+    (sp-local-pair "~" nil :actions :rem))
 
-(sp-with-modes '(org-mode)
-  (sp-local-pair "=" nil :actions :rem)
-  (sp-local-pair "~" nil :actions :rem))
-
-(global-set-key (kbd "M-H") 'sp-forward-slurp-sexp)
-(global-set-key (kbd "M-L") 'sp-forward-barf-sexp)
+  :bind (("M-H" . sp-forward-slurp-sexp)
+         ("M-L" . sp-forward-barf-sexp)))
 
 (defun shift-sexp-backward ()
   (interactive)
@@ -877,7 +884,7 @@
 ;; Clojure
 ;;
 
-(require 'clojure-mode)
+(use-package clojure-mode :ensure t :defer t)
 (require 'clojure-mode-personal)
 (require 'cider-test-personal)
 
@@ -926,7 +933,7 @@
 ;; NOTE(harry) If this doesn't work out try multi-web-mode or mmm-mode. See:
 ;; http://www.emacswiki.org/emacs/MultipleModes
 ;; http://stackoverflow.com/questions/4462393/how-do-i-configure-emacs-for-editing-html-files-that-contain-javascript
-(require 'web-mode)
+(use-package web-mode :ensure t :defer t)
 (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.mustache\\'" . web-mode))
@@ -942,18 +949,10 @@
 
 
 ;;
-;; SCSS mode, for editing SCSS files.
-;;
-
-(setq scss-compile-at-save nil)
-(add-to-list 'auto-mode-alist '("\\.scss\\'" . scss-mode))
-
-
-;;
 ;; YAML mode, for editing YAML files
 ;;
 
-(require 'yaml-mode)
+(use-package yaml-mode :ensure t :defer t)
 (add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode))
 
 
@@ -1072,15 +1071,11 @@
 (setq ns-use-native-fullscreen nil)
 (evil-leader/set-key "wf" 'toggle-frame-fullscreen)
 
-;; NOTE(harry) Using web-mode instead
-;; (add-to-list 'auto-mode-alist '("\\.mustache$" . mustache-mode))
-
 
 ;;
 ;; From Dmac - https://github.com/dmacdougall/dotfiles/blob/master/.emacs
 ;;
 
-(global-undo-tree-mode t)
 (setq undo-tree-auto-save-history nil)
 (global-font-lock-mode t)
 (global-display-line-numbers-mode)
@@ -1191,6 +1186,7 @@
   (ace-link-setup-default))
 
 ;; Company mode for autocompletion
+(use-package company :ensure t :defer t)
 (add-hook 'prog-mode-hook #'company-mode)
 (add-hook 'org-mode-hook #'company-mode)
 (setq company-idle-delay nil)
@@ -1201,8 +1197,10 @@
 (evil-define-key 'insert org-mode-map (kbd "TAB") 'company-complete)
 (evil-define-key 'insert org-mode-map (kbd "<tab>") 'company-complete)
 
-(require 'typescript-mode)
+(use-package typescript-mode :ensure t :defer t)
 (add-to-list 'auto-mode-alist '("\\.tsx$" . typescript-mode))
+
+(use-package browse-at-remote :ensure t :defer t)
 
 
 ;; Generic insertion of TODO et al
@@ -1324,11 +1322,11 @@
 ;; Github Copilot support
 ;; Run `M-x copilot-install-server` then `M-x copilot-login` first.
 ;; Check `M-x copilot-diagnose` if there's an issue.
-
-;; copilot is broken by default because the Github Copilot Server requires node
-;; 18, but my work repo forces node 16. I'm hacking it by editing
-;; ~/.emacs.d/.cache/copilot/bin/copilot-language-server to use
-;; the homebrew-installed version, currently
+;;
+;; copilot is broken for me by default because the Github Copilot Server requires
+;; node 18, but my work repo forces node 16. I'm hacking it by editing
+;; ~/.emacs.d/.cache/copilot/bin/copilot-language-server to use the
+;; homebrew-installed version, currently
 ;; #!/opt/homebrew/Cellar/node/23.9.0/bin/node
 (use-package copilot
   :quelpa
@@ -1336,14 +1334,16 @@
            :repo "copilot-emacs/copilot.el"
            :branch "main"
            :files ("*.el"))
-  :config
-  (add-hook 'prog-mode-hook 'copilot-mode)
   :bind
   (:map copilot-completion-map
         ("A-<tab>" . 'copilot-accept-completion)
         ("A-TAB" . 'copilot-accept-completion)
         ("A-S-<tab>" . 'copilot-accept-completion-by-word)
-        ("A-S-TAB" . 'copilot-accept-completion-by-word)))
+        ("A-S-TAB" . 'copilot-accept-completion-by-word))
+
+  :config
+  (add-hook 'prog-mode-hook 'copilot-mode)
+  (setq copilot-indent-offset-warning-disable t))
 
 (use-package copilot-chat :after (magit) :ensure t :defer t
   :config

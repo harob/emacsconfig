@@ -52,7 +52,7 @@
   (kbd "TAB") 'org-cycle
   (kbd "RET") 'org-open-at-point)
 
-(require 'org-mac-link)
+(use-package org-mac-link :ensure t :defer t)
 
 (evil-leader/set-key-for-mode 'org-mode
   "li" 'org-insert-link
@@ -123,10 +123,11 @@
                               (emacs-lisp . t)
                               (R . t))))
 
-(require 'org-download)
-(setq org-download-method 'directory)
-(setq-default org-download-image-dir "images")
-(setq org-image-actual-width '(400))
+(use-package org-download :ensure t :defer t
+  :config
+  (setq org-download-method 'directory)
+  (setq-default org-download-image-dir "images")
+  (setq org-image-actual-width '(400)))
 
 (setq org-timer-display 'both)
 
