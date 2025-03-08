@@ -54,11 +54,11 @@
 
 (global-auto-revert-mode t) ; Reload an open file from disk if it is changed outside of Emacs.
 
-(setq inhibit-startup-message t)
-(setq inhibit-startup-echo-area-message t)
-(setq ring-bell-function 'ignore)
-(setq mac-option-modifier 'alt)
-(setq mac-command-modifier 'meta)
+(setq inhibit-startup-message t
+      inhibit-startup-echo-area-message t
+      ring-bell-function 'ignore
+      mac-option-modifier 'alt
+      mac-command-modifier 'meta)
 (add-to-list 'default-frame-alist '(ns-appearance . dark))
 
 ;; Require typing only "y" or "n" instead of the full "yes" to confirm destructive actions.
@@ -83,7 +83,7 @@
       ;; Make touchpad scrolling on OSX less jerky
       mouse-wheel-scroll-amount '(0.01))
 
-;; The preference file for Emac's "Customize" system. `M-x customize` to access it.
+;; The preference file for Emac's "Customize" system. M-x `customize' to access it.
 (setq custom-file (expand-file-name "~/.emacs.d/custom.el"))
 (load custom-file t)
 
@@ -187,9 +187,9 @@
   :init
   (setq evil-want-C-u-scroll t)
   :config
-  ;; Use the "symbol" as the text object for `*` and `#` rather than the "word"
+  ;; Use the "symbol" as the text object for `*' and `#' rather than the "word"
   ;; (e.g. the full variable in Python including underscores, rather than the part
-  ;; between underscores). This corresponds to the `o` text object over `w`
+  ;; between underscores). This corresponds to the `o' text object over `w'
   (setq evil-symbol-word-search t)
   (setq evil-undo-system 'undo-tree)
   (evil-mode t))
@@ -217,8 +217,8 @@
 (use-package which-key :ensure t
   :config
   (which-key-mode)
-  (setq which-key-allow-evil-operators t)
-  (setq which-key-show-operator-state-maps t))
+  (setq which-key-allow-evil-operators t
+        which-key-show-operator-state-maps t))
 
 ;; When opening new lines, indent according to the previous line.
 (setq evil-auto-indent t)
@@ -247,7 +247,7 @@
   :type line
   ;; These two vars are set by the current programming mode. Set them to their default text mode values
   ;; temporarily while we select the paragraph. The implementation of evil-move-paragraph invokes
-  ;; `forward-paragraph`, which uses these variables.
+  ;; `forward-paragraph', which uses these variables.
   (let ((paragraph-start "\f\\|[     ]*$")
         (paragraph-separate "[  ]*$"))
     (evil-select-an-object 'evil-paragraph beg end type count)))
@@ -346,9 +346,9 @@
 ;;
 
 ;; Settings for window splits.
-(setq split-height-threshold 40)
-(setq split-width-threshold 200)
-(setq split-window-preferred-function 'split-window-sensibly-reverse)
+(setq split-height-threshold 40
+      split-width-threshold 200
+      split-window-preferred-function 'split-window-sensibly-reverse)
 
 ;; "I manage my windows in a 4x4 grid. I want ephemeral or status-based buffers to always show in the
 ;; lower-right or right window, in that order of preference."
@@ -369,7 +369,7 @@
 ;; References, for context:
 ;; http://snarfed.org/emacs_special-display-function_prefer-other-visible-frame
 ;; http://stackoverflow.com/questions/1002091/how-to-force-emacs-not-to-display-buffer-in-a-specific-window
-;; The implementation of this function is based on `special-display-popup-frame` in window.el.
+;; The implementation of this function is based on `special-display-popup-frame' in window.el.
 (defun show-ephemeral-buffer-in-a-sensible-window (buffer &optional buffer-data)
   "Given a buffer, shows the window in a right-side split."
   (let* ((original-window (selected-window))
@@ -386,8 +386,8 @@
     window))
 
 (defun dismiss-ephemeral-windows ()
-  "Dismisses any visible windows in the current frame identifiedy by `special-display-buffer-names` and
-   `special-display-regexps`. I use this to quickly dismiss help windows, compile output, etc."
+  "Dismisses any visible windows in the current frame identifiedy by `special-display-buffer-names' and
+   `special-display-regexps'. I use this to quickly dismiss help windows, compile output, etc."
   (interactive)
   (save-excursion
     (let ((original-window (selected-window)))
@@ -550,8 +550,8 @@
   (call-process-region nil nil "/usr/bin/open" nil nil nil "."))
 
 (defun vimlike-quit ()
-  "Closes the current window, tab, or if there's only one tab, use the `:q` Evil
-   command. This simulates the `:q` behavior of Vim when used with tabs."
+  "Closes the current window, tab, or if there's only one tab, use the `:q' Evil
+   command. This simulates the `:q' behavior of Vim when used with tabs."
   (interactive)
   (let ((one-tab (= 1 (length (tab-bar-tabs))))
         (one-window (one-window-p)))
@@ -688,7 +688,7 @@
   (kbd "M-l") 'shift-sexp-forward
   "K"'(lambda ()
         (interactive)
-        ;; Run `describe-function` and show its output in a help
+        ;; Run `describe-function' and show its output in a help
         ;; window. Inspired from help-fns.el.
         (with-help-window "*Help*"
           (describe-function (intern (current-word))))))
@@ -970,7 +970,7 @@
 (defun gofmt-before-save-ignoring-errors ()
   "Don't pop up syntax errors in a new window when running gofmt-before-save."
   (interactive)
-  ;; Note that `gofmt-before-save` triggers this save-hook for some reason, so we lock on gofmt-in-progress to
+  ;; Note that `gofmt-before-save' triggers this save-hook for some reason, so we lock on gofmt-in-progress to
   ;; to protect from infinite recurision.
   (when (not gofmt-in-progress)
     (setq gofmt-in-progress 't)
@@ -1029,7 +1029,7 @@
 ;;
 
 ;; Don't use the native OSX full screen support, because it uses OSX Spaces which don't play well with
-;; CMD-tabbing to applications which are behind Emacs. Invoke fullscreen with `toggle-frame-fullscreen`.
+;; CMD-tabbing to applications which are behind Emacs. Invoke fullscreen with `toggle-frame-fullscreen'.
 (setq ns-use-native-fullscreen nil)
 (evil-leader/set-key "wf" 'toggle-frame-fullscreen)
 
@@ -1141,7 +1141,7 @@
   (define-key evil-motion-state-map (kbd "Z") 'avy-goto-line)
   (define-key evil-visual-state-map (kbd "Z") 'avy-goto-line))
 
-;; Open links vimium-style with `o` in various help-like modes
+;; Open links vimium-style with `o' in various help-like modes
 (use-package ace-link
   :ensure t
   :config
@@ -1269,7 +1269,7 @@
 (add-to-list 'pytest-project-names "kirin test")
 
 (defun ruff-fix-imports ()
-  "Run `ruff check` on the current file with `--select I --fix`."
+  "Reorder imports in the current buffer using ruff."
   (interactive)
   (if buffer-file-name
       (let ((command (format "ruff check %s --select I --fix" (shell-quote-argument buffer-file-name))))
@@ -1300,8 +1300,8 @@
                                                ; the selected region to Copilot chat
 
 ;; Github Copilot autocomplete support
-;; Run `M-x copilot-install-server` then `M-x copilot-login` first.
-;; Check `M-x copilot-diagnose` if there's an issue.
+;; Run M-x `copilot-install-server' then M-x `copilot-login' first.
+;; Check M-x `copilot-diagnose' if there's an issue.
 ;;
 ;; copilot is broken for me by default because the Github Copilot Server requires
 ;; node 18, but my work repo forces node 16. I'm hacking it by editing
@@ -1324,4 +1324,4 @@
   :config
   (add-hook 'prog-mode-hook 'copilot-mode)
   (setq copilot-indent-offset-warning-disable t
-        copilot-max-char-warning-disabled t))
+        copilot-max-char-warning-disable t))
