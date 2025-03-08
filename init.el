@@ -1284,7 +1284,25 @@
 ;; AI
 ;;
 
-;; Github Copilot support
+;; To set up gptel, add this line to ~/.authinfo:
+;; machine api.openai.com login apikey password <openai dev token>
+;;
+;; Main commands: gptel-send, gptel-rewrite, gptel-menu
+(use-package gptel :ensure t :defer t
+  :config
+  (setq gptel-org-branching-context t))
+
+(use-package copilot-chat :after (magit) :ensure t :defer t
+  :config
+  (evil-leader/set-key
+    "CC" 'copilot-chat-transient           ; Show menu
+    "Ca" 'copilot-chat-add-current-buffer  ; Add the current buffer to the Copilot chat list
+    "Cc" 'copilot-chat-display             ; Display the Copilot chat window
+    "Ce" 'copilot-chat-explain             ; Explain the selected region using Copilot chat
+    "Cp" 'copilot-chat-custom-prompt-selection))  ; Send a custom prompt followed by
+                                               ; the selected region to Copilot chat
+
+;; Github Copilot autocomplete support
 ;; Run `M-x copilot-install-server` then `M-x copilot-login` first.
 ;; Check `M-x copilot-diagnose` if there's an issue.
 ;;
@@ -1309,21 +1327,3 @@
   :config
   (add-hook 'prog-mode-hook 'copilot-mode)
   (setq copilot-indent-offset-warning-disable t))
-
-(use-package copilot-chat :after (magit) :ensure t :defer t
-  :config
-  (evil-leader/set-key
-    "CC" 'copilot-chat-transient           ; Show menu
-    "Ca" 'copilot-chat-add-current-buffer  ; Add the current buffer to the Copilot chat list
-    "Cc" 'copilot-chat-display             ; Display the Copilot chat window
-    "Ce" 'copilot-chat-explain             ; Explain the selected region using Copilot chat
-    "Cp" 'copilot-chat-custom-prompt-selection))  ; Send a custom prompt followed by
-                                               ; the selected region to Copilot chat
-
-;; To set up gptel, add this line to ~/.authinfo:
-;; machine api.openai.com login apikey password <openai dev token>
-;;
-;; Main commands: gptel-send, gptel-rewrite, gptel-menu
-(use-package gptel :ensure t :defer t
-  :config
-  (setq gptel-org-branching-context t))
