@@ -12,41 +12,6 @@
 (when (not package-archive-contents)
   (package-refresh-contents))
 
-(defvar my-packages '(
-                      browse-at-remote
-                      cider
-                      clojure-mode
-                      color-theme-sanityinc-tomorrow
-                      company
-                      counsel
-                      markdown-mode
-                      mustache-mode
-                      noflet ; Replacement for the deprecated flet macro - see
-                             ; http://emacsredux.com/blog/2013/09/05/a-proper-replacement-for-flet/
-                      org
-                      org-download
-                      org-mac-link
-                      paradox ; Better package menu
-                      projectile ; This is only used by counsel, which uses it
-                                 ; to find the repo root directory
-                      protobuf-mode
-                      quelpa
-                      quelpa-use-package
-                      rainbow-delimiters
-                      scss-mode
-                      smartparens
-                      typescript-mode
-                      undo-tree
-                      web-mode
-                      which-key
-                      yaml-mode
-                      ))
-
-(add-to-list 'package-pinned-packages '(cider . "melpa-stable") t)
-
-(dolist (p my-packages)
-  (when (not (package-installed-p p))
-    (package-install p)))
 (require 'use-package)
 (use-package quelpa :ensure t)
 (use-package quelpa-use-package :ensure t)
