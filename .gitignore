@@ -1,4 +1,6 @@
 .org-id-locations
+/tramp
+/transient
 abbrev_defs
 ac-comphist.dat
 amx-items
@@ -7,8 +9,6 @@ bookmarks
 elpa
 eshell
 history
+projects
 projectile-bookmarks.eld
-quelpa
 recentf
-/tramp
-/transient

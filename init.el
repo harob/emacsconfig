@@ -10,8 +10,6 @@
   (package-refresh-contents))
 
 (require 'use-package)
-(use-package quelpa :ensure t)
-(use-package quelpa-use-package :ensure t)
 
 
 ;;
@@ -1260,13 +1258,11 @@
 
 (add-hook 'python-mode-hook (lambda () (interactive) (set-fill-column 88)))
 
-(use-package pytest
-  :quelpa (pytest :fetcher github
-                  :repo "ionrock/pytest-el"
-                  :branch "master"
-                  :files ("*.el")))
-;; FIXME(harry)
-(add-to-list 'pytest-project-names "kirin test")
+(use-package pytest :ensure t :defer t
+  :vc (:url "https://github.com/ionrock/pytest-el" :branch "main")
+  :config
+  ;; FIXME(harry)
+  (add-to-list 'pytest-project-names "kirin test"))
 
 (defun ruff-fix-imports ()
   "Reorder imports in the current buffer using ruff."
@@ -1308,12 +1304,8 @@
 ;; ~/.emacs.d/.cache/copilot/bin/copilot-language-server to use the
 ;; homebrew-installed version, currently
 ;; #!/opt/homebrew/Cellar/node/23.9.0/bin/node
-(use-package copilot
-  :quelpa
-  (copilot :fetcher github
-           :repo "copilot-emacs/copilot.el"
-           :branch "main"
-           :files ("*.el"))
+(use-package copilot :ensure t :defer t
+  :vc (:url "https://github.com/copilot-emacs/copilot.el" :branch "main")
   :bind
   (:map copilot-completion-map
         ("A-<tab>" . 'copilot-accept-completion)
