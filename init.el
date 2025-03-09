@@ -1005,7 +1005,7 @@
 (use-package magit :ensure t :defer t
   :config
   (setq magit-commit-show-diff nil)
-  (add-hook 'git-commit-mode-hook 'evil-append-line))
+  (add-hook 'git-commit-mode-hook (lambda () (interactive) (evil-append-line 1))))
 
 
 ;;
