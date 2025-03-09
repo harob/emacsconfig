@@ -27,7 +27,7 @@
  '(org-modules
    '(ol-bbdb ol-bibtex ol-docview ol-gnus ol-info ol-irc ol-mhe ol-rmail ol-w3m
              org-mac-link))
- '(package-selected-packages '(copilot))
+ '(package-selected-packages '(copilot magit-delta))
  '(package-vc-selected-packages
    '((copilot :url "https://github.com/copilot-emacs/copilot.el" :branch "main")))
  '(paradox-github-token t))

@@ -1007,6 +1007,9 @@
   (setq magit-commit-show-diff nil)
   (add-hook 'git-commit-mode-hook (lambda () (interactive) (evil-append-line 1))))
 
+(use-package magit-delta :after (magit) :ensure t :defer t
+  :hook (magit-mode . magit-delta-mode))
+
 
 ;;
 ;; Javascript
