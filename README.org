@@ -1,4 +1,4 @@
 * Setup
 #+begin_src
-git clone https@github.com:harob/emacsconfig.git ~/.emacs.d
+git clone https://github.com/harob/emacsconfig.git ~/.emacs.d
 #+end_src
