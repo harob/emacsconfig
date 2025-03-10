@@ -1094,14 +1094,6 @@
   (evil-yank (point) (point-at-eol)))
 (define-key evil-normal-state-map "Y" 'copy-to-end-of-line)
 
-;; Elisp go-to-definition with M-. and back again with M-,
-(use-package elisp-slime-nav :ensure t :defer t
-  :hook
-  (emacs-lisp-mode-hook . elisp-slime-nav-mode)
-  (ielm-mode-hook . elisp-slime-nav-mode)
-  :config
-  (diminish 'elisp-slime-nav-mode " SN"))
-
 (setq tramp-default-method "pscp")
 
 ; From http://emacsredux.com/blog/2013/03/27/copy-filename-to-the-clipboard/
@@ -1307,16 +1299,36 @@
 ;; ~/.emacs.d/.cache/copilot/bin/copilot-language-server to use the
 ;; homebrew-installed version, currently
 ;; #!/opt/homebrew/Cellar/node/23.9.0/bin/node
-(use-package copilot :ensure t :defer t
-  :vc (:url "https://github.com/copilot-emacs/copilot.el" :branch "main")
-  :bind
-  (:map copilot-completion-map
-        ("A-<tab>" . 'copilot-accept-completion)
-        ("A-TAB" . 'copilot-accept-completion)
-        ("A-S-<tab>" . 'copilot-accept-completion-by-word)
-        ("A-S-TAB" . 'copilot-accept-completion-by-word))
+;; TODO(harry) Turning off in favor of just always using gptel
+;; (use-package copilot :ensure t :defer t
+;;   :vc (:url "https://github.com/copilot-emacs/copilot.el" :branch "main")
+;;   :bind
+;;   (:map copilot-completion-map
+;;         ("A-<tab>" . 'copilot-accept-completion)
+;;         ("A-TAB" . 'copilot-accept-completion)
+;;         ("A-S-<tab>" . 'copilot-accept-completion-by-word)
+;;         ("A-S-TAB" . 'copilot-accept-completion-by-word))
 
-  :config
-  (add-hook 'prog-mode-hook 'copilot-mode)
-  (setq copilot-indent-offset-warning-disable t
-        copilot-max-char-warning-disable t))
+;;   :config
+;;   (add-hook 'prog-mode-hook 'copilot-mode)
+;;   (setq copilot-indent-offset-warning-disable t
+;;         copilot-max-char-warning-disable t))
+
+; Write code to use completion-preview-mode from emacs 30
+
+(add-hook 'prog-mode-hook #'completion-preview-mode)
+
+
+;;
+;; Elisp
+;;
+
+;; Elisp go-to-definition with M-. and back again with M-,
+(use-package elisp-slime-nav :ensure t :defer t
+ :hook
+ (emacs-lisp-mode-hook . elisp-slime-nav-mode)
+ (ielm-mode-hook . elisp-slime-nav-mode)
+ :config
+ (diminish 'elisp-slime-nav-mode " SN"))
+
+(use-package elisp-autofmt :ensure t :defer t)
