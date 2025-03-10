@@ -1293,28 +1293,28 @@
 ;; Github Copilot autocomplete support
 ;; Run M-x `copilot-install-server' then M-x `copilot-login' first.
 ;; Check M-x `copilot-diagnose' if there's an issue.
-(use-package editorconfig :ensure t)
-(use-package jsonrpc :ensure t)
-(use-package copilot :after (editorconfig jsonrpc) :ensure t
-  :vc (:url "https://github.com/copilot-emacs/copilot.el"
-            :rev :newest
-            :branch "main")
-  :init
-  ;; copilot is broken for me by default because the Github Copilot Server requires
-  ;; node 18, but my work repo forces node 16. I'm hacking it by hardcoding the
-  ;; path here:
-  (setq copilot-node-executable "/opt/homebrew/Cellar/node/23.9.0/bin/node")
-  :bind
-  (:map copilot-completion-map
-        ("A-<tab>" . 'copilot-accept-completion)
-        ("A-TAB" . 'copilot-accept-completion)
-        ("A-S-<tab>" . 'copilot-accept-completion-by-word)
-        ("A-S-TAB" . 'copilot-accept-completion-by-word))
+;; (use-package editorconfig :ensure t)
+;; (use-package jsonrpc :ensure t)
+;; (use-package copilot :after (editorconfig jsonrpc) :ensure t
+;;   :vc (:url "https://github.com/copilot-emacs/copilot.el"
+;;             :rev :newest
+;;             :branch "main")
+;;   :init
+;;   ;; copilot is broken for me by default because the Github Copilot Server requires
+;;   ;; node 18, but my work repo forces node 16. I'm hacking it by hardcoding the
+;;   ;; path here:
+;;   (setq copilot-node-executable "/opt/homebrew/Cellar/node/23.9.0/bin/node")
+;;   :bind
+;;   (:map copilot-completion-map
+;;         ("A-<tab>" . 'copilot-accept-completion)
+;;         ("A-TAB" . 'copilot-accept-completion)
+;;         ("A-S-<tab>" . 'copilot-accept-completion-by-word)
+;;         ("A-S-TAB" . 'copilot-accept-completion-by-word))
 
-  :config
-  (add-hook 'prog-mode-hook 'copilot-mode)
-  (setq copilot-indent-offset-warning-disable t
-        copilot-max-char-warning-disable t))
+;;   :config
+;;   (add-hook 'prog-mode-hook 'copilot-mode)
+;;   (setq copilot-indent-offset-warning-disable t
+;;         copilot-max-char-warning-disable t))
 
 
 ;;
