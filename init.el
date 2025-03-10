@@ -1272,13 +1272,19 @@
 ;; AI
 ;;
 
-;; To set up gptel, add this line to ~/.authinfo:
+;; To set up gptel, add these lines to ~/.authinfo:
 ;; machine api.openai.com login apikey password <openai dev token>
+;; machine api.anthropic.com login apikey password <anthropic API key>
 ;;
 ;; Main commands: gptel-send, gptel-rewrite, gptel-menu
 (use-package gptel :ensure t :defer t
   :config
-  (setq gptel-org-branching-context t))
+  (setq gptel-org-branching-context t
+        gptel-model 'claude-3-7-sonnet-20250219
+        gptel-backend (gptel-make-anthropic "Claude"
+                        :key (gptel-api-key-from-auth-source "api.anthropic.com")
+                        :stream t)))
+
 
 (use-package copilot-chat :after (magit) :ensure t :defer t
   :config
