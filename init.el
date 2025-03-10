@@ -3,8 +3,8 @@
 ;;
 
 (require 'package)
-(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
-(add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/"))
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/"))
 (package-initialize)
 (when (not package-archive-contents)
   (package-refresh-contents))
@@ -1293,30 +1293,28 @@
 ;; Github Copilot autocomplete support
 ;; Run M-x `copilot-install-server' then M-x `copilot-login' first.
 ;; Check M-x `copilot-diagnose' if there's an issue.
-;;
-;; copilot is broken for me by default because the Github Copilot Server requires
-;; node 18, but my work repo forces node 16. I'm hacking it by editing
-;; ~/.emacs.d/.cache/copilot/bin/copilot-language-server to use the
-;; homebrew-installed version, currently
-;; #!/opt/homebrew/Cellar/node/23.9.0/bin/node
-;; TODO(harry) Turning off in favor of just always using gptel
-;; (use-package copilot :ensure t :defer t
-;;   :vc (:url "https://github.com/copilot-emacs/copilot.el" :branch "main")
-;;   :bind
-;;   (:map copilot-completion-map
-;;         ("A-<tab>" . 'copilot-accept-completion)
-;;         ("A-TAB" . 'copilot-accept-completion)
-;;         ("A-S-<tab>" . 'copilot-accept-completion-by-word)
-;;         ("A-S-TAB" . 'copilot-accept-completion-by-word))
+(use-package editorconfig :ensure t)
+(use-package jsonrpc :ensure t)
+(use-package copilot :after (editorconfig jsonrpc) :ensure t
+  :vc (:url "https://github.com/copilot-emacs/copilot.el"
+            :rev :newest
+            :branch "main")
+  :init
+  ;; copilot is broken for me by default because the Github Copilot Server requires
+  ;; node 18, but my work repo forces node 16. I'm hacking it by hardcoding the
+  ;; path here:
+  (setq copilot-node-executable "/opt/homebrew/Cellar/node/23.9.0/bin/node")
+  :bind
+  (:map copilot-completion-map
+        ("A-<tab>" . 'copilot-accept-completion)
+        ("A-TAB" . 'copilot-accept-completion)
+        ("A-S-<tab>" . 'copilot-accept-completion-by-word)
+        ("A-S-TAB" . 'copilot-accept-completion-by-word))
 
-;;   :config
-;;   (add-hook 'prog-mode-hook 'copilot-mode)
-;;   (setq copilot-indent-offset-warning-disable t
-;;         copilot-max-char-warning-disable t))
-
-; Write code to use completion-preview-mode from emacs 30
-
-(add-hook 'prog-mode-hook #'completion-preview-mode)
+  :config
+  (add-hook 'prog-mode-hook 'copilot-mode)
+  (setq copilot-indent-offset-warning-disable t
+        copilot-max-char-warning-disable t))
 
 
 ;;
