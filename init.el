@@ -999,16 +999,21 @@
 ;; Magit - for staging hunks and making commits to git
 ;;
 
-; NOTE(harry Magit mode is pretty broken for me currently. So I'm restarting
-; from scratch
-;; (require 'magit-config)
+;; For large repos, check what's slow with M-x `magit-toggle-verbose-refresh'
+;; and looking at the times in *Messages*. Then disable the slowest sections
+;; by filling in /path/to/repo/.dir-locals.el with e.g.:
+;; ((magit-status-mode . ((eval . (magit-disable-section-inserter 'magit-insert-tags-header))
+;;                        (eval . (magit-disable-section-inserter 'magit-insert-status-headers))
+;;                        (eval . (magit-disable-section-inserter 'magit-insert-unpushed-to-upstream-or-recent))
+;;                        (eval . (magit-disable-section-inserter 'magit-insert-unpulled-from-upstream)))))
 (use-package magit :ensure t :defer t
   :config
   (setq magit-commit-show-diff nil)
   (add-hook 'git-commit-mode-hook (lambda () (interactive) (evil-append-line 1))))
 
-(use-package magit-delta :after (magit) :ensure t :defer t
-  :hook (magit-mode . magit-delta-mode))
+;; NOTE(harry) Turning off due to some display bugs
+;; (use-package magit-delta :after (magit) :ensure t :defer t
+;;   :hook (magit-mode . magit-delta-mode))
 
 
 ;;
