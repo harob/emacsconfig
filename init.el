@@ -1261,8 +1261,10 @@
 (use-package pytest :ensure t :defer t
   :vc (:url "https://github.com/ionrock/pytest-el" :branch "main")
   :config
-  ;; FIXME(harry)
-  (add-to-list 'pytest-project-names "kirin test"))
+  (setq pytest-global-name "kirin test")
+  ;; My work git repo has many projects inside it, so pytest needs to know to use
+  ;; the nested project rather than the parent repo as its working directory:
+  (add-to-list 'pytest-project-root-files "build.toml"))
 
 (defun ruff-fix-imports ()
   "Reorder imports in the current buffer using ruff."
