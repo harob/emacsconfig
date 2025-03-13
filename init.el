@@ -804,9 +804,10 @@
 ;; Smartparens utility functions
 ;;
 
-(use-package smartparens :ensure t
+(use-package smartparens :ensure t :demand t
   :config
   (require 'smartparens-config)
+  (smartparens-global-mode t)
   (sp-pair "'" nil :actions :rem)
   (setq sp-autoescape-string-quote nil)
 
@@ -819,8 +820,6 @@
 
   :bind (("M-H" . sp-forward-slurp-sexp)
          ("M-L" . sp-forward-barf-sexp)))
-
-(smartparens-global-mode t)
 
 (defun shift-sexp-backward ()
   (interactive)
