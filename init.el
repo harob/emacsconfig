@@ -1256,8 +1256,8 @@
   "My work git repo has many projects inside it, so pytest needs to know to use
    the nested project rather than the parent repo as its working directory."
   (when-let ((dir (locate-dominating-file default-directory "build.toml")))
-    (setq python-pytest-executable
-          (concat "cd " dir " && kirin test"))))
+    (setq python-pytest-executable (concat "cd " dir " && kirin test")
+          project-compilation-dir dir)))
 
 (use-package python-pytest :ensure t :defer t
   :config
