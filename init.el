@@ -1252,13 +1252,20 @@
 
 (add-hook 'python-mode-hook (lambda () (interactive) (set-fill-column 88)))
 
-(use-package pytest :ensure t :defer t
-  :vc (:url "https://github.com/ionrock/pytest-el" :branch "main")
+(defun my-patch-python-pytest-executable ()
+  "My work git repo has many projects inside it, so pytest needs to know to use
+   the nested project rather than the parent repo as its working directory."
+  (when-let ((dir (locate-dominating-file default-directory "build.toml")))
+    (setq python-pytest-executable
+          (concat "cd " dir " && kirin test"))))
+
+(use-package python-pytest :ensure t :defer t
   :config
-  (setq pytest-global-name "kirin test")
-  ;; My work git repo has many projects inside it, so pytest needs to know to use
-  ;; the nested project rather than the parent repo as its working directory:
-  (add-to-list 'pytest-project-root-files "build.toml"))
+  (setq python-pytest-unsaved-buffers-behavior 'save-current
+        ;; This is projectile by default, which has bad test-finding logic:
+        python-pytest-preferred-project-manager 'project)
+  :hook
+  (python-mode . my-patch-python-pytest-executable))
 
 (defun ruff-fix-imports ()
   "Reorder imports in the current buffer using ruff."
