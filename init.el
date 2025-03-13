@@ -143,8 +143,7 @@
 (setq kill-buffer-query-functions (remq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
 ;; Use amx to show the M-x command prompt. It has better completion support than the default M-x.
-(use-package amx
-  :ensure t
+(use-package amx :ensure t
   :config
   (amx-mode 1))
 
@@ -1072,8 +1071,7 @@
 (define-key evil-normal-state-map (kbd "C-k") (lambda () (interactive) (ignore-errors (evil-window-up 1))))
 (define-key evil-normal-state-map (kbd "C-l") (lambda () (interactive) (ignore-errors (evil-window-right 1))))
 
-(use-package buffer-move
-  :ensure t
+(use-package buffer-move :ensure t
   :bind (("C-S-k" . buf-move-up)
          ("C-S-j" . buf-move-down)
          ("C-S-h" . buf-move-left)
@@ -1127,8 +1125,7 @@
   (setq dumb-jump-force-searcher 'rg)
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
 
-(use-package avy
-  :ensure t
+(use-package avy :ensure t
   :config
   (setq avy-keys (number-sequence ?a ?z)
         avy-all-windows 'all-frames)
@@ -1140,8 +1137,7 @@
   (define-key evil-visual-state-map (kbd "Z") 'avy-goto-line))
 
 ;; Open links vimium-style with `o' in various help-like modes
-(use-package ace-link
-  :ensure t
+(use-package ace-link :ensure t
   :config
   (ace-link-setup-default))
 
@@ -1220,15 +1216,13 @@
 ; Configuration inspired by https://www.naiquev.in/understanding-emacs-packages-for-python.html
 
 ; First run `pip install -U jedi-language-server`
-(use-package eglot
-  :ensure t
+(use-package eglot :ensure t
   :config
   (add-to-list 'eglot-server-programs '(python-mode . ("jedi-language-server")))
   ;; (add-to-list 'eglot-stay-out-of 'flymake)
   :hook (python-mode . eglot-ensure))
 
-(use-package flymake-ruff
-  :ensure t
+(use-package flymake-ruff :ensure t
   :hook (eglot-managed-mode . flymake-ruff-load))
 ;; This makes flymake only run on save:
 ;; (setq flymake-no-changes-timeout nil)
