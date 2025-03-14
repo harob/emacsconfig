@@ -27,7 +27,18 @@
  '(org-modules
    '(ol-bbdb ol-bibtex ol-docview ol-gnus ol-info ol-irc ol-mhe ol-rmail ol-w3m
              org-mac-link))
- '(package-selected-packages nil)
+ '(package-selected-packages
+   '(ace-link amx browse-at-remote buffer-move cape cider
+              color-theme-sanityinc-tomorrow company consult copilot
+              copilot-chat corfu counsel diminish doom-modeline dumb-jump
+              elisp-autofmt elisp-slime-nav embark embark-consult evil-anzu
+              evil-args evil-leader evil-matchit evil-nerd-commenter
+              evil-surround evil-visualstar flymake-cursor flymake-ruff go-mode
+              goto-last-change gptel magit-delta marginalia orderless
+              org-download org-mac-link pytest python-pytest quelpa-use-package
+              rainbow-delimiters reformatter smartparens treemacs-evil
+              treemacs-projectile typescript-mode undo-tree vertico web-mode
+              wgrep yaml-mode))
  '(package-vc-selected-packages
    '((copilot :url "https://github.com/copilot-emacs/copilot.el" :branch "main")))
  '(paradox-github-token t))

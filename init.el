@@ -10,6 +10,8 @@
   (package-refresh-contents))
 
 (require 'use-package)
+;; TODO(harry) Remove all the :ensure t's everywhere
+(setq use-package-always-ensure t)
 
 
 ;;
@@ -588,6 +590,52 @@
 ;; Filename completions (i.e. CTRL-P or CMD-T in other editors)
 ;;
 
+(use-package vertico :ensure t
+  :init
+  (vertico-mode)
+  :custom
+  (vertico-cycle t))
+
+(use-package savehist :ensure t
+  :init
+  ;; Save history across sessions
+  (savehist-mode))
+
+;; Marginalia for rich annotations in the minibuffer
+(use-package marginalia :after vertico :ensure t
+  :init
+  (marginalia-mode))
+
+(use-package corfu :ensure t
+  :init
+  (global-corfu-mode))
+
+(use-package cape :ensure t
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-file))
+
+(use-package consult :ensure t
+  :bind
+  (("C-s" . consult-line) ;; Replace Swiper for buffer search
+   ("M-x" . execute-extended-command) ;; Replace counsel-M-x
+   ("C-x b" . consult-buffer))) ;; Replace ivy-switch-buffer
+
+(use-package orderless :ensure t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-defaults nil)
+  (completion-category-overrides '((file (styles partial-completion)))))
+
+(use-package embark :ensure t
+  :bind
+  (("C-." . embark-act) ;; Act on completion candidates
+   ("M-." . embark-dwim)))
+
+(use-package embark-consult :ensure t
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+
+;; TODO(harry) Delete all these:
 (use-package ivy :ensure t
   :config
   (ivy-mode 1)
