@@ -6,6 +6,7 @@ ac-comphist.dat
 amx-items
 auto-save-list
 bookmarks
+.cache
 elpa
 eshell
 history
