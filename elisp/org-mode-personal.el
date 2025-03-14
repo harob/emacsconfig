@@ -8,8 +8,6 @@
 (require 'ox-html-personal)
 (require 'ox-md-personal)
 
-(provide 'org-mode-personal)
-
 (define-minor-mode evil-org-mode
   "Buffer local minor mode for evil-org"
   :init-value nil
@@ -18,15 +16,6 @@
   :group 'evil-org)
 
 (add-hook 'org-mode-hook 'evil-org-mode) ;; only load with org-mode
-
-(defun init-org-mode-personal ()
-  ;; This enables "clean mode", such that sublists use whitespace for indentation (ala markdown) instead of
-  ;; many stars.
-  (setq org-startup-indented t)
-  (setq org-fontify-done-headline nil)
-  (setq org-startup-folded t))
-
-(eval-after-load 'org '(init-org-mode-personal))
 
 ;; normal state shortcuts
 (evil-define-key 'normal evil-org-mode-map
@@ -107,6 +96,12 @@
 
 (define-key org-mode-map "\M-t" nil)
 
+;; This enables "clean mode", such that sublists use whitespace for indentation (ala markdown) instead of
+;; many stars.
+(setq org-startup-indented t)
+(setq org-fontify-done-headline nil)
+(setq org-startup-folded t)
+
 (setq org-src-fontify-natively t)
 (setq org-todo-keywords '((sequence "TODO" "IP" "WAIT" "|" "DONE")))
 (setq org-todo-keyword-faces '(("IP" . (:foreground "cyan3" :weight bold))
@@ -146,3 +141,5 @@
 ;; Workaround for global-auto-revert-mode apparently not working for org buffers when it's called upfront on
 ;; startup:
 (add-hook 'org-mode-hook (lambda () (global-auto-revert-mode)))
+
+(provide 'org-mode-personal)

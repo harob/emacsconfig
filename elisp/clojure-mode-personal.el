@@ -5,8 +5,6 @@
 ;; https://github.com/clojure-emacs/cider
 ;; http://clojure-doc.org/articles/tutorials/emacs.html
 
-(provide 'clojure-mode-personal)
-
 (defun setup-clojure-buffer ()
   ;; Count hyphens, etc. as word characters in lisps
   (modify-syntax-entry ?- "w" clojure-mode-syntax-table)
@@ -150,3 +148,5 @@ but doesn't treat single semicolons as right-hand-side comments."
 
 (custom-set-variables
   '(cider-clojure-cli-global-options "-A:liftoff:dev:nrepl"))
+
+(provide 'clojure-mode-personal)

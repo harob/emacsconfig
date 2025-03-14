@@ -1,7 +1,6 @@
 ;;
 ;; Lisp utility functions to serve as building blocks for working with text in Emacs.
 ;;
-(provide 'emacs-utils)
 
 (require 'lisp-helpers-personal)
 
@@ -28,3 +27,5 @@
     (let ((original-window (selected-window)))
       (funcall f)
       (select-window original-window))))
+
+(provide 'emacs-utils)

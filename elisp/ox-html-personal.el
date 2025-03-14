@@ -1,7 +1,5 @@
 (require 'ox-html)
 
-(provide 'ox-html-personal)
-
 ;; NOTE(harry) This function has been changed to remove linebreaks after "heading" bullets.
 (defun org-html-format-list-item (contents type checkbox info
              &optional term-counter-id
@@ -43,3 +41,5 @@
        (`ordered "</li>")
        (`unordered "</li>")
        (`descriptive "</dd>")))))
+
+(provide 'ox-html-personal)
