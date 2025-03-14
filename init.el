@@ -189,6 +189,7 @@
   ;; between underscores). This corresponds to the `o' text object over `w'
   (setq evil-symbol-word-search t)
   (setq evil-undo-system 'undo-tree)
+  (evil-set-undo-system 'undo-redo)
   (evil-mode t))
 
 ;; Use M-u since I use vim's C-u for page-up
