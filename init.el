@@ -178,11 +178,7 @@
 ;; Evil mode -- Vim keybindings for Emacs.
 ;;
 
-(use-package undo-tree :ensure t
-  :config
-  (global-undo-tree-mode))
-
-(use-package evil :ensure t :after (undo-tree)
+(use-package evil :ensure t
   :init
   (setq evil-want-C-u-scroll t)
   :config
@@ -190,7 +186,6 @@
   ;; (e.g. the full variable in Python including underscores, rather than the part
   ;; between underscores). This corresponds to the `o' text object over `w'
   (setq evil-symbol-word-search t)
-  (setq evil-undo-system 'undo-tree)
   (evil-set-undo-system 'undo-redo)
   (evil-mode t))
 
@@ -796,7 +791,6 @@
   (diminish 'auto-fill-function "")
   (diminish 'yas-minor-mode "")
   (diminish 'osx-keys-minor-mode "")
-  (diminish 'undo-tree-mode "")
   (diminish 'ivy-mode "")
   (diminish 'company-mode ""))
 
@@ -1092,7 +1086,6 @@
 ;; From Dmac - https://github.com/dmacdougall/dotfiles/blob/master/.emacs
 ;;
 
-(setq undo-tree-auto-save-history nil)
 (global-font-lock-mode t)
 (global-display-line-numbers-mode)
 ;; (line-number-mode 1)
