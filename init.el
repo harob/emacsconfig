@@ -10,7 +10,6 @@
   (package-refresh-contents))
 
 (require 'use-package)
-;; TODO(harry) Remove all the :ensure t's everywhere
 (setq use-package-always-ensure t)
 
 
@@ -29,7 +28,7 @@
 (setq initial-scratch-message "") ; When opening a new buffer, don't show the scratch message.
 
 ;; Make it so that the scratch buffer uses markdown. By default it uses Emacs Lisp mode.
-(use-package markdown-mode :ensure t :defer t)
+(use-package markdown-mode :defer t)
 (setq initial-major-mode 'markdown-mode)
 
 ;; Sync environment variables.
@@ -88,7 +87,7 @@
 (load custom-file t)
 
 ;; Colorscheme
-(use-package color-theme-sanityinc-tomorrow :ensure t
+(use-package color-theme-sanityinc-tomorrow
   :config
   (load-theme 'sanityinc-tomorrow-bright t))
 (set-face-attribute 'default nil :family "Consolas" :height 150)
@@ -145,7 +144,7 @@
 (setq kill-buffer-query-functions (remq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
 ;; Use amx to show the M-x command prompt. It has better completion support than the default M-x.
-(use-package amx :ensure t
+(use-package amx
   :config
   (amx-mode 1))
 
@@ -178,7 +177,7 @@
 ;; Evil mode -- Vim keybindings for Emacs.
 ;;
 
-(use-package evil :ensure t
+(use-package evil
   :init
   (setq evil-want-C-u-scroll t)
   :config
@@ -192,15 +191,15 @@
 ;; Use M-u since I use vim's C-u for page-up
 (global-set-key (kbd "M-u") 'universal-argument)
 
-(use-package evil-nerd-commenter :ensure t
+(use-package evil-nerd-commenter
   :config
   (define-key evil-normal-state-map " cc" 'evilnc-comment-or-uncomment-lines)
   (define-key evil-visual-state-map " cc" 'evilnc-comment-operator))
 
-(use-package goto-last-change :ensure t)
+(use-package goto-last-change)
 
 ;; Provide configuration functions for assigning actions to a Vim leader key.
-(use-package evil-leader :ensure t
+(use-package evil-leader
   :config
   (setq evil-leader/leader "SPC")
   ;; Access leader with C-SPC in insert mode:
@@ -209,7 +208,7 @@
   (setq evil-leader/no-prefix-mode-rx '("magit-.*-mode"))
   (global-evil-leader-mode))
 
-(use-package which-key :ensure t
+(use-package which-key
   :config
   (which-key-mode)
   (setq which-key-allow-evil-operators t
@@ -316,21 +315,21 @@
                   (kbd "C-p") 'previous-line
                   (kbd "C-n") 'next-line)
 
-(use-package evil-surround :ensure t
+(use-package evil-surround
   :config
   (evil-define-key 'visual evil-surround-mode-map "s" 'evil-surround-region)
   (evil-define-key 'visual evil-surround-mode-map "gs" 'evil-Surround-region)
   (global-evil-surround-mode 1))
 
-(use-package evil-visualstar :ensure t
+(use-package evil-visualstar
   :config
   (global-evil-visualstar-mode))
 
-(use-package evil-matchit :ensure t
+(use-package evil-matchit
   :config
   (global-evil-matchit-mode 1))
 
-(use-package evil-args :ensure t
+(use-package evil-args
   :config
   (define-key evil-inner-text-objects-map "a" 'evil-inner-arg)
   (define-key evil-outer-text-objects-map "a" 'evil-outer-arg))
@@ -585,53 +584,53 @@
 ;; Filename completions (i.e. CTRL-P or CMD-T in other editors)
 ;;
 
-(use-package vertico :ensure t
+(use-package vertico
   :init
   (vertico-mode)
   :custom
   (vertico-cycle t))
 
-(use-package savehist :ensure t
+(use-package savehist
   :init
   ;; Save history across sessions
   (savehist-mode))
 
 ;; Marginalia for rich annotations in the minibuffer
-(use-package marginalia :after vertico :ensure t
+(use-package marginalia :after vertico
   :init
   (marginalia-mode))
 
-(use-package corfu :ensure t
+(use-package corfu
   :init
   (global-corfu-mode))
 
-(use-package cape :ensure t
+(use-package cape
   :init
   (add-to-list 'completion-at-point-functions #'cape-file))
 
-(use-package consult :ensure t
+(use-package consult
   :bind
   (("C-s" . consult-line) ;; Replace Swiper for buffer search
    ("M-x" . execute-extended-command) ;; Replace counsel-M-x
    ("C-x b" . consult-buffer))) ;; Replace ivy-switch-buffer
 
-(use-package orderless :ensure t
+(use-package orderless
   :custom
   (completion-styles '(orderless basic))
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles partial-completion)))))
 
-(use-package embark :ensure t
+(use-package embark
   :bind
   (("C-." . embark-act) ;; Act on completion candidates
    ("M-." . embark-dwim)))
 
-(use-package embark-consult :ensure t
+(use-package embark-consult
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
 ;; TODO(harry) Delete all these:
-(use-package ivy :ensure t
+(use-package ivy
   :config
   (ivy-mode 1)
   (setq ivy-use-virtual-buffers t)
@@ -643,7 +642,7 @@
   (define-key ivy-mode-map (kbd "C-h") 'backward-delete-char)
   (define-key ivy-mode-map (kbd "C-w") 'backward-delete-word))
 
-(use-package swiper :ensure t :after (ivy)
+(use-package swiper :after (ivy)
   :config
   (define-key ivy-minibuffer-map [escape] 'minibuffer-keyboard-quit)
   (define-key swiper-map [escape] 'minibuffer-keyboard-quit)
@@ -652,17 +651,17 @@
 
 ;; Allows batch find-and-replace with
 ;; counsel-rg -> ivy-occur -> ivy-wgrep-change-to-wgrep-mode -> C-x C-s
-(use-package wgrep :ensure t :defer t
+(use-package wgrep :defer t
   :config
   (setq wgrep-auto-save-buffer t))
 
 ;; Projectile is only used by counsel, which uses it to find the repo root directory
-(use-package projectile :ensure t
+(use-package projectile
   :config
   (projectile-global-mode)
   (setq projectile-completion-system 'ivy))
 
-(use-package counsel :ensure t :defer t
+(use-package counsel :defer t
   :config
   (setq counsel-fzf-cmd "fzf --exact --filter=\"%s\""))
 
@@ -784,7 +783,7 @@
 ;; To see which minor modes you have loaded and what their modeline strings are: (message minor-mode-alist)
 ;;
 
-(use-package diminish :ensure t
+(use-package diminish
   :config
   (diminish 'visual-line-mode "")
   (diminish 'global-whitespace-mode "")
@@ -838,7 +837,7 @@
 ;; Rainbow-delimiters: highlight parentheses in rainbow colors.
 ;;
 
-(use-package rainbow-delimiters :ensure t :defer t
+(use-package rainbow-delimiters :defer t
   :hook (prog-mode . rainbow-delimiters-mode))
 
 
@@ -846,7 +845,7 @@
 ;; Smartparens utility functions
 ;;
 
-(use-package smartparens :ensure t :demand t
+(use-package smartparens :demand t
   :config
   (require 'smartparens-config)
   (smartparens-global-mode t)
@@ -886,7 +885,7 @@
 ;; Clojure
 ;;
 
-(use-package clojure-mode :ensure t :defer t)
+(use-package clojure-mode :defer t)
 (require 'clojure-mode-personal)
 (require 'cider-test-personal)
 
@@ -935,7 +934,7 @@
 ;; NOTE(harry) If this doesn't work out try multi-web-mode or mmm-mode. See:
 ;; http://www.emacswiki.org/emacs/MultipleModes
 ;; http://stackoverflow.com/questions/4462393/how-do-i-configure-emacs-for-editing-html-files-that-contain-javascript
-(use-package web-mode :ensure t :defer t)
+(use-package web-mode :defer t)
 (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.mustache\\'" . web-mode))
@@ -954,7 +953,7 @@
 ;; YAML mode, for editing YAML files
 ;;
 
-(use-package yaml-mode :ensure t :defer t)
+(use-package yaml-mode :defer t)
 (add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode))
 
 
@@ -962,7 +961,7 @@
 ;; Go mode, for writing Go code
 ;;
 
-(use-package go-mode :ensure t :defer t
+(use-package go-mode :defer t
   :config
   (evil-define-key 'normal go-mode-map "K" 'godef-describe))
 
@@ -1048,13 +1047,13 @@
 ;;                        (eval . (magit-disable-section-inserter 'magit-insert-status-headers))
 ;;                        (eval . (magit-disable-section-inserter 'magit-insert-unpushed-to-upstream-or-recent))
 ;;                        (eval . (magit-disable-section-inserter 'magit-insert-unpulled-from-upstream)))))
-(use-package magit :ensure t :defer t
+(use-package magit :defer t
   :config
   (setq magit-commit-show-diff nil)
   (add-hook 'git-commit-mode-hook (lambda () (interactive) (evil-append-line 1))))
 
 ;; NOTE(harry) Turning off due to some display bugs
-;; (use-package magit-delta :after (magit) :ensure t :defer t
+;; (use-package magit-delta :after (magit) :defer t
 ;;   :hook (magit-mode . magit-delta-mode))
 
 
@@ -1113,7 +1112,7 @@
 (define-key evil-normal-state-map (kbd "C-k") (lambda () (interactive) (ignore-errors (evil-window-up 1))))
 (define-key evil-normal-state-map (kbd "C-l") (lambda () (interactive) (ignore-errors (evil-window-right 1))))
 
-(use-package buffer-move :ensure t
+(use-package buffer-move
   :bind (("C-S-k" . buf-move-up)
          ("C-S-j" . buf-move-down)
          ("C-S-h" . buf-move-left)
@@ -1161,13 +1160,13 @@
       (message "Copied buffer file name '%s' to the clipboard." filename))))
 
 ;; Go-to-definition for all languages, using rg
-(use-package dumb-jump :ensure t :defer t
+(use-package dumb-jump :defer t
   :config
   ;; Forcing the use of ripgrep because for some reason the default git-grep doesn't work
   (setq dumb-jump-force-searcher 'rg)
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
 
-(use-package avy :ensure t
+(use-package avy
   :config
   (setq avy-keys (number-sequence ?a ?z)
         avy-all-windows 'all-frames)
@@ -1179,12 +1178,12 @@
   (define-key evil-visual-state-map (kbd "Z") 'avy-goto-line))
 
 ;; Open links vimium-style with `o' in various help-like modes
-(use-package ace-link :ensure t
+(use-package ace-link
   :config
   (ace-link-setup-default))
 
 ;; Company mode for autocompletion
-(use-package company :ensure t :defer t)
+(use-package company :defer t)
 (add-hook 'prog-mode-hook #'company-mode)
 (add-hook 'org-mode-hook #'company-mode)
 (setq company-idle-delay nil)
@@ -1195,10 +1194,10 @@
 (evil-define-key 'insert org-mode-map (kbd "TAB") 'company-complete)
 (evil-define-key 'insert org-mode-map (kbd "<tab>") 'company-complete)
 
-(use-package typescript-mode :ensure t :defer t)
+(use-package typescript-mode :defer t)
 (add-to-list 'auto-mode-alist '("\\.tsx$" . typescript-mode))
 
-(use-package browse-at-remote :ensure t :defer t)
+(use-package browse-at-remote :defer t)
 
 
 ;; Generic insertion of TODO et al
@@ -1235,18 +1234,18 @@
 
 
 ;; Treemacs file browser pane -- start with M-x treemacs-projectile
-(use-package treemacs :ensure t :defer t)
-(use-package treemacs-evil :after (treemacs evil) :ensure t)
-(use-package treemacs-projectile :after (treemacs projectile) :ensure t :defer t)
+(use-package treemacs :defer t)
+(use-package treemacs-evil :after (treemacs evil))
+(use-package treemacs-projectile :after (treemacs projectile) :defer t)
 
 
 ;; Custom modeline -- run M-x nerd-icons-install-fonts to install the fonts
-(use-package evil-anzu :ensure t
+(use-package evil-anzu
   :config
   ;; To display search result count in modeline
   (global-anzu-mode t))
 
-(use-package doom-modeline :after (evil-anzu) :ensure t
+(use-package doom-modeline :after (evil-anzu)
   :config
   (doom-modeline-mode 1))
 
@@ -1258,20 +1257,20 @@
 ; Configuration inspired by https://www.naiquev.in/understanding-emacs-packages-for-python.html
 
 ; First run `pip install -U jedi-language-server`
-(use-package eglot :ensure t
+(use-package eglot
   :config
   (add-to-list 'eglot-server-programs '(python-mode . ("jedi-language-server")))
   ;; (add-to-list 'eglot-stay-out-of 'flymake)
   :hook (python-mode . eglot-ensure))
 
-(use-package flymake-ruff :ensure t
+(use-package flymake-ruff
   :hook (eglot-managed-mode . flymake-ruff-load))
 ;; This makes flymake only run on save:
 ;; (setq flymake-no-changes-timeout nil)
 ;; This would be nice, but apparently it's only in Emacs 30:
 ;; (setq flymake-show-diagnostics-at-end-of-line t)
 
-(use-package flymake-cursor :after (flymake) :ensure t
+(use-package flymake-cursor :after (flymake)
   :hook (python-mode-hook . flymake-cursor-mode))
 (add-hook 'eglot-managed-mode-hook
           (lambda ()
@@ -1283,7 +1282,7 @@
             ;; Show all eldoc feedback.
             (setq eldoc-documentation-strategy #'eldoc-documentation-compose)))
 
-(use-package reformatter :ensure t :defer t
+(use-package reformatter :defer t
   :hook
   (python-mode . ruff-format-on-save-mode)
   (python-ts-mode . ruff-format-on-save-mode)
@@ -1301,7 +1300,7 @@
     (setq python-pytest-executable (concat "cd " dir " && kirin test")
           project-compilation-dir dir)))
 
-(use-package python-pytest :ensure t :defer t
+(use-package python-pytest :defer t
   :config
   (setq python-pytest-unsaved-buffers-behavior 'save-current
         ;; This is projectile by default, which has bad test-finding logic:
@@ -1327,7 +1326,7 @@
 ;; machine api.anthropic.com login apikey password <anthropic API key>
 ;;
 ;; Main commands: gptel-send, gptel-rewrite, gptel-menu
-(use-package gptel :ensure t :defer t
+(use-package gptel :defer t
   :config
   (setq gptel-org-branching-context t
         gptel-model 'claude-3-7-sonnet-20250219
@@ -1339,7 +1338,7 @@
   )
 
 
-(use-package copilot-chat :after (magit) :ensure t :defer t
+(use-package copilot-chat :after (magit) :defer t
   :config
   (evil-leader/set-key
     "CC" 'copilot-chat-transient           ; Show menu
@@ -1352,9 +1351,9 @@
 ;; Github Copilot autocomplete support
 ;; Run M-x `copilot-install-server' then M-x `copilot-login' first.
 ;; Check M-x `copilot-diagnose' if there's an issue.
-;; (use-package editorconfig :ensure t)
-;; (use-package jsonrpc :ensure t)
-;; (use-package copilot :after (editorconfig jsonrpc) :ensure t
+;; (use-package editorconfig)
+;; (use-package jsonrpc)
+;; (use-package copilot :after (editorconfig jsonrpc)
 ;;   :vc (:url "https://github.com/copilot-emacs/copilot.el"
 ;;             :rev :newest
 ;;             :branch "main")
@@ -1381,11 +1380,11 @@
 ;;
 
 ;; Elisp go-to-definition with M-. and back again with M-,
-(use-package elisp-slime-nav :ensure t :defer t
+(use-package elisp-slime-nav :defer t
  :hook
  (emacs-lisp-mode-hook . elisp-slime-nav-mode)
  (ielm-mode-hook . elisp-slime-nav-mode)
  :config
  (diminish 'elisp-slime-nav-mode " SN"))
 
-(use-package elisp-autofmt :ensure t :defer t)
+(use-package elisp-autofmt :defer t)
