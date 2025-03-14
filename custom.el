@@ -28,7 +28,7 @@
    '(ol-bbdb ol-bibtex ol-docview ol-gnus ol-info ol-irc ol-mhe ol-rmail ol-w3m
              org-mac-link))
  '(package-selected-packages
-   '(ace-link amx browse-at-remote buffer-move cape cider
+   '(ace-link affe amx browse-at-remote buffer-move cape cider
               color-theme-sanityinc-tomorrow company consult copilot
               copilot-chat corfu counsel diminish doom-modeline dumb-jump
               elisp-autofmt elisp-slime-nav embark embark-consult evil-anzu

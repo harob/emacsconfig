@@ -69,6 +69,7 @@
 (setq vc-follow-symlinks t) ; Don't ask confirmation to follow symlinks to edit files.
 
 (savehist-mode t) ; Save your minibuffer history across Emacs sessions. UX win!
+(setq savehist-additional-variables '(buffer-name-history))
 
 ;; Include path information in duplicate buffer names (e.g. a/foo.txt b/foo.txt)
 (setq uniquify-buffer-name-style 'forward)
@@ -143,11 +144,6 @@
 ;; when we want to restart the nrepl process.
 (setq kill-buffer-query-functions (remq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
-;; Use amx to show the M-x command prompt. It has better completion support than the default M-x.
-(use-package amx
-  :config
-  (amx-mode 1))
-
 ;; RecentF mode is the Emacs minor mode used when opening files via C-x C-f.
 (require 'recentf)
 (define-key recentf-mode-map (kbd "C-w") 'backward-delete-word)
@@ -184,8 +180,13 @@
   ;; Use the "symbol" as the text object for `*' and `#' rather than the "word"
   ;; (e.g. the full variable in Python including underscores, rather than the part
   ;; between underscores). This corresponds to the `o' text object over `w'
-  (setq evil-symbol-word-search t)
+  (setq evil-symbol-word-search t
+        evil-default-cursor t)
   (evil-set-undo-system 'undo-redo)
+  ;; Unbind these keys in evil so they can instead be used for code navigation.
+  (define-key evil-normal-state-map (kbd "M-,") nil)
+  (define-key evil-normal-state-map (kbd "M-.") nil)
+  (define-key evil-normal-state-map (kbd "C-.") nil)
   (evil-mode t))
 
 ;; Use M-u since I use vim's C-u for page-up
@@ -251,13 +252,13 @@
 
 (evil-leader/set-key
   "h" 'help
-  "SPC" 'amx
+  "SPC" 'execute-extended-command
   ":" 'eval-expression
   ";" 'eval-expression
-  "b" 'ivy-switch-buffer
-  "t" 'counsel-fzf
-  "a" 'counsel-rg
-  "/" 'swiper
+  "b" 'consult-buffer
+  "t" 'affe-find
+  "a" 'consult-ripgrep
+  "/" 'consult-line
   "u" 'universal-argument
   "\\" (lambda () (interactive)
          (split-window-horizontally)
@@ -296,13 +297,6 @@
   "v" "View"
   "w" "Window"
   "C" "Copilot chat")
-
-(eval-after-load 'evil
-  '(progn
-     (setq evil-default-cursor t)
-     ;; Unbind these keys in evil so they can instead be used for code navigation.
-     (define-key evil-normal-state-map (kbd "M-,") nil)
-     (define-key evil-normal-state-map (kbd "M-.") nil)))
 
 ;; Enable the typical Bash/readline keybindings when in insert mode.
 (util/define-keys evil-insert-state-map
@@ -588,12 +582,10 @@
   :init
   (vertico-mode)
   :custom
-  (vertico-cycle t))
+  (vertico-cycle t)
+  (vertico-count 20))
 
-(use-package savehist
-  :init
-  ;; Save history across sessions
-  (savehist-mode))
+(setq enable-recursive-minibuffers t)
 
 ;; Marginalia for rich annotations in the minibuffer
 (use-package marginalia :after vertico
@@ -602,21 +594,46 @@
 
 (use-package corfu
   :init
-  (global-corfu-mode))
+  (global-corfu-mode)
+  :custom
+  (corfu-auto nil) ;; Disable automatic popup (manual trigger)
+  (corfu-cycle t) ;; Enable cycling through candidates
+  (corfu-preselect 'prompt) ;; Preselect the prompt
+  :bind (:map corfu-map
+              ("TAB" . corfu-next) ;; Navigate candidates with TAB
+              ([tab] . corfu-next)
+              ("S-TAB" . corfu-previous) ;; Navigate backward with Shift+TAB
+              ([backtab] . corfu-previous)))
+
+(evil-define-key 'insert prog-mode-map (kbd "TAB") 'completion-at-point)
+(evil-define-key 'insert prog-mode-map (kbd "<tab>") 'completion-at-point)
+(evil-define-key 'insert org-mode-map (kbd "TAB") 'completion-at-point)
+(evil-define-key 'insert org-mode-map (kbd "<tab>") 'completion-at-point)
 
 (use-package cape
   :init
-  (add-to-list 'completion-at-point-functions #'cape-file))
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev))
 
 (use-package consult
+  :config
+  ;; (setq consult-buffer-sources
+  ;;       '(consult--source-hidden-buffer
+  ;;         consult--source-modified-buffer
+  ;;         consult--source-file
+  ;;         consult--source-project-file
+  ;;         consult--source-recent-file)) ;; Add recent files as a source
   :bind
-  (("C-s" . consult-line) ;; Replace Swiper for buffer search
-   ("M-x" . execute-extended-command) ;; Replace counsel-M-x
-   ("C-x b" . consult-buffer))) ;; Replace ivy-switch-buffer
+  (("M-x" . execute-extended-command)))
+
+(recentf-mode 1)
+(setq recentf-max-saved-items 100) ;; Increase the number of saved items
+(setq recentf-auto-cleanup 'never) ;; Disable automatic cleanup
 
 (use-package orderless
   :custom
   (completion-styles '(orderless basic))
+  (completion-ignore-case t)
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles partial-completion)))))
 
@@ -629,41 +646,13 @@
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
-;; TODO(harry) Delete all these:
-(use-package ivy
-  :config
-  (ivy-mode 1)
-  (setq ivy-use-virtual-buffers t)
-  (setq enable-recursive-minibuffers t)
-  (setq ivy-height 20)
-  (setq ivy-wrap t)
-  (setq ivy-re-builders-alist '((t . ivy--regex-ignore-order)))
-  (setq ivy-use-selectable-prompt t)
-  (define-key ivy-mode-map (kbd "C-h") 'backward-delete-char)
-  (define-key ivy-mode-map (kbd "C-w") 'backward-delete-word))
-
-(use-package swiper :after (ivy)
-  :config
-  (define-key ivy-minibuffer-map [escape] 'minibuffer-keyboard-quit)
-  (define-key swiper-map [escape] 'minibuffer-keyboard-quit)
-  (define-key swiper-map (kbd "C-h") 'backward-delete-char)
-  (define-key swiper-map (kbd "C-w") 'backward-delete-word))
+(use-package affe)
 
 ;; Allows batch find-and-replace with
 ;; counsel-rg -> ivy-occur -> ivy-wgrep-change-to-wgrep-mode -> C-x C-s
 (use-package wgrep :defer t
   :config
   (setq wgrep-auto-save-buffer t))
-
-;; Projectile is only used by counsel, which uses it to find the repo root directory
-(use-package projectile
-  :config
-  (projectile-global-mode)
-  (setq projectile-completion-system 'ivy))
-
-(use-package counsel :defer t
-  :config
-  (setq counsel-fzf-cmd "fzf --exact --filter=\"%s\""))
 
 
 ;;
@@ -789,9 +778,7 @@
   (diminish 'global-whitespace-mode "")
   (diminish 'auto-fill-function "")
   (diminish 'yas-minor-mode "")
-  (diminish 'osx-keys-minor-mode "")
-  (diminish 'ivy-mode "")
-  (diminish 'company-mode ""))
+  (diminish 'osx-keys-minor-mode ""))
 
 
 ;; Markdown
@@ -973,15 +960,13 @@
         (interactive)
         (go-save-and-compile command))))
 
-;; Note that this function uses (projectile-project-root) to determine the directory to run `go` commands,
-;; which requires that the go project have a .projectile file in it or that it be at the root of a git repo.
 (defun go-save-and-compile (command)
   "Saves the current buffer before invoking the given command."
-  (lexical-let ((has-makefile (file-exists-p (concat (projectile-project-root) "Makefile"))))
+  (when-let ((project-dir (locate-dominating-file default-directory ".git")))
     (save-buffer)
     (message command)
     (util/without-confirmation
-     (lambda () (compile (concat "cd " (projectile-project-root) " && " command))))))
+     (lambda () (compile (concat "cd " project-dir " && " command))))))
 
 (evil-leader/set-key-for-mode 'go-mode
   ;; "r" is a namespace for run-related commands.
@@ -1182,18 +1167,6 @@
   :config
   (ace-link-setup-default))
 
-;; Company mode for autocompletion
-(use-package company :defer t)
-(add-hook 'prog-mode-hook #'company-mode)
-(add-hook 'org-mode-hook #'company-mode)
-(setq company-idle-delay nil)
-(setq company-dabbrev-downcase nil)
-(setq company-dabbrev-ignore-case t)
-(evil-define-key 'insert prog-mode-map (kbd "TAB") 'company-complete)
-(evil-define-key 'insert prog-mode-map (kbd "<tab>") 'company-complete)
-(evil-define-key 'insert org-mode-map (kbd "TAB") 'company-complete)
-(evil-define-key 'insert org-mode-map (kbd "<tab>") 'company-complete)
-
 (use-package typescript-mode :defer t)
 (add-to-list 'auto-mode-alist '("\\.tsx$" . typescript-mode))
 
@@ -1236,7 +1209,7 @@
 ;; Treemacs file browser pane -- start with M-x treemacs-projectile
 (use-package treemacs :defer t)
 (use-package treemacs-evil :after (treemacs evil))
-(use-package treemacs-projectile :after (treemacs projectile) :defer t)
+;; (use-package treemacs-projectile :after (treemacs projectile) :defer t)
 
 
 ;; Custom modeline -- run M-x nerd-icons-install-fonts to install the fonts
