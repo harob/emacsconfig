@@ -69,7 +69,7 @@
 (setq vc-follow-symlinks t) ; Don't ask confirmation to follow symlinks to edit files.
 
 (savehist-mode t) ; Save your minibuffer history across Emacs sessions. UX win!
-(setq savehist-additional-variables '(buffer-name-history))
+(setq savehist-additional-variables '(buffer-name-history kill-ring))
 
 ;; Include path information in duplicate buffer names (e.g. a/foo.txt b/foo.txt)
 (setq uniquify-buffer-name-style 'forward)
@@ -279,7 +279,8 @@
   "vi" (lambda () (interactive) (find-file "~/Dropbox/notes/inbox.org") (org-mode))
   "vs" (lambda () (interactive) (find-file "~/Dropbox/notes/scratch.org") (org-mode))
   "vt" (lambda () (interactive) (find-file "~/Dropbox/notes/tasks.org") (org-mode))
-  "vz" (lambda () (interactive) (find-file "~/dotfiles/.zshrc")))
+  "vz" (lambda () (interactive) (find-file "~/dotfiles/.zshrc"))
+  "V" 'consult-yank-from-kill-ring)
 
 (defmacro my-which-key-with-evil-leader (&rest key-desc-pairs)
   `(progn
@@ -621,6 +622,10 @@
   :init
   (add-to-list 'completion-at-point-functions #'cape-file)
   (add-to-list 'completion-at-point-functions #'cape-dabbrev))
+
+(defun my-org-mode-completion-setup ()
+  (setq-local completion-at-point-functions (list #'cape-file #'cape-dabbrev)))
+(add-hook 'org-mode-hook #'my-org-mode-completion-setup)
 
 (use-package consult
   :config
