@@ -623,6 +623,8 @@
   (add-to-list 'completion-at-point-functions #'cape-file)
   (add-to-list 'completion-at-point-functions #'cape-dabbrev))
 
+;; For some reason org-mode overwrites `completion-at-point-functions', so
+;; re-overwrite iit here:
 (defun my-org-mode-completion-setup ()
   (setq-local completion-at-point-functions (list #'cape-file #'cape-dabbrev)))
 (add-hook 'org-mode-hook #'my-org-mode-completion-setup)
