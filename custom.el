@@ -30,9 +30,9 @@
  '(package-selected-packages
    '(ace-link affe amx browse-at-remote buffer-move cape cider
               color-theme-sanityinc-tomorrow company consult copilot
-              copilot-chat corfu counsel diminish doom-modeline dumb-jump
-              elisp-autofmt elisp-slime-nav embark embark-consult evil-anzu
-              evil-args evil-leader evil-matchit evil-nerd-commenter
+              copilot-chat corfu corfu-popupinfo counsel diminish doom-modeline
+              dumb-jump elisp-autofmt elisp-slime-nav embark embark-consult
+              evil-anzu evil-args evil-leader evil-matchit evil-nerd-commenter
               evil-surround evil-visualstar flymake-cursor flymake-ruff go-mode
               goto-last-change gptel magit-delta marginalia orderless
               org-download org-mac-link pytest python-pytest quelpa-use-package

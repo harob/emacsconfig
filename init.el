@@ -596,9 +596,9 @@
   :init
   (global-corfu-mode)
   :custom
-  (corfu-auto nil) ;; Disable automatic popup (manual trigger)
-  (corfu-cycle t) ;; Enable cycling through candidates
-  (corfu-preselect 'prompt) ;; Preselect the prompt
+  (corfu-cycle t)
+  ;; (corfu-preselect 'prompt) ;; Preselect the prompt
+  (corfu-quit-at-boundary nil) ;; Do orderless matching upon pressing SPC rather than exiting
   :bind (:map corfu-map
               ("TAB" . corfu-next) ;; Navigate candidates with TAB
               ([tab] . corfu-next)
@@ -609,6 +609,13 @@
 (evil-define-key 'insert prog-mode-map (kbd "<tab>") 'completion-at-point)
 (evil-define-key 'insert org-mode-map (kbd "TAB") 'completion-at-point)
 (evil-define-key 'insert org-mode-map (kbd "<tab>") 'completion-at-point)
+
+(use-package corfu-popupinfo :after corfu
+  :ensure nil; Included with corfu
+  :hook
+  (corfu-mode . corfu-popupinfo-mode)
+  :custom
+  (corfu-popupinfo-delay '(0.1 . 0.1)))
 
 (use-package cape
   :init
