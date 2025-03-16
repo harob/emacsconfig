@@ -667,10 +667,14 @@
 (use-package affe)
 
 ;; Allows batch find-and-replace with
-;; counsel-rg -> ivy-occur -> ivy-wgrep-change-to-wgrep-mode -> C-x C-s
+;; consult-ripgreg -> embark-export -> wgrep-change-to-wgrep-mode -> C-x C-s
 (use-package wgrep :defer t
-  :config
-  (setq wgrep-auto-save-buffer t))
+  :custom
+  (wgrep-auto-save-buffer t))
+
+(add-to-list 'evil-insert-state-modes 'wgrep-mode)
+(evil-define-key 'normal wgrep-mode-map "ZQ" 'wgrep-abort-changes)
+(evil-define-key 'normal wgrep-mode-map "ZZ" 'wgrep-finish-edit)
 
 
 ;;
