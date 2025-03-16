@@ -630,6 +630,10 @@
 (add-hook 'org-mode-hook #'my-org-mode-completion-setup)
 
 (use-package consult
+  :custom
+  ; Sample usage: in consult-buffer, press < then b to narrow to just open buffers.
+  ; The same can be achieved by pressing b then SPC
+  (consult-narrow-key "<")
   :config
   ;; (setq consult-buffer-sources
   ;;       '(consult--source-hidden-buffer
