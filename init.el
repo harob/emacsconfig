@@ -104,8 +104,6 @@
 
 (setq-default tab-width 2)
 (setq-default evil-shift-width 2)
-; Some modes have their own tab-width variables.
-(setq-default css-indent-offset 2)
 
 (setq-default fill-column 80)
 (add-hook 'prog-mode-hook 'display-fill-column-indicator-mode)
@@ -144,17 +142,12 @@
 ;; when we want to restart the nrepl process.
 (setq kill-buffer-query-functions (remq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
-;; RecentF mode is the Emacs minor mode used when opening files via C-x C-f.
-(require 'recentf)
-(define-key recentf-mode-map (kbd "C-w") 'backward-delete-word)
-(define-key recentf-mode-map (kbd "C-h") 'backward-delete-char)
-
 ;; The poorly-named winner mode saves the history of your window splits, so you can undo and redo changes to
-;; your window configuration.
+;; your window configuration with `winner-undo'
 (winner-mode t)
 
 ;; Save buffers whenever they lose focus.
-;; This obviates the need to hit the Save key thousands of times a day. Inspired by http://goo.gl/2z0g5O.
+;; This obviates the need to hit the Save key thousands of times a day. Inspired by http://goo.gl/2z0g5O
 (add-hook 'focus-out-hook 'util/save-buffer-if-dirty)
 (defadvice windmove-up (before other-window-now activate) (util/save-buffer-if-dirty))
 (defadvice windmove-down (before other-window-now activate) (util/save-buffer-if-dirty))
@@ -173,15 +166,29 @@
 ;; Evil mode -- Vim keybindings for Emacs.
 ;;
 
-(use-package evil
-  :init
-  (setq evil-want-C-u-scroll t)
+;; Provide configuration functions for assigning actions to a Vim leader key.
+(use-package evil-leader
+  :custom
+  (evil-leader/leader "SPC")
+  ;; Access leader with C-SPC in insert mode:
+  (evil-leader/in-all-states t)
+  ;; Ensure evil-leader works in non-editing modes like magit. This is referenced from evil-leader's README.
+  (evil-leader/no-prefix-mode-rx '("magit-.*-mode"))
   :config
+  ;; This needs to be *before* calling `evil-mode' for the leader key to work in
+  ;; all buffer types:
+  (global-evil-leader-mode 1))
+
+(use-package evil
+  :custom
+  (evil-want-C-u-scroll t)
   ;; Use the "symbol" as the text object for `*' and `#' rather than the "word"
   ;; (e.g. the full variable in Python including underscores, rather than the part
   ;; between underscores). This corresponds to the `o' text object over `w'
-  (setq evil-symbol-word-search t
-        evil-default-cursor t)
+  (evil-symbol-word-search t)
+  ;; When opening new lines, indent according to the previous line.
+  (evil-auto-indent t)
+  :config
   (evil-set-undo-system 'undo-redo)
   ;; Unbind these keys in evil so they can instead be used for code navigation.
   (define-key evil-normal-state-map (kbd "M-,") nil)
@@ -199,24 +206,19 @@
 
 (use-package goto-last-change)
 
-;; Provide configuration functions for assigning actions to a Vim leader key.
-(use-package evil-leader
-  :config
-  (setq evil-leader/leader "SPC")
-  ;; Access leader with C-SPC in insert mode:
-  (setq evil-leader/in-all-states t)
-  ;; Ensure evil-leader works in non-editing modes like magit. This is referenced from evil-leader's README.
-  (setq evil-leader/no-prefix-mode-rx '("magit-.*-mode"))
-  (global-evil-leader-mode))
-
 (use-package which-key
+  :custom
+  (which-key-allow-evil-operators t)
+  (which-key-show-operator-state-maps t)
   :config
-  (which-key-mode)
-  (setq which-key-allow-evil-operators t
-        which-key-show-operator-state-maps t))
+  (which-key-mode 1))
 
-;; When opening new lines, indent according to the previous line.
-(setq evil-auto-indent t)
+(defmacro my-which-key-with-evil-leader (&rest key-desc-pairs)
+  `(progn
+     ,@(mapcar (lambda (pair)
+                 `(which-key-add-key-based-replacements
+                    (concat evil-leader/leader " " ,(car pair)) ,(cadr pair)))
+               (seq-partition key-desc-pairs 2))))
 
 ;; Move up and down through long, wrapped lines one visual line at a time.
 (define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
@@ -260,17 +262,9 @@
   "a" 'consult-ripgrep
   "/" 'consult-line
   "u" 'universal-argument
-  "\\" (lambda () (interactive)
-         (split-window-horizontally)
-         (other-window 1)
-         (balance-windows))
-  "-" (lambda () (interactive)
-        (split-window-vertically)
-        (other-window 1)
-        (balance-windows))
-  "gs" (lambda() (interactive)
-          (util/save-buffer-if-dirty)
-          (magit-status))
+  "\\" (lambda () (interactive) (split-window-horizontally) (other-window 1) (balance-windows))
+  "-" (lambda () (interactive) (split-window-vertically) (other-window 1) (balance-windows))
+  "gs" (lambda() (interactive) (util/save-buffer-if-dirty) (magit-status))
   "gl" 'magit-log-current
   ;; "v" is a mnemonic prefix for "view X".
   "ve" (lambda () (interactive) (find-file "~/.emacs.d/init.el"))
@@ -281,13 +275,6 @@
   "vt" (lambda () (interactive) (find-file "~/Dropbox/notes/tasks.org") (org-mode))
   "vz" (lambda () (interactive) (find-file "~/dotfiles/.zshrc"))
   "V" 'consult-yank-from-kill-ring)
-
-(defmacro my-which-key-with-evil-leader (&rest key-desc-pairs)
-  `(progn
-     ,@(mapcar (lambda (pair)
-                 `(which-key-add-key-based-replacements
-                    (concat evil-leader/leader " " ,(car pair)) ,(cadr pair)))
-               (seq-partition key-desc-pairs 2))))
 
 (my-which-key-with-evil-leader
   "c" "Comment"
@@ -318,16 +305,12 @@
 
 (use-package evil-visualstar
   :config
-  (global-evil-visualstar-mode))
+  (global-evil-visualstar-mode 1))
 
+;; Press % to jump to matching delimiter
 (use-package evil-matchit
   :config
   (global-evil-matchit-mode 1))
-
-(use-package evil-args
-  :config
-  (define-key evil-inner-text-objects-map "a" 'evil-inner-arg)
-  (define-key evil-outer-text-objects-map "a" 'evil-outer-arg))
 
 
 ;;
@@ -684,16 +667,13 @@
 ;; Emacs Lisp (elisp)
 ;;
 
+;; Treat hyphens as part of words:
 (add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w" emacs-lisp-mode-syntax-table)))
+
 (evil-define-key 'normal emacs-lisp-mode-map
   (kbd "M-h") 'shift-sexp-backward
   (kbd "M-l") 'shift-sexp-forward
-  "K"'(lambda ()
-        (interactive)
-        ;; Run `describe-function' and show its output in a help
-        ;; window. Inspired from help-fns.el.
-        (with-help-window "*Help*"
-          (describe-function (intern (current-word))))))
+  "K" 'describe-function)
 
 (defun current-sexp ()
   "Returns the text content of the sexp list around the cursor."
@@ -708,7 +688,7 @@
   ; Note that I'm saving the buffer before each eval because otherwise, the buffer gets saved after the eval,
   ; (due to save-when-switching-windows setup) and the output from the buffer save overwrites the eval results
   ; in the minibuffer.
-  "eb" (lambda() (interactive) (util/save-buffer-if-dirty) (eval-buffer))
+  "eb" (lambda () (interactive) (util/save-buffer-if-dirty) (eval-buffer))
   "es" (lambda () (interactive) (util/save-buffer-if-dirty) (elisp-eval-current-sexp))
   "ex" (lambda () (interactive) (util/save-buffer-if-dirty) (call-interactively 'eval-defun))
   "ee" 'view-echo-area-messages)
@@ -1319,19 +1299,3 @@
 ;;   (add-hook 'prog-mode-hook 'copilot-mode)
 ;;   (setq copilot-indent-offset-warning-disable t
 ;;         copilot-max-char-warning-disable t))
-
-
-;;
-;; Elisp
-;;
-
-;; Elisp go-to-definition with M-. and back again with M-,
-;; You can also use `find-function' to get a fuzzy finder minibuffer UI
-(use-package elisp-slime-nav :defer t
- :hook
- (emacs-lisp-mode-hook . elisp-slime-nav-mode)
- (ielm-mode-hook . elisp-slime-nav-mode)
- :config
- (diminish 'elisp-slime-nav-mode " SN"))
-
-(use-package elisp-autofmt :defer t)
