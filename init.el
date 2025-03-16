@@ -576,7 +576,7 @@
 
 
 ;;
-;; Filename completions (i.e. CTRL-P or CMD-T in other editors)
+;; Fancy fuzzy-finding for buffers, files, text, and more!
 ;;
 
 (use-package vertico
@@ -657,17 +657,20 @@
 
 (use-package embark
   :bind
-  (("C-." . embark-act) ;; Act on completion candidates
+  (;; Pops up a giant menu of options. Press C-h to search within it
+   ("C-." . embark-act)
    ("M-." . embark-dwim)))
 
 (use-package embark-consult
+  :ensure nil
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
+;; For fzf-style `affe-find'
 (use-package affe)
 
 ;; Allows batch find-and-replace with
-;; consult-ripgreg -> embark-export -> wgrep-change-to-wgrep-mode -> C-x C-s
+;; `consult-ripgreg' -> `embark-export' -> `wgrep-change-to-wgrep-mode' -> ZZ or ZQ
 (use-package wgrep :defer t
   :custom
   (wgrep-auto-save-buffer t))
@@ -1375,6 +1378,7 @@
 ;;
 
 ;; Elisp go-to-definition with M-. and back again with M-,
+;; You can also use `find-function' to get a fuzzy finder minibuffer UI
 (use-package elisp-slime-nav :defer t
  :hook
  (emacs-lisp-mode-hook . elisp-slime-nav-mode)
