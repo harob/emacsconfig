@@ -582,6 +582,9 @@
   :custom
   (corfu-cycle t)
   ;; (corfu-preselect 'prompt) ;; Preselect the prompt
+  ;; NOTE(harry) Try this for a while. If it's too annoying, turn it off and
+  ;; switch to using S-SPC to call `corfu-insert-separator' to activate orderless
+  ;; matching instead.
   (corfu-quit-at-boundary nil) ;; Do orderless matching upon pressing SPC rather than exiting
   :bind (:map corfu-map
               ("TAB" . corfu-next) ;; Navigate candidates with TAB
