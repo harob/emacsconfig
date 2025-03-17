@@ -1,10 +1,13 @@
+;; Uncomment this if there are any errors on startup:
+;; (setq debug-on-error t)
+
+
 ;;
 ;; Package management
 ;;
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/"))
 (package-initialize)
 (when (not package-archive-contents)
   (package-refresh-contents))
@@ -606,11 +609,11 @@
 
 (use-package cape
   :init
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev))
+  (add-to-list 'completion-at-point-functions #'cape-file t)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev t))
 
 ;; For some reason org-mode overwrites `completion-at-point-functions', so
-;; re-overwrite iit here:
+;; re-overwrite it here:
 (defun my-org-mode-completion-setup ()
   (setq-local completion-at-point-functions (list #'cape-file #'cape-dabbrev)))
 (add-hook 'org-mode-hook #'my-org-mode-completion-setup)
@@ -706,6 +709,14 @@
 ;; Indentation rules.
 (put '-> 'lisp-indent-function nil)
 (put '->> 'lisp-indent-function nil)
+
+(add-hook 'emacs-lisp-mode-hook
+          (lambda () (setq-local completion-at-point-functions
+                                 (list #'elisp-completion-at-point
+                                       #'cape-elisp-symbol
+                                       #'cape-elisp-block
+                                       #'cape-file
+                                       #'cape-dabbrev))))
 
 
 ;;
