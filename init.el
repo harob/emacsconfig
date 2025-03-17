@@ -653,7 +653,14 @@
   (embark-collect-mode . consult-preview-at-point-mode))
 
 ;; For fzf-style `affe-find'
-(use-package affe)
+(use-package affe
+  :custom
+  (affe-regexp-compiler #'affe-orderless-regexp-compiler))
+
+;; Mysterious code recommended at https://github.com/minad/affe
+(defun affe-orderless-regexp-compiler (input _type _ignorecase)
+  (setq input (cdr (orderless-compile input)))
+  (cons input (apply-partially #'orderless--highlight input t)))
 
 ;; Allows batch find-and-replace with
 ;; `consult-ripgreg' -> `embark-export' -> `wgrep-change-to-wgrep-mode' -> ZZ or ZQ
