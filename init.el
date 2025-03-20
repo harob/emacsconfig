@@ -2,9 +2,7 @@
 ;; (setq debug-on-error t)
 
 
-;;
-;; Package management
-;;
+;;;; Package management
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
@@ -17,9 +15,7 @@
 (setq use-package-always-ensure t)
 
 
-;;
-;; General settings
-;;
+;;;; General settings
 
 (require 'cl)
 (add-to-list 'load-path "~/.emacs.d/elisp")
@@ -183,9 +179,7 @@
   (show-paren-mode t))
 
 
-;;
-;; Evil mode -- Vim keybindings for Emacs.
-;;
+;;;; Evil mode -- Vim keybindings for Emacs.
 
 ;; Provide configuration functions for assigning actions to a Vim leader key.
 (use-package evil-leader
@@ -332,9 +326,7 @@
   (global-evil-visualstar-mode 1))
 
 
-;;
-;; Window manipulation, switching, & management.
-;;
+;;;; Window manipulation, switching, & management.
 
 ;; Settings for window splits.
 (setq split-height-threshold 40
@@ -440,9 +432,7 @@
 (global-set-key [escape] 'evil-exit-emacs-state)
 
 
-;;
-;; Incremental search (isearch)
-;;
+;;;; Incremental search (isearch)
 
 ;; Make highlighting during incremental search feel snappier.
 (setq case-fold-search t) ; Make searches case insensitive.
@@ -492,12 +482,10 @@
     (recenter arg)))
 
 
-;;
-;; Mac OS X keybindings minor mode.
+;;;; Mac OS X keybindings minor mode.
+
 ;; Make it so the OSX keybindings you're used to always work in every mode in Emacs.
 ;; http://stackoverflow.com/questions/683425/globally-override-key-binding-in-emacs
-;;
-
 (defvar osx-keys-minor-mode-map (make-keymap) "osx-keys-minor-mode-keymap")
 (util/define-keys osx-keys-minor-mode-map
                   (kbd "M-`") 'other-frame
@@ -561,9 +549,7 @@
   (run-hooks 'after-explicit-save-hook))
 
 
-;;
-;; Fancy fuzzy-finding for buffers, files, text, and more!
-;;
+;;;; Fancy fuzzy-finding for buffers, files, text, and more!
 
 (use-package vertico
   :init
@@ -669,9 +655,7 @@
 (evil-define-key 'normal wgrep-mode-map "ZZ" 'wgrep-finish-edit)
 
 
-;;
-;; Emacs Lisp (elisp)
-;;
+;;;; Emacs Lisp (elisp)
 
 ;; Treat hyphens as part of words:
 (add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w" emacs-lisp-mode-syntax-table)))
@@ -711,17 +695,12 @@
 (setq find-function-C-source-directory "~/workspace/external_codebases/emacs/src")
 
 
-;;
-;; Org mode, for GTD and note taking.
-;;
+;;;; Org mode, for GTD and note taking.
 
 (require 'org-mode-personal)
 
 
-;;
-;; tab-bar-mode (tabs on the window).
-;;
-
+;;;; tab-bar-mode (tabs on the window).
 
 (use-package tab-bar
   :ensure nil
@@ -739,11 +718,9 @@
 
 
 
-;;
-;; Diminish - hide or shorten the names of minor modes in your modeline.
-;; To see which minor modes you have loaded and what their modeline strings are: (message minor-mode-alist)
-;;
+;;;; Diminish - hide or shorten the names of minor modes in your modeline.
 
+;; To see which minor modes you have loaded and what their modeline strings are run `(message minor-mode-alist)`
 (use-package diminish
   :config
   (diminish 'visual-line-mode "")
@@ -752,9 +729,7 @@
   (diminish 'osx-keys-minor-mode ""))
 
 
-;;
-;; Markdown
-;;
+;;;; Markdown
 
 (setq markdown-command
       (concat
@@ -767,9 +742,7 @@
 (setq markdown-fontify-code-blocks-natively t)
 
 
-;;
-;; CSS
-;;
+;;;; CSS
 
 (add-hook 'css-mode-hook (lambda ()
                            ;; (autopair-mode 1) ; Auto-insert matching delimiters.
@@ -777,9 +750,7 @@
                            (electric-indent-mode)))
 
 
-;;
-;; Ruby
-;;
+;;;; Ruby
 
 (add-to-list 'auto-mode-alist '("\\.rake$" . ruby-mode))
 (add-to-list 'auto-mode-alist '("\\.gemspec$" . ruby-mode))
@@ -793,17 +764,13 @@
 (add-hook 'ruby-mode-hook (lambda () (ruby-electric-mode)))
 
 
-;;
-;; Rainbow-delimiters: highlight parentheses in rainbow colors.
-;;
+;;;; Rainbow-delimiters: highlight parentheses in rainbow colors.
 
 (use-package rainbow-delimiters :defer t
   :hook (prog-mode . rainbow-delimiters-mode))
 
 
-;;
-;; Smartparens utility functions
-;;
+;;;; Smartparens utility functions
 
 (use-package smartparens :demand t
   :config
@@ -840,9 +807,7 @@
   (sp-backward-sexp))
 
 
-;;
-;; Clojure
-;;
+;;;; Clojure
 
 (use-package clojure-mode :defer t)
 (require 'clojure-mode-personal)
@@ -860,9 +825,7 @@
 (add-hook 'cider-repl-mode-hook 'rainbow-delimiters-mode)
 
 
-;;
-;; HTML mode
-;;
+;;;; HTML
 
 (add-to-list 'auto-mode-alist '("\\.erb$" . html-mode))
 
@@ -908,17 +871,13 @@
 (add-hook 'web-mode-hook 'my-web-mode-hook)
 
 
-;;
-;; YAML mode, for editing YAML files
-;;
+;;;; YAML
 
 (use-package yaml-mode :defer t)
 (add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode))
 
 
-;;
-;; Go mode, for writing Go code
-;;
+;;;; Go
 
 (use-package go-mode :defer t
   :config
@@ -993,9 +952,7 @@
                                         (+ 1 (match-end 1)))))))
 
 
-;;
-;; Magit - for staging hunks and making commits to git
-;;
+;;;; Magit - for staging hunks and making commits to git
 
 ;; For large repos, check what's slow with M-x `magit-toggle-verbose-refresh'
 ;; and looking at the times in *Messages*. Then disable the slowest sections
@@ -1011,23 +968,17 @@
 ;;   :hook (magit-mode . magit-delta-mode))
 
 
-;;
-;; Javascript
-;;
+;;;; Javascript
 
 (setq js-indent-level 2)
 
 
-;;
-;; Lua
-;;
+;;;; Lua
 
 (setq lua-indent-level 2)
 
 
-;;
-;; All new!
-;;
+;;;; Misc
 
 ;; Switch across windows (i.e. panes/splits)
 (define-key evil-normal-state-map (kbd "C-h") (lambda () (interactive) (ignore-errors (evil-window-left 1))))
@@ -1110,8 +1061,24 @@
 
 (use-package browse-at-remote :defer t)
 
+;; Treemacs file browser pane -- start with M-x treemacs-projectile
+(use-package treemacs :defer t)
+(use-package treemacs-evil :after (treemacs evil))
+;; (use-package treemacs-projectile :after (treemacs projectile) :defer t)
 
-;; Generic insertion of TODO et al
+
+;; Custom modeline -- run M-x nerd-icons-install-fonts to install the fonts
+(use-package evil-anzu
+  :config
+  ;; To display search result count in modeline
+  (global-anzu-mode t))
+
+(use-package doom-modeline :after (evil-anzu)
+  :config
+  (doom-modeline-mode 1))
+
+
+;;;; Generic insertion of TODO et al
 
 (defun insert-todo ()
   "Insert a TODO comment appropriate for the current mode."
@@ -1144,26 +1111,8 @@
   "if" 'insert-fixme)
 
 
-;; Treemacs file browser pane -- start with M-x treemacs-projectile
-(use-package treemacs :defer t)
-(use-package treemacs-evil :after (treemacs evil))
-;; (use-package treemacs-projectile :after (treemacs projectile) :defer t)
 
-
-;; Custom modeline -- run M-x nerd-icons-install-fonts to install the fonts
-(use-package evil-anzu
-  :config
-  ;; To display search result count in modeline
-  (global-anzu-mode t))
-
-(use-package doom-modeline :after (evil-anzu)
-  :config
-  (doom-modeline-mode 1))
-
-
-;;
-;; Python dev
-;;
+;;;; Python
 
 ;; Configuration inspired by https://www.naiquev.in/understanding-emacs-packages-for-python.html
 
@@ -1229,9 +1178,7 @@
     (message "No file is associated with the current buffer.")))
 
 
-;;
-;; AI
-;;
+;;;; AI
 
 ;; To set up gptel, add these lines to ~/.authinfo:
 ;; machine api.openai.com login apikey password <openai dev token>
