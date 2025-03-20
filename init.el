@@ -8,6 +8,7 @@
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 (package-initialize)
 (when (not package-archive-contents)
   (package-refresh-contents))
@@ -164,6 +165,23 @@
 (setq create-lockfiles nil)
 (setq eldoc-echo-area-use-multiline-p nil)
 
+;; Don't use the native OSX full screen support, because it uses OSX Spaces which don't play well with
+;; CMD-tabbing to applications which are behind Emacs. Invoke fullscreen with `toggle-frame-fullscreen'.
+(setq ns-use-native-fullscreen nil)
+
+(global-font-lock-mode t)
+(global-display-line-numbers-mode t)
+(column-number-mode t)
+
+(global-set-key (kbd "RET") 'comment-indent-new-line)
+
+(use-package paren
+  :ensure nil
+  :custom
+  (show-paren-delay 0)
+  :config
+  (show-paren-mode t))
+
 
 ;;
 ;; Evil mode -- Vim keybindings for Emacs.
@@ -201,11 +219,6 @@
 
 ;; Use M-u since I use vim's C-u for page-up
 (global-set-key (kbd "M-u") 'universal-argument)
-
-(use-package evil-nerd-commenter
-  :config
-  (define-key evil-normal-state-map " cc" 'evilnc-comment-or-uncomment-lines)
-  (define-key evil-visual-state-map " cc" 'evilnc-comment-operator))
 
 (use-package goto-last-change)
 
@@ -256,14 +269,14 @@
 (define-key evil-outer-text-objects-map "P" 'evil-a-paragraph)
 
 (evil-leader/set-key
-  "h" 'help
   "SPC" 'execute-extended-command
-  ":" 'eval-expression
+  "h" 'help
   ";" 'eval-expression
-  "b" 'consult-buffer
   "t" 'affe-find
+  "b" 'consult-buffer ; Includes all buffers and recent files by default. Type p SPC to narrow to just the current project
   "a" 'consult-ripgrep
   "/" 'consult-line
+  "V" 'consult-yank-from-kill-ring
   "u" 'universal-argument
   "\\" (lambda () (interactive) (split-window-horizontally) (other-window 1) (balance-windows))
   "-" (lambda () (interactive) (split-window-vertically) (other-window 1) (balance-windows))
@@ -272,12 +285,10 @@
   ;; "v" is a mnemonic prefix for "view X".
   "ve" (lambda () (interactive) (find-file "~/.emacs.d/init.el"))
   "vh" (lambda () (interactive) (find-file "~/workspace/src/liftoff/haggler/src/haggler/handler.clj"))
-  "vk" (lambda () (interactive) (find-file "~/workspace/side_projects/qmk_firmware/keyboards/ergodox/keymaps/dvorak_harob/keymap.c"))
   "vi" (lambda () (interactive) (find-file "~/Dropbox/notes/inbox.org") (org-mode))
   "vs" (lambda () (interactive) (find-file "~/Dropbox/notes/scratch.org") (org-mode))
   "vt" (lambda () (interactive) (find-file "~/Dropbox/notes/tasks.org") (org-mode))
-  "vz" (lambda () (interactive) (find-file "~/dotfiles/.zshrc"))
-  "V" 'consult-yank-from-kill-ring)
+  "vz" (lambda () (interactive) (find-file "~/dotfiles/.zshrc")))
 
 (my-which-key-with-evil-leader
   "c" "Comment"
@@ -300,6 +311,16 @@
                   (kbd "C-p") 'previous-line
                   (kbd "C-n") 'next-line)
 
+;; Press % to jump to matching delimiter
+(use-package evil-matchit
+  :config
+  (global-evil-matchit-mode 1))
+
+(use-package evil-nerd-commenter
+  :config
+  (define-key evil-normal-state-map " cc" 'evilnc-comment-or-uncomment-lines)
+  (define-key evil-visual-state-map " cc" 'evilnc-comment-operator))
+
 (use-package evil-surround
   :config
   (evil-define-key 'visual evil-surround-mode-map "s" 'evil-surround-region)
@@ -309,11 +330,6 @@
 (use-package evil-visualstar
   :config
   (global-evil-visualstar-mode 1))
-
-;; Press % to jump to matching delimiter
-(use-package evil-matchit
-  :config
-  (global-evil-matchit-mode 1))
 
 
 ;;
@@ -329,7 +345,7 @@
 ;; lower-right or right window, in that order of preference."
 (setq special-display-buffer-names '("*Help*" "*compilation*" "COMMIT_EDITMSG" "*Messages*"
                                      "*magit-process*" "*magit-commit*" "*Compile-Log*" "*Gofmt Errors*"))
-(setq special-display-regexps '("*cider.*" "*ag.*" "magit: .**"))
+(setq special-display-regexps '("*cider.*" "magit: .*" "magit-log: .*"))
 (setq special-display-function 'show-ephemeral-buffer-in-a-sensible-window)
 
 ;; A list of "special" (ephemeral) buffer names which should be focused after they are shown. Used by
@@ -373,25 +389,25 @@
       (select-window original-window))))
 
 (defun split-window-sensibly-reverse (&optional window)
-  "Identical to the built-in function split-window-sensibly, but prefers horizontal splits over vertical splits."
+  "Identical to the built-in function `split-window-sensibly', but prefers horizontal splits over vertical splits."
   (let ((window (or window (selected-window))))
     (or (and (window-splittable-p window t)
-       ;; Split window horizontally.
-       (with-selected-window window
-         (split-window-right)))
-  (and (window-splittable-p window)
-       ;; Split window vertically.(column-marker-1 80)
-       (with-selected-window window
-         (split-window-below)))
-  (and (eq window (frame-root-window (window-frame window)))
-       (not (window-minibuffer-p window))
-       ;; If WINDOW is the only window on its frame and is not the
-       ;; minibuffer window, try to split it vertically disregarding
-       ;; the value of `split-height-threshold'.
-       (let ((split-height-threshold 0))
-         (when (window-splittable-p window)
-     (with-selected-window window
-       (split-window-below))))))))
+             ;; Split window horizontally.
+             (with-selected-window window
+               (split-window-right)))
+        (and (window-splittable-p window)
+             ;; Split window vertically.(column-marker-1 80)
+             (with-selected-window window
+               (split-window-below)))
+        (and (eq window (frame-root-window (window-frame window)))
+             (not (window-minibuffer-p window))
+             ;; If WINDOW is the only window on its frame and is not the
+             ;; minibuffer window, try to split it vertically disregarding
+             ;; the value of `split-height-threshold'.
+             (let ((split-height-threshold 0))
+               (when (window-splittable-p window)
+                 (with-selected-window window
+                   (split-window-below))))))))
 
 ;; Evil's window map is the set of keys which control window functions. All of its keys are prefixed with
 ;; <C-w>.
@@ -443,7 +459,7 @@
 
 (defun trim-last-word-of-string (string)
   "Removes the last word from the given string. Word separators are -, _ and spaces. This is designed to
-  perform the same function as kill-word, but on a string argument."
+  perform the same function as `kill-word', but on a string argument."
   (lexical-let ((i 0))
     (while (and (< i (length string))
                 (string-match "[-_ ]+" string i))
@@ -454,7 +470,7 @@
 
 (defun isearch-del-word (&optional arg)
   "Delete word from end of search string and search again. If search string is empty, just beep.
-  This function definition is based on isearch-del-char, from isearch.el."
+  This function definition is based on `isearch-del-char', from isearch.el."
   (interactive "p")
   (if (= 0 (length isearch-string))
     (ding)
@@ -467,13 +483,6 @@
   (isearch-search)
   (isearch-push-state)
   (isearch-update))
-
-;; When pressing enter to confirm a search, or jumping to the next result, scroll the result to the center of
-;; the window. This solves the UX problem of the result appearing at the bottom of the screen, with little
-;; context.
-;; (defadvice evil-search-next (after isearch-recenter activate) (recenter-no-redraw))
-;; (defadvice evil-search-previous (after isearch-recenter activate) (recenter-no-redraw))
-;; (defadvice isearch-exit (before isearch-recenter activate) (recenter-no-redraw))
 
 ;; Taken from https://groups.google.com/forum/#!topic/gnu.emacs.help/vASrP0P-tXM
 (defun recenter-no-redraw (&optional arg)
@@ -500,8 +509,8 @@
                   (kbd "M-s") 'explicitly-save-buffer
                   (kbd "M-v") 'clipboard-yank
                   (kbd "M-c") 'clipboard-kill-ring-save
-                  (kbd "M-W") 'evil-quit ; Close all tabs in the current frame..
-                  (kbd "M-A-h") 'mac-hide-others)
+                  (kbd "M-W") 'evil-quit ; Close all tabs in the current frame
+                  )
 
 (define-minor-mode osx-keys-minor-mode
   "A minor-mode for emulating osx keyboard shortcuts."
@@ -550,15 +559,6 @@
   (run-hooks 'before-explicit-save-hook)
   (save-buffer)
   (run-hooks 'after-explicit-save-hook))
-
-;; From http://emacs.stackexchange.com/a/18981
-(defun mac-hide-others ()
-  "On a Mac, hide all applications other than Emacs."
-  (interactive)
-  (do-applescript (concat "tell application \"System Events\" to "
-                          "set visible of every process whose visible is true "
-                          "and name is not \"Emacs\" to "
-                          "false")))
 
 
 ;;
@@ -623,13 +623,6 @@
   ; Sample usage: in consult-buffer, press < then b to narrow to just open buffers.
   ; The same can be achieved by pressing b then SPC
   (consult-narrow-key "<")
-  :config
-  ;; (setq consult-buffer-sources
-  ;;       '(consult--source-hidden-buffer
-  ;;         consult--source-modified-buffer
-  ;;         consult--source-file
-  ;;         consult--source-project-file
-  ;;         consult--source-recent-file)) ;; Add recent files as a source
   :bind
   (("M-x" . execute-extended-command)))
 
@@ -703,12 +696,7 @@
   ; in the minibuffer.
   "eb" (lambda () (interactive) (util/save-buffer-if-dirty) (eval-buffer))
   "es" (lambda () (interactive) (util/save-buffer-if-dirty) (elisp-eval-current-sexp))
-  "ex" (lambda () (interactive) (util/save-buffer-if-dirty) (call-interactively 'eval-defun))
-  "ee" 'view-echo-area-messages)
-
-;; Indentation rules.
-(put '-> 'lisp-indent-function nil)
-(put '->> 'lisp-indent-function nil)
+  "ex" (lambda () (interactive) (util/save-buffer-if-dirty) (call-interactively 'eval-defun)))
 
 (add-hook 'emacs-lisp-mode-hook
           (lambda () (setq-local completion-at-point-functions
@@ -730,15 +718,21 @@
 ;; tab-bar-mode (tabs on the window).
 ;;
 
-(setq tab-bar-select-tab-modifiers '(meta))
-(setq tab-bar-tab-hints t)
-(setq tab-bar-show 1) ;; hide bar if <= 1 tabs open
-(setq tab-bar-close-button-show nil)
 
-(tab-bar-mode 1)
-(define-key evil-normal-state-map (kbd "M-t") 'tab-new)
-(define-key evil-normal-state-map (kbd "M-}") 'tab-next)
-(define-key evil-normal-state-map (kbd "M-{") 'tab-previous)
+(use-package tab-bar
+  :ensure nil
+  :custom
+  tab-bar-select-tab-modifiers '(meta)
+  tab-bar-tab-hints t
+  tab-bar-show 1 ; hide bar if <= 1 tabs open
+  tab-bar-close-button-show nil
+  :bind (:map evil-normal-state-map
+              ("M-t" . 'tab-new)
+              ("M-}" . 'tab-next)
+              ("M-{" . 'tab-previous))
+  :config
+  (tab-bar-mode 1))
+
 
 
 ;;
@@ -751,11 +745,12 @@
   (diminish 'visual-line-mode "")
   (diminish 'global-whitespace-mode "")
   (diminish 'auto-fill-function "")
-  (diminish 'yas-minor-mode "")
   (diminish 'osx-keys-minor-mode ""))
 
 
+;;
 ;; Markdown
+;;
 
 (setq markdown-command
       (concat
@@ -811,7 +806,6 @@
   (require 'smartparens-config)
   (smartparens-global-mode t)
   (sp-pair "'" nil :actions :rem)
-  (setq sp-autoescape-string-quote nil)
 
   (sp-with-modes '(clojure-mode)
     (sp-local-pair "`" "`" :when '(sp-in-string-p)))
@@ -857,8 +851,8 @@
 (which-key-add-major-mode-key-based-replacements 'clojure-mode
   "SPC e t" "EvaluateTests")
 
-(add-hook 'cider-mode-hook 'rainbow-delimiters-mode)
 (add-hook 'cider-mode-hook 'eldoc-mode)
+(add-hook 'cider-mode-hook 'rainbow-delimiters-mode)
 (add-hook 'cider-repl-mode-hook 'rainbow-delimiters-mode)
 
 
@@ -901,12 +895,12 @@
 (add-to-list 'auto-mode-alist '("\\.mustache\\'" . web-mode))
 
 (defun my-web-mode-hook ()
-  (setq web-mode-markup-indent-offset 2)
-  (setq web-mode-css-indent-offset 2)
-  (setq web-mode-code-indent-offset 2)
-  (setq web-mode-style-padding 2)
-  (setq web-mode-script-padding 2)
-  (setq web-mode-block-padding 2))
+  (setq web-mode-markup-indent-offset 2
+        web-mode-css-indent-offset 2
+        web-mode-code-indent-offset 2
+        web-mode-style-padding 2
+        web-mode-script-padding 2
+        web-mode-block-padding 2))
 (add-hook 'web-mode-hook 'my-web-mode-hook)
 
 
@@ -1001,11 +995,8 @@
 
 ;; For large repos, check what's slow with M-x `magit-toggle-verbose-refresh'
 ;; and looking at the times in *Messages*. Then disable the slowest sections
-;; by filling in /path/to/repo/.dir-locals.el with e.g.:
-;; ((magit-status-mode . ((eval . (magit-disable-section-inserter 'magit-insert-tags-header))
-;;                        (eval . (magit-disable-section-inserter 'magit-insert-status-headers))
-;;                        (eval . (magit-disable-section-inserter 'magit-insert-unpushed-to-upstream-or-recent))
-;;                        (eval . (magit-disable-section-inserter 'magit-insert-unpulled-from-upstream)))))
+;; by filling in /path/to/repo/.dir-locals.el similarly to
+;; ./.dir-locals.el.example_for_big_repos (or just directly symlink it).
 (use-package magit :defer t
   :config
   (setq magit-commit-show-diff nil)
@@ -1028,33 +1019,6 @@
 ;;
 
 (setq lua-indent-level 2)
-
-
-;;
-;; Misc
-;;
-
-;; Don't use the native OSX full screen support, because it uses OSX Spaces which don't play well with
-;; CMD-tabbing to applications which are behind Emacs. Invoke fullscreen with `toggle-frame-fullscreen'.
-(setq ns-use-native-fullscreen nil)
-(evil-leader/set-key "wf" 'toggle-frame-fullscreen)
-
-
-;;
-;; From Dmac - https://github.com/dmacdougall/dotfiles/blob/master/.emacs
-;;
-
-(global-font-lock-mode t)
-(global-display-line-numbers-mode)
-;; (line-number-mode 1)
-(column-number-mode 1)
-
-(global-set-key (kbd "RET") 'comment-indent-new-line)
-;; (global-set-key (kbd "M-X") 'smex-major-mode-commands)
-
-(eval-after-load 'paren
-  '(setq show-paren-delay 0))
-(show-paren-mode t)
 
 
 ;;

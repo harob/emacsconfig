@@ -63,6 +63,7 @@
   "SPC o" "Org")
 
 (defun my-org-insert-subheading ()
+  "Insert a heading immediately after and below the current heading."
   (interactive)
   (evil-end-of-line)
   (evil-append nil)
@@ -96,21 +97,16 @@
 
 (define-key org-mode-map "\M-t" nil)
 
-;; This enables "clean mode", such that sublists use whitespace for indentation (ala markdown) instead of
-;; many stars.
-(setq org-startup-indented t)
-(setq org-fontify-done-headline nil)
-(setq org-startup-folded t)
-
-(setq org-src-fontify-natively t)
-(setq org-todo-keywords '((sequence "TODO" "IP" "WAIT" "|" "DONE")))
-(setq org-todo-keyword-faces '(("IP" . (:foreground "cyan3" :weight bold))
-                               ("WAIT" . (:foreground "MediumOrchid3" :weight bold))))
-
-(setq org-log-done 'time)
-(setq org-agenda-files '("~/Dropbox/notes/tasks.org" "~/Dropbox/notes/inbox.org"))
-
-(setq org-link-search-must-match-exact-headline nil)
+(setq org-startup-indented t
+      org-fontify-done-headline nil
+      org-startup-folded t
+      org-src-fontify-natively t
+      org-todo-keywords '((sequence "TODO" "IP" "WAIT" "|" "DONE"))
+      org-todo-keyword-faces '(("IP" . (:foreground "cyan3" :weight bold))
+                               ("WAIT" . (:foreground "MediumOrchid3" :weight bold)))
+      org-log-done 'time
+      org-agenda-files '("~/Dropbox/notes/tasks.org" "~/Dropbox/notes/inbox.org")
+      org-link-search-must-match-exact-headline nil)
 
 (custom-set-variables
  '(org-confirm-babel-evaluate nil)
@@ -119,24 +115,25 @@
                               (R . t))))
 
 (use-package org-download :defer t
+  :custom
+  (org-download-method 'directory)
+  (org-download-image-dir "images")
   :config
-  (setq org-download-method 'directory)
-  (setq-default org-download-image-dir "images")
   (setq org-image-actual-width '(400)))
 
 (setq org-timer-display 'both)
 
 ;; Minimalistic export settings:
-(setq org-export-with-title nil)
-(setq org-export-with-toc nil)
-(setq org-export-headline-levels 0)
-(setq org-export-with-section-numbers 0)
-(setq org-export-with-author nil)
-(setq org-export-with-date nil)
-(setq org-export-time-stamp-file nil)
-(setq org-html-validation-link nil)
-;; Use Gmail's default styling, so I can copy exported HTML into the Compose window with no reformatting:
-(setq org-html-head "<style type=\"text/css\">body {font-size: small; font-family: arial, helvetica, sans-serif; line-height: 1.5;}</style>")
+(setq org-export-with-title nil
+      org-export-with-toc nil
+      org-export-headline-levels 0
+      org-export-with-section-numbers 0
+      org-export-with-author nil
+      org-export-with-date nil
+      org-export-time-stamp-file nil
+      org-html-validation-link nil
+      ;; Use Gmail's default styling, so I can copy exported HTML into the Compose window with no reformatting:
+      org-html-head "<style type=\"text/css\">body {font-size: small; font-family: arial, helvetica, sans-serif; line-height: 1.5;}</style>")
 
 ;; Workaround for global-auto-revert-mode apparently not working for org buffers when it's called upfront on
 ;; startup:
