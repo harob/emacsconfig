@@ -706,6 +706,10 @@
                                        #'cape-file
                                        #'cape-dabbrev))))
 
+;; Run `git clone https://git.savannah.gnu.org/git/emacs.git` to get the emacs
+;; source code.
+(setq find-function-C-source-directory "~/workspace/external_codebases/emacs/src")
+
 
 ;;
 ;; Org mode, for GTD and note taking.
@@ -1025,10 +1029,6 @@
 ;; All new!
 ;;
 
-;; Run `git clone https://git.savannah.gnu.org/git/emacs.git` to get the emacs
-;; source code.
-(setq find-function-C-source-directory "~/workspace/external_codebases/emacs/src")
-
 ;; Switch across windows (i.e. panes/splits)
 (define-key evil-normal-state-map (kbd "C-h") (lambda () (interactive) (ignore-errors (evil-window-left 1))))
 (define-key evil-normal-state-map (kbd "C-j") (lambda () (interactive) (ignore-errors (evil-window-down 1))))
@@ -1165,9 +1165,9 @@
 ;; Python dev
 ;;
 
-; Configuration inspired by https://www.naiquev.in/understanding-emacs-packages-for-python.html
+;; Configuration inspired by https://www.naiquev.in/understanding-emacs-packages-for-python.html
 
-; First run `pip install -U jedi-language-server`
+;; First run `pip install -U jedi-language-server`
 (use-package eglot
   :config
   (add-to-list 'eglot-server-programs '(python-mode . ("jedi-language-server")))
@@ -1175,14 +1175,15 @@
   :hook (python-mode . eglot-ensure))
 
 (use-package flymake-ruff
+  :custom
+  (flymake-show-diagnostics-at-end-of-line t)
+  ;; This makes flymake only run on save:
+  ;; (flymake-no-changes-timeout nil)
   :hook (eglot-managed-mode . flymake-ruff-load))
-;; This makes flymake only run on save:
-;; (setq flymake-no-changes-timeout nil)
-;; This would be nice, but apparently it's only in Emacs 30:
-;; (setq flymake-show-diagnostics-at-end-of-line t)
 
 (use-package flymake-cursor :after (flymake)
   :hook (python-mode-hook . flymake-cursor-mode))
+
 (add-hook 'eglot-managed-mode-hook
           (lambda ()
             (message "Setting up eglot-managed-mode-hook")
@@ -1212,10 +1213,10 @@
           project-compilation-dir dir)))
 
 (use-package python-pytest :defer t
-  :config
-  (setq python-pytest-unsaved-buffers-behavior 'save-current
-        ;; This is projectile by default, which has bad test-finding logic:
-        python-pytest-preferred-project-manager 'project)
+  :custom
+  (python-pytest-unsaved-buffers-behavior 'save-current)
+  ;; This is projectile by default, which has bad test-finding logic:
+  (python-pytest-preferred-project-manager 'project)
   :hook
   (python-mode . my-patch-python-pytest-executable))
 
@@ -1238,16 +1239,12 @@
 ;;
 ;; Main commands: gptel-send, gptel-rewrite, gptel-menu
 (use-package gptel :defer t
-  :config
-  (setq gptel-org-branching-context t
-        gptel-model 'claude-3-7-sonnet-20250219
-        gptel-backend (gptel-make-anthropic "Claude"
+  :custom
+  (gptel-org-branching-context t)
+  (gptel-model 'claude-3-7-sonnet-20250219)
+  (gptel-backend (gptel-make-anthropic "Claude"
                         :key (gptel-api-key-from-auth-source "api.anthropic.com")
-                        :stream t))
-  ;; (custom-set-faces
-  ;;  '(gptel-rewrite-highlight-face ((t (:background "blue")))))
-  )
-
+                        :stream t)))
 
 (use-package copilot-chat :after (magit) :defer t
   :config
