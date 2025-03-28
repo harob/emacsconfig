@@ -131,12 +131,18 @@
       org-export-with-author nil
       org-export-with-date nil
       org-export-time-stamp-file nil
-      org-html-validation-link nil
-      ;; Use Gmail's default styling, so I can copy exported HTML into the Compose window with no reformatting:
-      org-html-head "<style type=\"text/css\">body {font-size: small; font-family: arial, helvetica, sans-serif; line-height: 1.5;}</style>")
+      org-html-validation-link nil)
+
+;; Use Gmail's default styling, so I can copy exported HTML into the Compose window with no reformatting:
+(setq org-html-head "<style type=\"text/css\">body {font-size: small; font-family: arial, helvetica, sans-serif; line-height: 1.5;}</style>")
 
 ;; Workaround for global-auto-revert-mode apparently not working for org buffers when it's called upfront on
 ;; startup:
 (add-hook 'org-mode-hook (lambda () (global-auto-revert-mode)))
+
+;; This setting restricts subscript and superscript interpretation to curly
+;; braces globally, similar to the `#+OPTIONS: ^:{}` directive:
+(setq org-use-sub-superscripts '{}
+      org-export-with-sub-superscripts '{})
 
 (provide 'org-mode-personal)

@@ -770,21 +770,18 @@
   :hook (prog-mode . rainbow-delimiters-mode))
 
 
-;;;; Smartparens utility functions
+;;;; Smartparens
 
 (use-package smartparens :demand t
+  :hook
+  ;; Only use smartparens in programming modes, since that's where it's most useful
+  ;; and also it was causing some really bad input lag issues in org-mode.
+  (prog-mode . smartparens-mode)
   :config
   (require 'smartparens-config)
-  (smartparens-global-mode t)
   (sp-pair "'" nil :actions :rem)
-
   (sp-with-modes '(clojure-mode)
     (sp-local-pair "`" "`" :when '(sp-in-string-p)))
-
-  (sp-with-modes '(org-mode)
-    (sp-local-pair "=" nil :actions :rem)
-    (sp-local-pair "~" nil :actions :rem))
-
   :bind (("M-H" . sp-forward-slurp-sexp)
          ("M-L" . sp-forward-barf-sexp)))
 
