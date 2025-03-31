@@ -1,6 +1,11 @@
+;;; init --- Harry's emacs config -*- lexical-binding: t; -*-
+
+;;; Commentary:
+
 ;; Uncomment this if there are any errors on startup:
 ;; (setq debug-on-error t)
 
+;;; Code:
 
 ;;;; Package management
 
@@ -68,8 +73,11 @@
 
 (setq vc-follow-symlinks t) ; Don't ask confirmation to follow symlinks to edit files.
 
-(savehist-mode t) ; Save your minibuffer history across Emacs sessions. UX win!
-(setq savehist-additional-variables '(buffer-name-history kill-ring))
+(use-package savehist
+  :init
+  (savehist-mode t)
+  :custom
+  (savehist-additional-variables '(buffer-name-history kill-ring)))
 
 ;; Include path information in duplicate buffer names (e.g. a/foo.txt b/foo.txt)
 (setq uniquify-buffer-name-style 'forward)
@@ -94,12 +102,15 @@
 (set-face-attribute 'default nil :family "Consolas" :height 150)
 
 ;; Whitespace & line wrapping.
-(global-whitespace-mode t)
-(eval-after-load 'whitespace
-  '(progn
-     ;; (setq whitespace-line-column 110) ; When text flows past 110 chars, highlight it.
-     ; whitespace mode by default marks all whitespace. Show only tabs, trailing space, and trailing lines.
-     (setq whitespace-style '(face empty trailing tabs))))
+(use-package whitespace
+  :ensure nil
+  :custom
+  ;; `whitespace-mode' by default marks all whitespace. Show only tabs, trailing
+  ;; space, and trailing lines.
+  (whitespace-style '(face empty trailing tabs))
+  :config
+  (global-whitespace-mode t))
+
 (add-hook 'before-explicit-save-hook 'delete-trailing-whitespace)
 
 (setq-default tab-width 2)
@@ -118,14 +129,14 @@
 ;; Don't use tabs by default. Modes that really need tabs should enable indent-tabs-mode explicitly.
 ;; Makefile-mode already does that, for example. If indent-tabs-mode is off, untabify before saving.
 (setq-default indent-tabs-mode nil)
-(add-hook 'write-file-hooks
-          (lambda ()
-            (if (not indent-tabs-mode)
-                (untabify (point-min) (point-max)))
-            nil))
+(add-to-list 'write-file-functions
+             (lambda ()
+               (when (not indent-tabs-mode)
+                 (untabify (point-min) (point-max)))
+               nil))
 
 (defun backward-delete-word ()
-  "Deletes the word behind the cursor, and does not yank the contents to the clipboard."
+  "Deletes the word behind the cursor, without copying to the clipboard."
   ; This implementation is based on backward-kill-word.
   (interactive)
   (delete-region (point) (progn (forward-word -1) (point))))
@@ -354,7 +365,7 @@
 ;; http://stackoverflow.com/questions/1002091/how-to-force-emacs-not-to-display-buffer-in-a-specific-window
 ;; The implementation of this function is based on `special-display-popup-frame' in window.el.
 (defun show-ephemeral-buffer-in-a-sensible-window (buffer &optional buffer-data)
-  "Given a buffer, shows the window in a right-side split."
+  "Show the window for BUFFER in a right-side split."
   (let* ((original-window (selected-window))
          (create-new-window (one-window-p))
          (window (if create-new-window
@@ -693,6 +704,9 @@
 ;; Run `git clone https://git.savannah.gnu.org/git/emacs.git` to get the emacs
 ;; source code.
 (setq find-function-C-source-directory "~/workspace/external_codebases/emacs/src")
+
+;; Fix `flymake-mode' errors in init.el about require statements:
+(setq elisp-flymake-byte-compile-load-path load-path)
 
 
 ;;;; Org mode, for GTD and note taking.
@@ -1186,7 +1200,8 @@
   :custom
   (gptel-org-branching-context t)
   (gptel-model 'claude-3-7-sonnet-20250219)
-  (gptel-backend (gptel-make-anthropic "Claude"
+  :config
+  (setq gptel-backend (gptel-make-anthropic "Claude"
                         :key (gptel-api-key-from-auth-source "api.anthropic.com")
                         :stream t)))
 
@@ -1225,3 +1240,6 @@
 ;;   (add-hook 'prog-mode-hook 'copilot-mode)
 ;;   (setq copilot-indent-offset-warning-disable t
 ;;         copilot-max-char-warning-disable t))
+
+(provide 'init)
+;;; init.el ends here
