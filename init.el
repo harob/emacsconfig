@@ -819,6 +819,10 @@
   ;; Focus the cursor correctly.
   (sp-backward-sexp))
 
+;; Use `electric-pair-mode' instead of `smartparens-mode' for org-mode, since it's
+;; simpler and less laggy:
+(add-hook 'org-mode-hook 'electric-pair-local-mode)
+
 
 ;;;; Clojure
 
