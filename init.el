@@ -33,7 +33,7 @@
 (setq initial-scratch-message "") ; When opening a new buffer, don't show the scratch message.
 
 ;; Make it so that the scratch buffer uses markdown. By default it uses Emacs Lisp mode.
-(use-package markdown-mode :defer t)
+(use-package markdown-mode)
 (setq initial-major-mode 'markdown-mode)
 
 ;; Sync environment variables.
@@ -745,15 +745,17 @@
 
 ;;;; Markdown
 
-(setq markdown-command
-      (concat
-       "/opt/homebrew/bin/pandoc"
-       " --from markdown --to html"
-       " --metadata title='-'"
-       ;; Use Gmail's default styling, so I can copy exported HTML into the Compose window with no reformatting:
-       " --include-in-header $HOME/.emacs.d/resources/gmail.css"))
-
-(setq markdown-fontify-code-blocks-natively t)
+(use-package markdown-mode
+  :custom
+  (markdown-command
+   (concat
+    "/opt/homebrew/bin/pandoc"
+    " --from markdown --to html"
+    " --metadata title='-'"
+    ;; Use Gmail's default styling, so I can copy exported HTML into the Compose
+    ;; window with no reformatting:
+    " --include-in-header $HOME/.emacs.d/resources/gmail.css"))
+  (markdown-fontify-code-blocks-natively t))
 
 
 ;;;; CSS
@@ -820,7 +822,12 @@
 
 ;;;; Clojure
 
-(use-package clojure-mode :defer t)
+(use-package clojure-mode :defer t
+  :hook
+  (cider-mode-hook . eldoc-mode)
+  (cider-mode-hook . rainbow-delimiters-mode)
+  (cider-repl-mode-hook . rainbow-delimiters-mode))
+
 (require 'clojure-mode-personal)
 (require 'cider-test-personal)
 
@@ -831,9 +838,6 @@
 (which-key-add-major-mode-key-based-replacements 'clojure-mode
   "SPC e t" "EvaluateTests")
 
-(add-hook 'cider-mode-hook 'eldoc-mode)
-(add-hook 'cider-mode-hook 'rainbow-delimiters-mode)
-(add-hook 'cider-repl-mode-hook 'rainbow-delimiters-mode)
 
 
 ;;;; HTML
