@@ -1249,5 +1249,13 @@
 ;;   (setq copilot-indent-offset-warning-disable t
 ;;         copilot-max-char-warning-disable t))
 
+
+;;; protobuf
+
+;; CP'ed from https://github.com/protocolbuffers/protobuf/blob/main/editors/protobuf-mode.el
+;; since I can't find it on melpa:
+(require 'protobuf-mode)
+(add-to-list 'auto-mode-alist '("\\.proto$" . protobuf-mode))
+
 (provide 'init)
 ;;; init.el ends here
