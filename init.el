@@ -62,7 +62,8 @@
       inhibit-startup-echo-area-message t
       ring-bell-function 'ignore
       mac-option-modifier 'alt
-      mac-command-modifier 'meta)
+      mac-command-modifier 'meta
+      sentence-end-double-space nil)
 (add-to-list 'default-frame-alist '(ns-appearance . dark))
 
 ;; Require typing only "y" or "n" instead of the full "yes" to confirm destructive actions.
