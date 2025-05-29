@@ -1145,7 +1145,7 @@
 
 (use-package flymake-ruff
   :custom
-  (flymake-show-diagnostics-at-end-of-line t)
+  (flymake-show-diagnostics-at-end-of-line nil)
   ;; This makes flymake only run on save:
   ;; (flymake-no-changes-timeout nil)
   :hook (eglot-managed-mode . flymake-ruff-load))
