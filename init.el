@@ -22,6 +22,12 @@
 
 ;;;; General settings
 
+;; This allows for opening files from the terminal into the existing Emacs app
+;; window with `emacs-client'
+(require 'server)
+(unless (server-running-p)
+  (server-start))
+
 (require 'cl)
 (add-to-list 'load-path "~/.emacs.d/elisp")
 (require 'emacs-utils)
@@ -642,7 +648,6 @@
    ("M-." . embark-dwim)))
 
 (use-package embark-consult
-  :ensure nil
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
