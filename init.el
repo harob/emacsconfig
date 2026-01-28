@@ -109,8 +109,7 @@
 (set-face-attribute 'default nil :family "Consolas" :height 150)
 
 ;; Whitespace & line wrapping.
-(use-package whitespace
-  :ensure nil
+(use-package whitespace :ensure nil
   :custom
   ;; `whitespace-mode' by default marks all whitespace. Show only tabs, trailing
   ;; space, and trailing lines.
@@ -189,8 +188,7 @@
 
 (global-set-key (kbd "RET") 'comment-indent-new-line)
 
-(use-package paren
-  :ensure nil
+(use-package paren :ensure nil
   :custom
   (show-paren-delay 0)
   :config
@@ -604,8 +602,7 @@
 (evil-define-key 'insert org-mode-map (kbd "TAB") 'completion-at-point)
 (evil-define-key 'insert org-mode-map (kbd "<tab>") 'completion-at-point)
 
-(use-package corfu-popupinfo :after corfu
-  :ensure nil; Included with corfu
+(use-package corfu-popupinfo :after corfu :ensure nil; Included with corfu
   :hook
   (corfu-mode . corfu-popupinfo-mode)
   :custom
@@ -722,8 +719,7 @@
 
 ;;;; tab-bar-mode (tabs on the window).
 
-(use-package tab-bar
-  :ensure nil
+(use-package tab-bar :ensure nil
   :custom
   tab-bar-select-tab-modifiers '(meta)
   tab-bar-tab-hints t
@@ -1000,7 +996,9 @@
 
 ;;;; Lua
 
-(setq lua-indent-level 2)
+(use-package lua-mode :defer t
+    :custom
+    (lua-indent-level 2))
 
 
 ;;;; Misc
@@ -1012,10 +1010,11 @@
 (define-key evil-normal-state-map (kbd "C-l") (lambda () (interactive) (ignore-errors (evil-window-right 1))))
 
 (use-package buffer-move
-  :bind (("C-S-k" . buf-move-up)
-         ("C-S-j" . buf-move-down)
-         ("C-S-h" . buf-move-left)
-         ("C-S-l" . buf-move-right)))
+  :bind
+  (("C-S-k" . buf-move-up)
+   ("C-S-j" . buf-move-down)
+   ("C-S-h" . buf-move-left)
+   ("C-S-l" . buf-move-right)))
 
 (define-key evil-normal-state-map (kbd "H") 'evil-first-non-blank)
 (define-key evil-visual-state-map (kbd "H") 'evil-first-non-blank)
