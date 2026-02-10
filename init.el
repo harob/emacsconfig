@@ -591,11 +591,7 @@
   ;; switch to using S-SPC to call `corfu-insert-separator' to activate orderless
   ;; matching instead.
   (corfu-quit-at-boundary nil) ;; Do orderless matching upon pressing SPC rather than exiting
-  :bind (:map corfu-map
-              ("TAB" . corfu-next) ;; Navigate candidates with TAB
-              ([tab] . corfu-next)
-              ("S-TAB" . corfu-previous) ;; Navigate backward with Shift+TAB
-              ([backtab] . corfu-previous)))
+  )
 
 (evil-define-key 'insert prog-mode-map (kbd "TAB") 'completion-at-point)
 (evil-define-key 'insert prog-mode-map (kbd "<tab>") 'completion-at-point)
