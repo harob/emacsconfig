@@ -295,6 +295,17 @@
 (define-key evil-outer-text-objects-map "p" 'evil-paragraph-from-newlines)
 (define-key evil-outer-text-objects-map "P" 'evil-a-paragraph)
 
+;; Named commands for leader key bindings (so function names appear in help text)
+(defcmd split-right-and-focus (split-window-horizontally) (other-window 1) (balance-windows))
+(defcmd split-below-and-focus (split-window-vertically) (other-window 1) (balance-windows))
+(defcmd magit-status-after-save (util/save-buffer-if-dirty) (magit-status))
+(defcmd edit-init-el (find-file "~/.emacs.d/init.el"))
+(defcmd edit-haggler-handler (find-file "~/workspace/src/liftoff/haggler/src/haggler/handler.clj"))
+(defcmd edit-inbox-org (find-file "~/Dropbox/notes/inbox.org"))
+(defcmd edit-scratch-org (find-file "~/Dropbox/notes/scratch.org"))
+(defcmd edit-tasks-org (find-file "~/Dropbox/notes/tasks.org"))
+(defcmd edit-zshrc (find-file "~/dotfiles/.zshrc"))
+
 (evil-leader/set-key
   "SPC" 'execute-extended-command
   "h" 'help
@@ -306,17 +317,17 @@
   "s" 'jinx-correct
   "V" 'consult-yank-from-kill-ring
   "u" 'universal-argument
-  "\\" (lambda () (interactive) (split-window-horizontally) (other-window 1) (balance-windows))
-  "-" (lambda () (interactive) (split-window-vertically) (other-window 1) (balance-windows))
-  "gs" (lambda() (interactive) (util/save-buffer-if-dirty) (magit-status))
+  "\\" 'split-right-and-focus
+  "-" 'split-below-and-focus
+  "gs" 'magit-status-after-save
   "gl" 'magit-log-current
   ;; "v" is a mnemonic prefix for "view X".
-  "ve" (lambda () (interactive) (find-file "~/.emacs.d/init.el"))
-  "vh" (lambda () (interactive) (find-file "~/workspace/src/liftoff/haggler/src/haggler/handler.clj"))
-  "vi" (lambda () (interactive) (find-file "~/Dropbox/notes/inbox.org") (org-mode))
-  "vs" (lambda () (interactive) (find-file "~/Dropbox/notes/scratch.org") (org-mode))
-  "vt" (lambda () (interactive) (find-file "~/Dropbox/notes/tasks.org") (org-mode))
-  "vz" (lambda () (interactive) (find-file "~/dotfiles/.zshrc")))
+  "ve" 'edit-init-el
+  "vh" 'edit-haggler-handler
+  "vi" 'edit-inbox-org
+  "vs" 'edit-scratch-org
+  "vt" 'edit-tasks-org
+  "vz" 'edit-zshrc)
 
 (my-which-key-with-evil-leader
   "c" "Comment"
@@ -702,13 +713,18 @@
   (interactive)
   (message "%s" (eval (read (current-sexp)))))
 
+;; Named commands for elisp eval bindings (so function names appear in help text)
+(defcmd elisp-save-and-eval-buffer (util/save-buffer-if-dirty) (eval-buffer))
+(defcmd elisp-save-and-eval-sexp (util/save-buffer-if-dirty) (elisp-eval-current-sexp))
+(defcmd elisp-save-and-eval-defun (util/save-buffer-if-dirty) (call-interactively 'eval-defun))
+
 (evil-leader/set-key-for-mode 'emacs-lisp-mode
   ; Note that I'm saving the buffer before each eval because otherwise, the buffer gets saved after the eval,
   ; (due to save-when-switching-windows setup) and the output from the buffer save overwrites the eval results
   ; in the minibuffer.
-  "eb" (lambda () (interactive) (util/save-buffer-if-dirty) (eval-buffer))
-  "es" (lambda () (interactive) (util/save-buffer-if-dirty) (elisp-eval-current-sexp))
-  "ex" (lambda () (interactive) (util/save-buffer-if-dirty) (call-interactively 'eval-defun)))
+  "eb" 'elisp-save-and-eval-buffer
+  "es" 'elisp-save-and-eval-sexp
+  "ex" 'elisp-save-and-eval-defun)
 
 (add-hook 'emacs-lisp-mode-hook
           (lambda () (setq-local completion-at-point-functions

@@ -4,6 +4,11 @@
 
 (require 'lisp-helpers-personal)
 
+(defmacro defcmd (name &rest body)
+  "Define an interactive command NAME with BODY. Useful for one-line definitions."
+  (declare (indent defun))
+  `(defun ,name () (interactive) ,@body))
+
 (defun util/define-keys (keymap &rest key-and-fn-pairs)
   "Like define-key, but takes a variable number of arguments -- two per key binding pair."
   (dolist (pair (partition key-and-fn-pairs 2))
