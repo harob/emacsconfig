@@ -817,7 +817,8 @@
 (add-to-list 'auto-mode-alist '("Vagrantfile$" . ruby-mode))
 
 ;; Insert matching delimiters; unindent end blocks after you type them.
-(add-hook 'ruby-mode-hook (lambda () (ruby-electric-mode)))
+(use-package ruby-electric :defer t
+  :hook (ruby-mode . ruby-electric-mode))
 
 
 ;;;; Rainbow-delimiters: highlight parentheses in rainbow colors.
