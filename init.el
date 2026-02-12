@@ -197,7 +197,7 @@
 ;; Spell check
 ;; Requires enchant, installed with: brew install enchant
 ;; echo '*:AppleSpell,aspell' > ~/.config/enchant/enchant.ordering
-(use-package jinx :ensure t
+(use-package jinx
   :hook
   ((text-mode org-mode) . jinx-mode)
   :custom
@@ -209,7 +209,15 @@
     (setcdr global-entry
             (append regexps
                     '("[[:upper:]][[:alpha:]]+\\>" ;; Capitalized words
-                      )))))
+                      ))))
+  (setq jinx--predicates
+        (append jinx--predicates '(my-jinx-simple-plural-valid-p))))
+
+(defun my-jinx-simple-plural-valid-p (start)
+    "Treat word at START as valid if a simple singular variant is known."
+    (let* ((word (buffer-substring-no-properties start (point))))
+      (when (string-match "\\`[[:lower:]]+s\\'" word)
+        (jinx--word-valid-p (substring word 0 -1)))))
 
 
 ;;;; Evil mode -- Vim keybindings for Emacs.
