@@ -194,6 +194,23 @@
   :config
   (show-paren-mode t))
 
+;; Spell check
+;; Requires enchant, installed with: brew install enchant
+;; echo '*:AppleSpell,aspell' > ~/.config/enchant/enchant.ordering
+(use-package jinx :ensure t
+  :hook
+  ((text-mode org-mode) . jinx-mode)
+  :custom
+  (jinx-languages "en_US")
+  :config
+  ;; Exclude some regexes from spell check
+  (let* ((global-entry (assq t jinx-exclude-regexps))
+         (regexps (cdr global-entry)))
+    (setcdr global-entry
+            (append regexps
+                    '("[[:upper:]][[:alpha:]]+\\>" ;; Capitalized words
+                      )))))
+
 
 ;;;; Evil mode -- Vim keybindings for Emacs.
 
@@ -286,6 +303,7 @@
   "b" 'consult-buffer ; Includes all buffers and recent files by default. Type p SPC to narrow to just the current project
   "a" 'consult-ripgrep
   "/" 'consult-line
+  "s" 'jinx-correct
   "V" 'consult-yank-from-kill-ring
   "u" 'universal-argument
   "\\" (lambda () (interactive) (split-window-horizontally) (other-window 1) (balance-windows))
@@ -1059,6 +1077,9 @@
   ;; Forcing the use of ripgrep because for some reason the default git-grep doesn't work
   (setq dumb-jump-force-searcher 'rg)
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
+
+(with-eval-after-load 'xref
+  (evil-set-initial-state 'xref--xref-buffer-mode 'insert))
 
 (use-package avy
   :config
