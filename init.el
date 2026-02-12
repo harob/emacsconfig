@@ -208,7 +208,7 @@
          (regexps (cdr global-entry)))
     (setcdr global-entry
             (append regexps
-                    '("[[:upper:]][[:alpha:]]+\\>" ;; Capitalized words
+                    '("[[:upper:]][^[:space:]]*\\>" ;; Capitalized words
                       ))))
   (setq jinx--predicates
         (append jinx--predicates '(my-jinx-simple-plural-valid-p))))
