@@ -149,15 +149,15 @@
 
 ;; Enable the common Bash text-editing shortcuts in the minibuffer.
 (util/define-keys minibuffer-local-map
-                  (kbd "C-k") 'kill-line
-                  (kbd "C-e") 'end-of-line
-                  (kbd "C-d") 'delete-char
-                  (kbd "C-w") 'backward-delete-word
-                  (kbd "C-h") 'backward-delete-char)
+                  (kbd "C-k") #'kill-line
+                  (kbd "C-e") #'end-of-line
+                  (kbd "C-d") #'delete-char
+                  (kbd "C-w") #'backward-delete-word
+                  (kbd "C-h") #'backward-delete-char)
 
 ;; Disable the prompt we get when killing a buffer with a process. This affects clojure mode in particular,
 ;; when we want to restart the nrepl process.
-(setq kill-buffer-query-functions (remq 'process-kill-buffer-query-function kill-buffer-query-functions))
+(setq kill-buffer-query-functions (remq #'process-kill-buffer-query-function kill-buffer-query-functions))
 
 ;; The poorly-named winner mode saves the history of your window splits, so you can undo and redo changes to
 ;; your window configuration with `winner-undo'
@@ -165,7 +165,7 @@
 
 ;; Save buffers whenever they lose focus.
 ;; This obviates the need to hit the Save key thousands of times a day. Inspired by http://goo.gl/2z0g5O
-(add-hook 'focus-out-hook 'util/save-buffer-if-dirty)
+(add-hook 'focus-out-hook #'util/save-buffer-if-dirty)
 (defadvice windmove-up (before other-window-now activate) (util/save-buffer-if-dirty))
 (defadvice windmove-down (before other-window-now activate) (util/save-buffer-if-dirty))
 (defadvice windmove-left (before other-window-now activate) (util/save-buffer-if-dirty))
@@ -173,7 +173,7 @@
 
 ; This is fired whenever the buffer list is updated, which is a reasonably robust way to detect that the
 ; window config has changed and the current buffer should be saved.
-(add-hook 'buffer-list-update-hook 'util/save-buffer-if-dirty)
+(add-hook 'buffer-list-update-hook #'util/save-buffer-if-dirty)
 
 (setq create-lockfiles nil)
 (setq eldoc-echo-area-use-multiline-p nil)
@@ -186,7 +186,7 @@
 (global-display-line-numbers-mode t)
 (column-number-mode t)
 
-(global-set-key (kbd "RET") 'comment-indent-new-line)
+(global-set-key (kbd "RET") #'comment-indent-new-line)
 
 (use-package paren :ensure nil
   :custom
@@ -253,7 +253,7 @@
   (evil-mode t))
 
 ;; Use M-u since I use vim's C-u for page-up
-(global-set-key (kbd "M-u") 'universal-argument)
+(global-set-key (kbd "M-u") #'universal-argument)
 
 (use-package goto-last-change)
 
@@ -272,13 +272,13 @@
                (seq-partition key-desc-pairs 2))))
 
 ;; Move up and down through long, wrapped lines one visual line at a time.
-(define-key evil-normal-state-map (kbd "j") 'evil-next-visual-line)
-(define-key evil-normal-state-map (kbd "k") 'evil-previous-visual-line)
+(define-key evil-normal-state-map (kbd "j") #'evil-next-visual-line)
+(define-key evil-normal-state-map (kbd "k") #'evil-previous-visual-line)
 
-(define-key evil-normal-state-map (kbd "K") 'info-lookup-symbol)
+(define-key evil-normal-state-map (kbd "K") #'info-lookup-symbol)
 
 ;; I use this shortcut for manually splitting lines. Note that it does not put you in insert mode.
-(define-key evil-normal-state-map (kbd "s") 'newline-and-indent)
+(define-key evil-normal-state-map (kbd "s") #'newline-and-indent)
 
 ;; When jumping back and forth between marks, recenter the screen on the cursor.
 (define-key evil-normal-state-map (kbd "C-o")
@@ -300,8 +300,8 @@
         (paragraph-separate "[  ]*$"))
     (evil-select-an-object 'evil-paragraph beg end type count)))
 
-(define-key evil-outer-text-objects-map "p" 'evil-paragraph-from-newlines)
-(define-key evil-outer-text-objects-map "P" 'evil-a-paragraph)
+(define-key evil-outer-text-objects-map "p" #'evil-paragraph-from-newlines)
+(define-key evil-outer-text-objects-map "P" #'evil-a-paragraph)
 
 ;; Named commands for leader key bindings (so function names appear in help text)
 (defcmd split-right-and-focus (split-window-horizontally) (other-window 1) (balance-windows))
@@ -315,27 +315,27 @@
 (defcmd edit-zshrc (find-file "~/dotfiles/.zshrc"))
 
 (evil-leader/set-key
-  "SPC" 'execute-extended-command
-  "h" 'help
-  ";" 'eval-expression
-  "t" 'affe-find
-  "b" 'consult-buffer ; Includes all buffers and recent files by default. Type p SPC to narrow to just the current project
-  "a" 'consult-ripgrep
-  "/" 'consult-line
-  "s" 'jinx-correct
-  "V" 'consult-yank-from-kill-ring
-  "u" 'universal-argument
-  "\\" 'split-right-and-focus
-  "-" 'split-below-and-focus
-  "gs" 'magit-status-after-save
-  "gl" 'magit-log-current
+  "SPC" #'execute-extended-command
+  "h" #'help
+  ";" #'eval-expression
+  "t" #'affe-find
+  "b" #'consult-buffer ; Includes all buffers and recent files by default. Type p SPC to narrow to just the current project
+  "a" #'consult-ripgrep
+  "/" #'consult-line
+  "s" #'jinx-correct
+  "V" #'consult-yank-from-kill-ring
+  "u" #'universal-argument
+  "\\" #'split-right-and-focus
+  "-" #'split-below-and-focus
+  "gs" #'magit-status-after-save
+  "gl" #'magit-log-current
   ;; "v" is a mnemonic prefix for "view X".
-  "ve" 'edit-init-el
-  "vh" 'edit-haggler-handler
-  "vi" 'edit-inbox-org
-  "vs" 'edit-scratch-org
-  "vt" 'edit-tasks-org
-  "vz" 'edit-zshrc)
+  "ve" #'edit-init-el
+  "vh" #'edit-haggler-handler
+  "vi" #'edit-inbox-org
+  "vs" #'edit-scratch-org
+  "vt" #'edit-tasks-org
+  "vz" #'edit-zshrc)
 
 (my-which-key-with-evil-leader
   "c" "Comment"
@@ -349,14 +349,14 @@
 
 ;; Enable the typical Bash/readline keybindings when in insert mode.
 (util/define-keys evil-insert-state-map
-                  (kbd "C-h") 'backward-delete-char
-                  (kbd "C-k") 'kill-line
-                  (kbd "C-a") 'beginning-of-line
-                  (kbd "C-e") 'end-of-line
-                  (kbd "C-d") 'delete-char
-                  (kbd "C-w") 'backward-delete-word
-                  (kbd "C-p") 'previous-line
-                  (kbd "C-n") 'next-line)
+                  (kbd "C-h") #'backward-delete-char
+                  (kbd "C-k") #'kill-line
+                  (kbd "C-a") #'beginning-of-line
+                  (kbd "C-e") #'end-of-line
+                  (kbd "C-d") #'delete-char
+                  (kbd "C-w") #'backward-delete-word
+                  (kbd "C-p") #'previous-line
+                  (kbd "C-n") #'next-line)
 
 ;; Press % to jump to matching delimiter
 (use-package evil-matchit
@@ -365,13 +365,13 @@
 
 (use-package evil-nerd-commenter
   :config
-  (define-key evil-normal-state-map " cc" 'evilnc-comment-or-uncomment-lines)
-  (define-key evil-visual-state-map " cc" 'evilnc-comment-operator))
+  (define-key evil-normal-state-map " cc" #'evilnc-comment-or-uncomment-lines)
+  (define-key evil-visual-state-map " cc" #'evilnc-comment-operator))
 
 (use-package evil-surround
   :config
-  (evil-define-key 'visual evil-surround-mode-map "s" 'evil-surround-region)
-  (evil-define-key 'visual evil-surround-mode-map "gs" 'evil-Surround-region)
+  (evil-define-key 'visual evil-surround-mode-map "s" #'evil-surround-region)
+  (evil-define-key 'visual evil-surround-mode-map "gs" #'evil-Surround-region)
   (global-evil-surround-mode 1))
 
 (use-package evil-visualstar
@@ -384,7 +384,7 @@
 ;; Settings for window splits.
 (setq split-height-threshold 40
       split-width-threshold 200
-      split-window-preferred-function 'split-window-sensibly-reverse)
+      split-window-preferred-function #'split-window-sensibly-reverse)
 
 ;; "I manage my windows in a 4x4 grid. I want ephemeral or status-based buffers to always show in the
 ;; lower-right or right window, in that order of preference."
@@ -458,9 +458,9 @@
 ;; <C-w>.
 ;; Undo the last change you made to your window configuration. Very handy as a method for temporarily
 ;; maximizing a window: first invoke delete-other-windows, and then invoke winner-undo..
-(define-key evil-window-map (kbd "m") 'delete-other-windows)
-(define-key evil-window-map (kbd "b") 'winner-undo)
-(define-key evil-window-map (kbd "q") 'dismiss-ephemeral-windows)
+(define-key evil-window-map (kbd "m") #'delete-other-windows)
+(define-key evil-window-map (kbd "b") #'winner-undo)
+(define-key evil-window-map (kbd "q") #'dismiss-ephemeral-windows)
 
 ;; Make it so Esc means quit, no matter the context.
 ;; http://stackoverflow.com/a/10166400/46237
@@ -475,14 +475,14 @@
     (when (get-buffer "*Completions*") (delete-windows-on "*Completions*"))
     (abort-recursive-edit)))
 
-(define-key evil-normal-state-map [escape] 'keyboard-quit)
-(define-key evil-visual-state-map [escape] 'keyboard-quit)
-(define-key minibuffer-local-map [escape] 'minibuffer-keyboard-quit)
-(define-key minibuffer-local-ns-map [escape] 'minibuffer-keyboard-quit)
-(define-key minibuffer-local-completion-map [escape] 'minibuffer-keyboard-quit)
-(define-key minibuffer-local-must-match-map [escape] 'minibuffer-keyboard-quit)
-(define-key minibuffer-local-isearch-map [escape] 'minibuffer-keyboard-quit)
-(global-set-key [escape] 'evil-exit-emacs-state)
+(define-key evil-normal-state-map [escape] #'keyboard-quit)
+(define-key evil-visual-state-map [escape] #'keyboard-quit)
+(define-key minibuffer-local-map [escape] #'minibuffer-keyboard-quit)
+(define-key minibuffer-local-ns-map [escape] #'minibuffer-keyboard-quit)
+(define-key minibuffer-local-completion-map [escape] #'minibuffer-keyboard-quit)
+(define-key minibuffer-local-must-match-map [escape] #'minibuffer-keyboard-quit)
+(define-key minibuffer-local-isearch-map [escape] #'minibuffer-keyboard-quit)
+(global-set-key [escape] #'evil-exit-emacs-state)
 
 
 ;;;; Incremental search (isearch)
@@ -493,12 +493,12 @@
 (setq lazy-highlight-cleanup nil)
 (setq lazy-highlight-max-at-a-time nil)
 ;; Hitting escape aborts the search, restoring your cursor to the original position, as it does in Vim.
-(define-key isearch-mode-map (kbd "<escape>") 'isearch-abort)
+(define-key isearch-mode-map (kbd "<escape>") #'isearch-abort)
 ;; Make C-h act the same as backspace.
-(define-key isearch-mode-map (kbd "C-h") 'isearch-delete-char)
+(define-key isearch-mode-map (kbd "C-h") #'isearch-delete-char)
 ;; Make M-v paste the clipboard's text into the search ring.
-(define-key isearch-mode-map (kbd "M-v") 'isearch-yank-kill)
-(define-key isearch-mode-map (kbd "C-w") 'isearch-del-word)
+(define-key isearch-mode-map (kbd "M-v") #'isearch-yank-kill)
+(define-key isearch-mode-map (kbd "C-w") #'isearch-del-word)
 
 (defun trim-last-word-of-string (string)
   "Removes the last word from the given string. Word separators are -, _ and spaces. This is designed to
@@ -518,7 +518,7 @@
   (if (= 0 (length isearch-string))
     (ding)
     (setq isearch-string (trim-last-word-of-string isearch-string)
-          isearch-message (mapconcat 'isearch-text-char-description
+          isearch-message (mapconcat #'isearch-text-char-description
                                      isearch-string "")))
   ;; Use the isearch-other-end as new starting point to be able
   ;; to find the remaining part of the search string again.
@@ -541,16 +541,16 @@
 ;; http://stackoverflow.com/questions/683425/globally-override-key-binding-in-emacs
 (defvar osx-keys-minor-mode-map (make-keymap) "osx-keys-minor-mode-keymap")
 (util/define-keys osx-keys-minor-mode-map
-                  (kbd "M-`") 'other-frame
+                  (kbd "M-`") #'other-frame
                   (kbd "M-~") '(lambda () (interactive) (other-frame -1))
-                  (kbd "M-w") 'vimlike-quit
-                  (kbd "M-q") 'save-buffers-kill-terminal
-                  (kbd "M-n") 'new-frame
-                  (kbd "M-a") 'mark-whole-buffer
-                  (kbd "M-s") 'explicitly-save-buffer
-                  (kbd "M-v") 'clipboard-yank
-                  (kbd "M-c") 'clipboard-kill-ring-save
-                  (kbd "M-W") 'evil-quit ; Close all tabs in the current frame
+                  (kbd "M-w") #'vimlike-quit
+                  (kbd "M-q") #'save-buffers-kill-terminal
+                  (kbd "M-n") #'new-frame
+                  (kbd "M-a") #'mark-whole-buffer
+                  (kbd "M-s") #'explicitly-save-buffer
+                  (kbd "M-v") #'clipboard-yank
+                  (kbd "M-c") #'clipboard-kill-ring-save
+                  (kbd "M-W") #'evil-quit ; Close all tabs in the current frame
                   )
 
 (define-minor-mode osx-keys-minor-mode
@@ -630,10 +630,10 @@
   (corfu-quit-at-boundary nil) ;; Do orderless matching upon pressing SPC rather than exiting
   )
 
-(evil-define-key 'insert prog-mode-map (kbd "TAB") 'completion-at-point)
-(evil-define-key 'insert prog-mode-map (kbd "<tab>") 'completion-at-point)
-(evil-define-key 'insert org-mode-map (kbd "TAB") 'completion-at-point)
-(evil-define-key 'insert org-mode-map (kbd "<tab>") 'completion-at-point)
+(evil-define-key 'insert prog-mode-map (kbd "TAB") #'completion-at-point)
+(evil-define-key 'insert prog-mode-map (kbd "<tab>") #'completion-at-point)
+(evil-define-key 'insert org-mode-map (kbd "TAB") #'completion-at-point)
+(evil-define-key 'insert org-mode-map (kbd "<tab>") #'completion-at-point)
 
 (use-package corfu-popupinfo :after corfu :ensure nil; Included with corfu
   :hook
@@ -698,8 +698,8 @@
   (wgrep-auto-save-buffer t))
 
 (add-to-list 'evil-insert-state-modes 'wgrep-mode)
-(evil-define-key 'normal wgrep-mode-map "ZQ" 'wgrep-abort-changes)
-(evil-define-key 'normal wgrep-mode-map "ZZ" 'wgrep-finish-edit)
+(evil-define-key 'normal wgrep-mode-map "ZQ" #'wgrep-abort-changes)
+(evil-define-key 'normal wgrep-mode-map "ZZ" #'wgrep-finish-edit)
 
 
 ;;;; Emacs Lisp (elisp)
@@ -708,9 +708,9 @@
 (add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w" emacs-lisp-mode-syntax-table)))
 
 (evil-define-key 'normal emacs-lisp-mode-map
-  (kbd "M-h") 'shift-sexp-backward
-  (kbd "M-l") 'shift-sexp-forward
-  "K" 'describe-function)
+  (kbd "M-h") #'shift-sexp-backward
+  (kbd "M-l") #'shift-sexp-forward
+  "K" #'describe-function)
 
 (defun current-sexp ()
   "Returns the text content of the sexp list around the cursor."
@@ -724,15 +724,15 @@
 ;; Named commands for elisp eval bindings (so function names appear in help text)
 (defcmd elisp-save-and-eval-buffer (util/save-buffer-if-dirty) (eval-buffer))
 (defcmd elisp-save-and-eval-sexp (util/save-buffer-if-dirty) (elisp-eval-current-sexp))
-(defcmd elisp-save-and-eval-defun (util/save-buffer-if-dirty) (call-interactively 'eval-defun))
+(defcmd elisp-save-and-eval-defun (util/save-buffer-if-dirty) (call-interactively #'eval-defun))
 
 (evil-leader/set-key-for-mode 'emacs-lisp-mode
   ; Note that I'm saving the buffer before each eval because otherwise, the buffer gets saved after the eval,
   ; (due to save-when-switching-windows setup) and the output from the buffer save overwrites the eval results
   ; in the minibuffer.
-  "eb" 'elisp-save-and-eval-buffer
-  "es" 'elisp-save-and-eval-sexp
-  "ex" 'elisp-save-and-eval-defun)
+  "eb" #'elisp-save-and-eval-buffer
+  "es" #'elisp-save-and-eval-sexp
+  "ex" #'elisp-save-and-eval-defun)
 
 (add-hook 'emacs-lisp-mode-hook
           (lambda () (setq-local completion-at-point-functions
@@ -764,9 +764,9 @@
   tab-bar-show 1 ; hide bar if <= 1 tabs open
   tab-bar-close-button-show nil
   :bind (:map evil-normal-state-map
-              ("M-t" . 'tab-new)
-              ("M-}" . 'tab-next)
-              ("M-{" . 'tab-previous))
+              ("M-t" . #'tab-new)
+              ("M-}" . #'tab-next)
+              ("M-{" . #'tab-previous))
   :config
   (tab-bar-mode 1))
 
@@ -909,8 +909,8 @@
     (goto-char p)))
 
 (evil-leader/set-key-for-mode 'html-mode
-  "ii" 'indent-html-buffer
-  "rr" 'preview-html)
+  "ii" #'indent-html-buffer
+  "rr" #'preview-html)
 
 ;; NOTE(harry) If this doesn't work out try multi-web-mode or mmm-mode. See:
 ;; http://www.emacswiki.org/emacs/MultipleModes
@@ -940,7 +940,7 @@
 
 (use-package go-mode :defer t
   :config
-  (evil-define-key 'normal go-mode-map "K" 'godef-describe))
+  (evil-define-key 'normal go-mode-map "K" #'godef-describe))
 
 (defun go-save-and-compile-fn (command)
   "Returns a function for the purpose of binding to a key which saves the current buffer and then
@@ -965,8 +965,8 @@
   "rt" (go-save-and-compile-fn "make test")
   "rw" (go-save-and-compile-fn "make run-web")
   ;; "c" is a namespace for compile-related commands.
-  "cn" 'next-error
-  "cp" 'previous-error
+  "cn" #'next-error
+  "cp" #'previous-error
   "cw" (go-save-and-compile-fn "make web")
   "cb" (go-save-and-compile-fn "make benchmark")
   "cc" (go-save-and-compile-fn "make compile")
@@ -995,12 +995,12 @@
 (defun init-go-buffer-settings ()
   ;; I have Emacs configured to save when switching buffers, so popping up errors when I switch buffers is
   ;; really jarring.
-  (add-hook 'before-save-hook 'gofmt-before-save-ignoring-errors nil t)
+  (add-hook 'before-save-hook #'gofmt-before-save-ignoring-errors nil t)
   ;; Make it so comments are line-wrapped properly when filling. It's an oversight that this is missing from
   ;; go-mode.
   (setq-local fill-prefix "// "))
 
-(add-hook 'go-mode-hook 'init-go-buffer-settings)
+(add-hook 'go-mode-hook #'init-go-buffer-settings)
 
 (defun go-package-of-current-buffer ()
   "Returns the go package name defined in the current buffer. Returns nil if no package has been defined."
@@ -1054,25 +1054,25 @@
    ("C-S-h" . buf-move-left)
    ("C-S-l" . buf-move-right)))
 
-(define-key evil-normal-state-map (kbd "H") 'evil-first-non-blank)
-(define-key evil-visual-state-map (kbd "H") 'evil-first-non-blank)
-(define-key evil-normal-state-map (kbd "L") 'evil-end-of-line)
-(define-key evil-visual-state-map (kbd "L") 'evil-end-of-line)
+(define-key evil-normal-state-map (kbd "H") #'evil-first-non-blank)
+(define-key evil-visual-state-map (kbd "H") #'evil-first-non-blank)
+(define-key evil-normal-state-map (kbd "L") #'evil-end-of-line)
+(define-key evil-visual-state-map (kbd "L") #'evil-end-of-line)
 
-(define-key evil-normal-state-map (kbd ";") 'evil-ex)
-(define-key evil-visual-state-map (kbd ";") 'evil-ex)
+(define-key evil-normal-state-map (kbd ";") #'evil-ex)
+(define-key evil-visual-state-map (kbd ";") #'evil-ex)
 
-(define-key evil-normal-state-map (kbd "zz") 'evil-scroll-line-to-center)
+(define-key evil-normal-state-map (kbd "zz") #'evil-scroll-line-to-center)
 
-(define-key osx-keys-minor-mode-map (kbd "M-=") 'text-scale-increase)
-(define-key osx-keys-minor-mode-map (kbd "M-+") 'text-scale-increase)
-(define-key osx-keys-minor-mode-map (kbd "M--") 'text-scale-decrease)
+(define-key osx-keys-minor-mode-map (kbd "M-=") #'text-scale-increase)
+(define-key osx-keys-minor-mode-map (kbd "M-+") #'text-scale-increase)
+(define-key osx-keys-minor-mode-map (kbd "M--") #'text-scale-decrease)
 (define-key osx-keys-minor-mode-map (kbd "M-0") (lambda () (interactive) (text-scale-increase 0)))
 
 (defun copy-to-end-of-line ()
   (interactive)
   (evil-yank (point) (point-at-eol)))
-(define-key evil-normal-state-map "Y" 'copy-to-end-of-line)
+(define-key evil-normal-state-map "Y" #'copy-to-end-of-line)
 
 (setq tramp-default-method "pscp")
 
@@ -1109,12 +1109,12 @@
   :config
   (setq avy-keys (number-sequence ?a ?z)
         avy-all-windows 'all-frames)
-  (evil-leader/set-key "z" 'avy-goto-word-0)
-  (define-key evil-motion-state-map (kbd "z") 'avy-goto-word-0)
-  (define-key evil-visual-state-map (kbd "z") 'avy-goto-word-0)
-  (evil-leader/set-key "Z" 'avy-goto-line)
-  (define-key evil-motion-state-map (kbd "Z") 'avy-goto-line)
-  (define-key evil-visual-state-map (kbd "Z") 'avy-goto-line))
+  (evil-leader/set-key "z" #'avy-goto-word-0)
+  (define-key evil-motion-state-map (kbd "z") #'avy-goto-word-0)
+  (define-key evil-visual-state-map (kbd "z") #'avy-goto-word-0)
+  (evil-leader/set-key "Z" #'avy-goto-line)
+  (define-key evil-motion-state-map (kbd "Z") #'avy-goto-line)
+  (define-key evil-visual-state-map (kbd "Z") #'avy-goto-line))
 
 ;; Open links vimium-style with `o' in various help-like modes
 (use-package ace-link
@@ -1171,9 +1171,9 @@
    ))
 
 (evil-leader/set-key
-  "it" 'insert-todo
-  "in" 'insert-note
-  "if" 'insert-fixme)
+  "it" #'insert-todo
+  "in" #'insert-note
+  "if" #'insert-fixme)
 
 
 
@@ -1262,11 +1262,11 @@
 (use-package copilot-chat :after (magit) :defer t
   :config
   (evil-leader/set-key
-    "CC" 'copilot-chat-transient           ; Show menu
-    "Ca" 'copilot-chat-add-current-buffer  ; Add the current buffer to the Copilot chat list
-    "Cc" 'copilot-chat-display             ; Display the Copilot chat window
-    "Ce" 'copilot-chat-explain             ; Explain the selected region using Copilot chat
-    "Cp" 'copilot-chat-custom-prompt-selection))  ; Send a custom prompt followed by
+    "CC" #'copilot-chat-transient           ; Show menu
+    "Ca" #'copilot-chat-add-current-buffer  ; Add the current buffer to the Copilot chat list
+    "Cc" #'copilot-chat-display             ; Display the Copilot chat window
+    "Ce" #'copilot-chat-explain             ; Explain the selected region using Copilot chat
+    "Cp" #'copilot-chat-custom-prompt-selection))  ; Send a custom prompt followed by
                                                ; the selected region to Copilot chat
 
 ;; Github Copilot autocomplete support
