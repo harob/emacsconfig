@@ -7,6 +7,6 @@
 (defun partition (l n)
   "Return a list of L's consecutive sublists of length N."
   (cl-assert (zerop (mod (length l) n)))
-  (cl-loop for l on l by #'(lambda (l) (nthcdr n l)) collect (subseq l 0 n)))
+  (cl-loop for l on l by #'(lambda (l) (nthcdr n l)) collect (cl-subseq l 0 n)))
 
 (provide 'lisp-helpers-personal)

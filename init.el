@@ -28,7 +28,7 @@
 (unless (server-running-p)
   (server-start))
 
-(require 'cl)
+(require 'cl-lib)
 (add-to-list 'load-path "~/.emacs.d/elisp")
 (require 'emacs-utils)
 
@@ -503,13 +503,13 @@
 (defun trim-last-word-of-string (string)
   "Removes the last word from the given string. Word separators are -, _ and spaces. This is designed to
   perform the same function as `kill-word', but on a string argument."
-  (lexical-let ((i 0))
+  (let ((i 0))
     (while (and (< i (length string))
                 (string-match "[-_ ]+" string i))
-      (setq i (second (match-data))))
+      (setq i (cl-second (match-data))))
     (if (= i 0)
       ""
-      (substring string 0 (dec i)))))
+      (substring string 0 (1- i)))))
 
 (defun isearch-del-word (&optional arg)
   "Delete word from end of search string and search again. If search string is empty, just beep.
@@ -946,7 +946,7 @@
 (defun go-save-and-compile-fn (command)
   "Returns a function for the purpose of binding to a key which saves the current buffer and then
    runs the given command in the root of the go project."
-  (lexical-let ((command command))
+  (let ((command command))
     #'(lambda ()
         (interactive)
         (go-save-and-compile command))))
