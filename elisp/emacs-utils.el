@@ -19,11 +19,11 @@
   (when (and buffer-file-name (buffer-modified-p))
     (save-buffer)))
 
-(defun util/without-confirmation (fn)
+(defun util/without-confirmation (fn &rest args)
   "Applies the given fn but skips any confirmation prompts invoked via yes-or-no-p."
   ;; Taken from https://www.emacswiki.org/emacs/YesOrNoP.
-  (cl-letf (((symbol-function 'y-or-n-p) #'always-yes)
-            ((symbol-function 'yes-or-no-p) #'always-yes))
+  (cl-letf (((symbol-function 'y-or-n-p) #'always)
+            ((symbol-function 'yes-or-no-p) #'always))
     (apply fn args)))
 
 (defun util/preserve-selected-window (f)

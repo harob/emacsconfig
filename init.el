@@ -165,11 +165,11 @@
 
 ;; Save buffers whenever they lose focus.
 ;; This obviates the need to hit the Save key thousands of times a day. Inspired by http://goo.gl/2z0g5O
-(add-hook 'focus-out-hook #'util/save-buffer-if-dirty)
-(defadvice windmove-up (before other-window-now activate) (util/save-buffer-if-dirty))
-(defadvice windmove-down (before other-window-now activate) (util/save-buffer-if-dirty))
-(defadvice windmove-left (before other-window-now activate) (util/save-buffer-if-dirty))
-(defadvice windmove-right (before other-window-now activate) (util/save-buffer-if-dirty))
+(add-function :after after-focus-change-function #'util/save-buffer-if-dirty)
+(advice-add 'windmove-up :before (lambda (&rest _) (util/save-buffer-if-dirty)))
+(advice-add 'windmove-down :before (lambda (&rest _) (util/save-buffer-if-dirty)))
+(advice-add 'windmove-left :before (lambda (&rest _) (util/save-buffer-if-dirty)))
+(advice-add 'windmove-right :before (lambda (&rest _) (util/save-buffer-if-dirty)))
 
 ; This is fired whenever the buffer list is updated, which is a reasonably robust way to detect that the
 ; window config has changed and the current buffer should be saved.
@@ -388,14 +388,21 @@
 
 ;; "I manage my windows in a 4x4 grid. I want ephemeral or status-based buffers to always show in the
 ;; lower-right or right window, in that order of preference."
-(setq special-display-buffer-names '("*Help*" "*compilation*" "COMMIT_EDITMSG" "*Messages*"
-                                     "*magit-process*" "*magit-commit*" "*Compile-Log*" "*Gofmt Errors*"))
-(setq special-display-regexps '("*cider.*" "magit: .*" "magit-log: .*"))
-(setq special-display-function 'show-ephemeral-buffer-in-a-sensible-window)
+(defvar ephemeral-buffer-names '("*Help*" "*compilation*" "COMMIT_EDITMSG" "*Messages*"
+                                 "*magit-process*" "*magit-commit*" "*Compile-Log*" "*Gofmt Errors*"))
+(defvar ephemeral-buffer-regexps '("*cider.*" "magit: .*" "magit-log: .*"))
 
-;; A list of "special" (ephemeral) buffer names which should be focused after they are shown. Used by
+;; A list of ephemeral buffer names which should be focused after they are shown. Used by
 ;; show-ephemeral-buffer-in-a-sensible-window
-(setq special-display-auto-focused-buffers '())
+(defvar ephemeral-auto-focused-buffers '())
+
+(defun ephemeral-buffer-p (buffer-name &optional _alist)
+  "Return non-nil if BUFFER-NAME is an ephemeral buffer."
+  (or (member buffer-name ephemeral-buffer-names)
+      (cl-some (lambda (re) (string-match-p re buffer-name)) ephemeral-buffer-regexps)))
+
+(setq display-buffer-alist
+      '((ephemeral-buffer-p show-ephemeral-buffer-in-a-sensible-window)))
 
 (defun switch-to-upper-left () (interactive) (select-window (frame-first-window)))
 (defun switch-to-lower-left () (interactive) (switch-to-upper-left) (ignore-errors (windmove-down)))
@@ -406,7 +413,7 @@
 ;; http://snarfed.org/emacs_special-display-function_prefer-other-visible-frame
 ;; http://stackoverflow.com/questions/1002091/how-to-force-emacs-not-to-display-buffer-in-a-specific-window
 ;; The implementation of this function is based on `special-display-popup-frame' in window.el.
-(defun show-ephemeral-buffer-in-a-sensible-window (buffer &optional buffer-data)
+(defun show-ephemeral-buffer-in-a-sensible-window (buffer &optional _alist)
   "Show the window for BUFFER in a right-side split."
   (let* ((original-window (selected-window))
          (create-new-window (one-window-p))
@@ -417,19 +424,19 @@
     (set-window-buffer window buffer)
     (when create-new-window (set-window-prev-buffers window nil))
     (select-window original-window)
-    (when (member (buffer-name buffer) special-display-auto-focused-buffers)
+    (when (member (buffer-name buffer) ephemeral-auto-focused-buffers)
       (select-window window))
     window))
 
 (defun dismiss-ephemeral-windows ()
-  "Dismisses any visible windows in the current frame identifiedy by `special-display-buffer-names' and
-   `special-display-regexps'. I use this to quickly dismiss help windows, compile output, etc."
+  "Dismisses any visible ephemeral windows in the current frame.
+   I use this to quickly dismiss help windows, compile output, etc."
   (interactive)
   (save-excursion
     (let ((original-window (selected-window)))
       (dolist (window (window-list))
         (let ((buffer (window-buffer window)))
-          (when (special-display-p (buffer-name buffer))
+          (when (ephemeral-buffer-p (buffer-name buffer))
             (quit-window nil window))))
       (select-window original-window))))
 
@@ -545,7 +552,7 @@
                   (kbd "M-~") '(lambda () (interactive) (other-frame -1))
                   (kbd "M-w") #'vimlike-quit
                   (kbd "M-q") #'save-buffers-kill-terminal
-                  (kbd "M-n") #'new-frame
+                  (kbd "M-n") #'make-frame-command
                   (kbd "M-a") #'mark-whole-buffer
                   (kbd "M-s") #'explicitly-save-buffer
                   (kbd "M-v") #'clipboard-yank
@@ -561,13 +568,13 @@
 
 (osx-keys-minor-mode t)
 
-(defadvice load (after give-osx-keybindings-priority activate)
+(defun give-osx-keybindings-priority (&rest _)
   "Try to ensure that osx keybindings always have priority."
   (if (not (eq (car (car minor-mode-map-alist)) 'osx-keys-minor-mode))
       (let ((osx-keys (assq 'osx-keys-minor-mode minor-mode-map-alist)))
         (setq minor-mode-map-alist (assq-delete-all 'osx-keys-minor-mode minor-mode-map-alist))
         (add-to-list 'minor-mode-map-alist osx-keys))))
-(ad-activate 'load)
+(advice-add 'load :after #'give-osx-keybindings-priority)
 
 (defun open-folder-in-finder ()
   "Opens the folder of the current file in OSX's Finder."
@@ -677,9 +684,7 @@
    ("C-." . embark-act)
    ("M-." . embark-dwim)))
 
-(use-package embark-consult
-  :hook
-  (embark-collect-mode . consult-preview-at-point-mode))
+(use-package embark-consult)
 
 ;; For fzf-style `affe-find'
 (use-package affe
@@ -953,7 +958,7 @@
 
 (defun go-save-and-compile (command)
   "Saves the current buffer before invoking the given command."
-  (when-let ((project-dir (locate-dominating-file default-directory ".git")))
+  (when-let* ((project-dir (locate-dominating-file default-directory ".git")))
     (save-buffer)
     (message command)
     (util/without-confirmation
@@ -1072,7 +1077,7 @@
 
 (defun copy-to-end-of-line ()
   (interactive)
-  (evil-yank (point) (point-at-eol)))
+  (evil-yank (point) (pos-eol)))
 (define-key evil-normal-state-map "Y" #'copy-to-end-of-line)
 
 (setq tramp-default-method "pscp")
@@ -1223,7 +1228,7 @@
 (defun my-patch-python-pytest-executable ()
   "My work git repo has many projects inside it, so pytest needs to know to use
    the nested project rather than the parent repo as its working directory."
-  (when-let ((dir (locate-dominating-file default-directory "build.toml")))
+  (when-let* ((dir (locate-dominating-file default-directory "build.toml")))
     (setq python-pytest-executable (concat "cd " dir " && kirin test")
           project-compilation-dir dir)))
 
