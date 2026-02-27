@@ -233,7 +233,18 @@
   :config
   ;; This needs to be *before* calling `evil-mode' for the leader key to work in
   ;; all buffer types:
-  (global-evil-leader-mode 1))
+  (global-evil-leader-mode 1)
+  ;; Fix: evil-leader-mode is not permanent-local, so it gets killed by
+  ;; kill-all-local-variables during major mode changes. Since evil-local-mode IS
+  ;; permanent-local, its hook doesn't re-fire, leaving evil-leader-mode dead and
+  ;; SPC stuck on the default (non-mode-specific) keymap. This re-enables
+  ;; evil-leader-mode so it picks up the correct mode-specific map.
+  (add-hook 'after-change-major-mode-hook
+            (defun evil-leader--refresh-mode-maps ()
+              (when (and (bound-and-true-p evil-local-mode)
+                         (not (bound-and-true-p evil-leader-mode)))
+                (evil-leader-mode 1)))
+            100))
 
 (use-package evil
   :custom
@@ -689,6 +700,7 @@
 ;; For fzf-style `affe-find'
 (use-package affe
   :custom
+  (affe-count 100)
   (affe-regexp-compiler #'affe-orderless-regexp-compiler))
 
 ;; Mysterious code recommended at https://github.com/minad/affe
@@ -738,6 +750,9 @@
   "eb" #'elisp-save-and-eval-buffer
   "es" #'elisp-save-and-eval-sexp
   "ex" #'elisp-save-and-eval-defun)
+
+(which-key-add-major-mode-key-based-replacements 'emacs-lisp-mode
+  "SPC e" "emacs-Eval")
 
 (add-hook 'emacs-lisp-mode-hook
           (lambda () (setq-local completion-at-point-functions
