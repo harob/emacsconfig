@@ -105,6 +105,15 @@
 ;; Colorscheme
 (use-package color-theme-sanityinc-tomorrow
   :config
+  ;; Newer Emacs defines gnus-group-{news,mail}-N as inheriting from
+  ;; gnus-group-{news,mail}-N-empty.  The theme sets the -empty faces to
+  ;; inherit the other way, creating a cycle.  Break the built-in direction
+  ;; before loading the theme so load-theme can safely set the reverse.
+  (dolist (kind '("news" "mail"))
+    (dotimes (i 6)
+      (let ((base (intern (format "gnus-group-%s-%d" kind (1+ i)))))
+        (when (facep base)
+          (set-face-attribute base nil :inherit nil)))))
   (load-theme 'sanityinc-tomorrow-bright t))
 (set-face-attribute 'default nil :family "Consolas" :height 150)
 
