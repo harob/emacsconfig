@@ -1,3 +1,4 @@
+;;; lisp-helpers-personal.el --- Utility functions for writing lisp in Emacs -*- lexical-binding: t; -*-
 ;;
 ;; Utility functions for writing lisp in Emacs.
 ;;

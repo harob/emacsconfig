@@ -1,3 +1,4 @@
+;;; ox-md-personal.el --- Personal ox-md customizations -*- lexical-binding: t; -*-
 (require 'ox-md)
 
 (provide 'ox-md-personal)

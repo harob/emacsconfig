@@ -1,3 +1,4 @@
+;;; clojure-mode-personal.el --- Clojure mode customizations -*- lexical-binding: t; -*-
 ;;
 ;; Clojure
 ;;

@@ -1,5 +1,4 @@
-;;
-;; Functions for running clojure.test tests with Cider.
+;;; cider-test-personal.el --- Functions for running clojure.test tests with Cider -*- lexical-binding: t; -*-
 ;;
 ;; This has two bindable functions of interest:
 ;; cider-test/run-tests-in-ns

@@ -1,3 +1,4 @@
+;;; emacs-utils.el --- Lisp utility functions for working with text in Emacs -*- lexical-binding: t; -*-
 ;;
 ;; Lisp utility functions to serve as building blocks for working with text in Emacs.
 ;;

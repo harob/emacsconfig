@@ -1,4 +1,4 @@
-;;; My additions and customizations to org-mode.
+;;; org-mode-personal.el --- My additions and customizations to org-mode -*- lexical-binding: t; -*-
 ;;; Based loosely on evil-org-mode as a starting point.
 ;;; Provides an evil-org-mode minor mode.
 ;;; https://github.com/edwtjo/evil-org-mode

@@ -1,3 +1,4 @@
+;;; ox-html-personal.el --- Personal ox-html customizations -*- lexical-binding: t; -*-
 (require 'ox-html)
 
 ;; NOTE(harry) This function has been changed to remove linebreaks after "heading" bullets.
