@@ -898,9 +898,9 @@
 
 (use-package clojure-mode :defer t
   :hook
-  (cider-mode-hook . eldoc-mode)
-  (cider-mode-hook . rainbow-delimiters-mode)
-  (cider-repl-mode-hook . rainbow-delimiters-mode))
+  (cider-mode . eldoc-mode)
+  (cider-mode . rainbow-delimiters-mode)
+  (cider-repl-mode . rainbow-delimiters-mode))
 
 (require 'clojure-mode-personal)
 (require 'cider-test-personal)
@@ -1226,7 +1226,7 @@
   :hook (eglot-managed-mode . flymake-ruff-load))
 
 (use-package flymake-cursor :after (flymake)
-  :hook (python-mode-hook . flymake-cursor-mode))
+  :hook (python-mode . flymake-cursor-mode))
 
 (add-hook 'eglot-managed-mode-hook
           (lambda ()
