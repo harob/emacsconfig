@@ -569,7 +569,7 @@
 (defvar osx-keys-minor-mode-map (make-keymap) "osx-keys-minor-mode-keymap")
 (util/define-keys osx-keys-minor-mode-map
                   (kbd "M-`") #'other-frame
-                  (kbd "M-~") '(lambda () (interactive) (other-frame -1))
+                  (kbd "M-~") (lambda () (interactive) (other-frame -1))
                   (kbd "M-w") #'vimlike-quit
                   (kbd "M-q") #'save-buffers-kill-terminal
                   (kbd "M-n") #'make-frame-command

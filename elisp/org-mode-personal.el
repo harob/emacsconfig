@@ -20,20 +20,20 @@
 ;; normal state shortcuts
 (evil-define-key 'normal evil-org-mode-map
   "t" 'org-todo
-  "T" '(lambda () (interactive)
-         (let ((original-val org-log-done))
-           (setq org-log-done nil)
-           (org-todo 'done)
-           (setq org-log-done original-val)))
-  "o" '(lambda () (interactive)
-         (org-insert-heading-after-current)
-         (evil-end-of-line)
-         (evil-append nil))
-  "O" '(lambda () (interactive)
-         (org-insert-heading-after-current)
-         (evil-end-of-line)
-         (org-metaup)
-         (evil-append nil))
+  "T" (lambda () (interactive)
+        (let ((original-val org-log-done))
+          (setq org-log-done nil)
+          (org-todo 'done)
+          (setq org-log-done original-val)))
+  "o" (lambda () (interactive)
+        (org-insert-heading-after-current)
+        (evil-end-of-line)
+        (evil-append nil))
+  "O" (lambda () (interactive)
+        (org-insert-heading-after-current)
+        (evil-end-of-line)
+        (org-metaup)
+        (evil-append nil))
   "{" 'org-backward-heading-same-level
   "}" 'org-forward-heading-same-level
   "gu" 'outline-up-heading
