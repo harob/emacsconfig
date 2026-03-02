@@ -4,7 +4,6 @@
 ;; cider-test/run-tests-in-ns
 ;; cider-test/run-test-at-point
 ;;
-(provide 'cider-test-personal)
 (require 'cider)
 (require 'cl-lib)
 
@@ -58,3 +57,5 @@
        ;; failure.
        (when fn-name
          (cider-interactive-eval (concat "(" fn-name ")")))))))
+
+(provide 'cider-test-personal)
