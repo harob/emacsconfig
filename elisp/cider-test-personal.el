@@ -33,7 +33,7 @@
   ;; cider doesn't expose compile errors directly. `cider-highlight-compilation-errors` will set an overlay on
   ;; the buffer if there is a compile error. This fn checks for that overlay.
   (let* ((overlays (overlays-in (point-min) (point-max)))
-         (cider-notes (remove-if-not (lambda (o) (overlay-get o 'cider-note-p)) overlays)))
+         (cider-notes (cl-remove-if-not (lambda (o) (overlay-get o 'cider-note-p)) overlays)))
     (> (length cider-notes) 0)))
 
 (defun cider-test/run-tests-in-ns ()
