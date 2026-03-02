@@ -984,7 +984,7 @@
   "Saves the current buffer before invoking the given command."
   (when-let* ((project-dir (locate-dominating-file default-directory ".git")))
     (save-buffer)
-    (message command)
+    (message "%s" command)
     (util/without-confirmation
      (lambda () (compile (concat "cd " project-dir " && " command))))))
 
