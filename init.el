@@ -1035,10 +1035,8 @@
 (defun go-package-of-current-buffer ()
   "Returns the go package name defined in the current buffer. Returns nil if no package has been defined."
   (let ((file-contents (buffer-string)))
-    (let ((match-exists (string-match "^package \\(.+\\)\w*" file-contents)))
-      (when match-exists
-        (buffer-substring-no-properties (+ 1 (match-beginning 1))
-                                        (+ 1 (match-end 1)))))))
+    (when (string-match "^package \\(.+\\)" file-contents)
+      (match-string 1 file-contents))))
 
 
 ;;;; Magit - for staging hunks and making commits to git
