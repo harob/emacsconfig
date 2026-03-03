@@ -42,7 +42,7 @@
     (insert form)
     (cider-repl-return)))
 
-(use-package cider :defer t :pin melpa-stable)
+(use-package cider)
 (require 'cider-mode)
 
 (evil-leader/set-key-for-mode 'clojure-mode
