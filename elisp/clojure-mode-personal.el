@@ -33,10 +33,10 @@
   ;; Update the REPL namespace first if necessary:
   (unless (equal (cider-current-ns) (with-current-buffer (cider-current-repl) cider-buffer-ns))
     (cider-repl-set-ns (cider-current-ns)))
-  (let ((form (current-sexp)))
+  (when-let* ((form (current-sexp)))
     ;; Strip excess whitespace
     (while (string-match "\\`\s+\\|\n+\\'" form)
-           (setq form (replace-match "" t t form)))
+      (setq form (replace-match "" t t form)))
     (set-buffer (cider-current-repl))
     (goto-char (point-max))
     (insert form)

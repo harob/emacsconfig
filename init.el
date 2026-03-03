@@ -745,7 +745,9 @@
 
 (defun elisp-eval-current-sexp ()
   (interactive)
-  (message "%s" (eval (read (current-sexp)))))
+  (if-let* ((sexp-string (current-sexp)))
+      (message "%s" (eval (read sexp-string)))
+    (user-error "No sexp at point")))
 
 ;; Named commands for elisp eval bindings (so function names appear in help text)
 (defcmd elisp-save-and-eval-buffer (util/save-buffer-if-dirty) (eval-buffer))
@@ -985,7 +987,7 @@
     (save-buffer)
     (message "%s" command)
     (util/without-confirmation
-     (lambda () (compile (concat "cd " project-dir " && " command))))))
+     (lambda () (compile (concat "cd " (shell-quote-argument project-dir) " && " command))))))
 
 (evil-leader/set-key-for-mode 'go-mode
   ;; "r" is a namespace for run-related commands.
@@ -1228,7 +1230,6 @@
 
 (add-hook 'eglot-managed-mode-hook
           (lambda ()
-            (message "Setting up eglot-managed-mode-hook")
             ;; Show flymake diagnostics first.
             (setq eldoc-documentation-functions
                   (cons #'flymake-eldoc-function
@@ -1251,7 +1252,7 @@
   "My work git repo has many projects inside it, so pytest needs to know to use
    the nested project rather than the parent repo as its working directory."
   (when-let* ((dir (locate-dominating-file default-directory "build.toml")))
-    (setq python-pytest-executable (concat "cd " dir " && kirin test")
+    (setq python-pytest-executable (concat "cd " (shell-quote-argument dir) " && kirin test")
           project-compilation-dir dir)))
 
 (use-package python-pytest :defer t
