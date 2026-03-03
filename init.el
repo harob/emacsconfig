@@ -788,10 +788,10 @@
 
 (use-package tab-bar :ensure nil
   :custom
-  tab-bar-select-tab-modifiers '(meta)
-  tab-bar-tab-hints t
-  tab-bar-show 1 ; hide bar if <= 1 tabs open
-  tab-bar-close-button-show nil
+  (tab-bar-select-tab-modifiers '(meta))
+  (tab-bar-tab-hints t)
+  (tab-bar-show 1) ; hide bar if <= 1 tabs open
+  (tab-bar-close-button-show nil)
   :bind (:map evil-normal-state-map
               ("M-t" . #'tab-new)
               ("M-}" . #'tab-next)
