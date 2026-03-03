@@ -410,7 +410,7 @@
 ;; lower-right or right window, in that order of preference."
 (defvar ephemeral-buffer-names '("*Help*" "*compilation*" "COMMIT_EDITMSG" "*Messages*"
                                  "*magit-process*" "*magit-commit*" "*Compile-Log*" "*Gofmt Errors*"))
-(defvar ephemeral-buffer-regexps '("*cider.*" "magit: .*" "magit-log: .*"))
+(defvar ephemeral-buffer-regexps '("\\*cider.*" "magit: .*" "magit-log: .*"))
 
 ;; A list of ephemeral buffer names which should be focused after they are shown. Used by
 ;; show-ephemeral-buffer-in-a-sensible-window
