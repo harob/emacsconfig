@@ -15,7 +15,7 @@
   (sleep-for 0.1) ; cider-load-current-buffer is asynchronous, so we must work around that.
   ;; If there was a compile error, halt. Otherwise we'll mask the compile error which has been printed to the
   ;; minibuffer.
-  (when (not (cider-test/buffer-has-compile-errors?))
+  (unless (cider-test/buffer-has-compile-errors?)
     (funcall f)))
 
 (defun cider-test/defun-name-at-point ()

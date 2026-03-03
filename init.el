@@ -13,7 +13,7 @@
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 (package-initialize)
-(when (not package-archive-contents)
+(unless package-archive-contents
   (package-refresh-contents))
 
 (require 'use-package)
@@ -146,7 +146,7 @@
 (setq-default indent-tabs-mode nil)
 (add-to-list 'write-file-functions
              (lambda ()
-               (when (not indent-tabs-mode)
+               (unless indent-tabs-mode
                  (untabify (point-min) (point-max)))
                nil))
 
@@ -976,10 +976,9 @@
 (defun go-save-and-compile-fn (command)
   "Returns a function for the purpose of binding to a key which saves the current buffer and then
    runs the given command in the root of the go project."
-  (let ((command command))
-    #'(lambda ()
-        (interactive)
-        (go-save-and-compile command))))
+  (lambda ()
+    (interactive)
+    (go-save-and-compile command)))
 
 (defun go-save-and-compile (command)
   "Saves the current buffer before invoking the given command."
@@ -1017,7 +1016,7 @@
   (interactive)
   ;; Note that `gofmt-before-save' triggers this save-hook for some reason, so we lock on gofmt-in-progress to
   ;; to protect from infinite recurision.
-  (when (not gofmt-in-progress)
+  (unless gofmt-in-progress
     (setq gofmt-in-progress 't)
     (cl-letf (((symbol-function #'gofmt--process-errors) (lambda (&rest args) t)))
       (gofmt-before-save))
@@ -1109,12 +1108,11 @@
 (defun copy-file-path-to-clipboard ()
   "Copy the current buffer file name to the clipboard."
   (interactive)
-  (let ((filename (if (equal major-mode 'dired-mode)
-                      default-directory
-                    (buffer-file-name))))
-    (when filename
-      (kill-new filename)
-      (message "Copied buffer file name '%s' to the clipboard." filename))))
+  (when-let* ((filename (if (equal major-mode 'dired-mode)
+                            default-directory
+                          (buffer-file-name))))
+    (kill-new filename)
+    (message "Copied buffer file name '%s' to the clipboard." filename)))
 
 (defun copy-file-name-to-clipboard ()
   "Copy the current buffer file name to the clipboard."
