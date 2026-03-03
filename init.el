@@ -1119,11 +1119,10 @@
 (defun copy-file-name-to-clipboard ()
   "Copy the current buffer file name to the clipboard."
   (interactive)
-  (let ((filename (when (buffer-file-name)
-                    (file-name-nondirectory (buffer-file-name)))))
-    (when filename
-      (kill-new filename)
-      (message "Copied buffer file name '%s' to the clipboard." filename))))
+  (when-let* ((filename (and (buffer-file-name)
+                             (file-name-nondirectory (buffer-file-name)))))
+    (kill-new filename)
+    (message "Copied buffer file name '%s' to the clipboard." filename)))
 
 ;; Go-to-definition for all languages, using rg
 (use-package dumb-jump :defer t
