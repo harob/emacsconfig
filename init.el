@@ -740,7 +740,7 @@
 
 (defun current-sexp ()
   "Returns the text content of the sexp list around the cursor."
-  (let ((position (bounds-of-thing-at-point 'list)))
+  (when-let* ((position (bounds-of-thing-at-point 'list)))
     (buffer-substring-no-properties (car position) (cdr position))))
 
 (defun elisp-eval-current-sexp ()
@@ -916,7 +916,6 @@
 
 ;;;; HTML
 
-(add-to-list 'auto-mode-alist '("\\.erb$" . html-mode))
 
 (defun preview-html ()
   "Pipes the buffer's contents into a script which opens the HTML in a browser."
@@ -1048,7 +1047,7 @@
 (use-package magit :defer t
   :config
   (setq magit-commit-show-diff nil)
-  (add-hook 'git-commit-mode-hook (lambda () (interactive) (evil-append-line 1))))
+  (add-hook 'git-commit-mode-hook (lambda () (evil-append-line 1))))
 
 ;; NOTE(harry) Turning off due to some display bugs
 ;; (use-package magit-delta :after (magit) :defer t
@@ -1118,7 +1117,8 @@
 (defun copy-file-name-to-clipboard ()
   "Copy the current buffer file name to the clipboard."
   (interactive)
-  (let ((filename (file-name-nondirectory (buffer-file-name))))
+  (let ((filename (when (buffer-file-name)
+                    (file-name-nondirectory (buffer-file-name)))))
     (when filename
       (kill-new filename)
       (message "Copied buffer file name '%s' to the clipboard." filename))))
@@ -1245,7 +1245,7 @@
     :program "ruff"
     :args `("format" "--stdin-filename" ,buffer-file-name "-")))
 
-(add-hook 'python-mode-hook (lambda () (interactive) (set-fill-column 88)))
+(add-hook 'python-mode-hook (lambda () (set-fill-column 88)))
 
 (defun my-patch-python-pytest-executable ()
   "My work git repo has many projects inside it, so pytest needs to know to use
