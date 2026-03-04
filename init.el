@@ -156,13 +156,20 @@
   (interactive)
   (delete-region (point) (progn (forward-word -1) (point))))
 
-;; Enable the common Bash text-editing shortcuts in the minibuffer.
-(util/define-keys minibuffer-local-map
-                  (kbd "C-k") #'kill-line
-                  (kbd "C-e") #'end-of-line
-                  (kbd "C-d") #'delete-char
-                  (kbd "C-w") #'backward-delete-word
-                  (kbd "C-h") #'backward-delete-char)
+;; Enable the common Bash text-editing shortcuts in the minibuffer and evil-ex.
+(defun set-bash-editing-keys (keymap)
+  "Add Bash-style editing shortcuts to KEYMAP."
+  (util/define-keys keymap
+                    (kbd "C-a") #'beginning-of-line
+                    (kbd "C-e") #'end-of-line
+                    (kbd "C-k") #'kill-line
+                    (kbd "C-d") #'delete-char
+                    (kbd "C-w") #'backward-delete-word
+                    (kbd "C-h") #'backward-delete-char))
+
+(set-bash-editing-keys minibuffer-local-map)
+(with-eval-after-load 'evil-ex
+  (set-bash-editing-keys evil-ex-completion-map))
 
 ;; Disable the prompt we get when killing a buffer with a process. This affects clojure mode in particular,
 ;; when we want to restart the nrepl process.
