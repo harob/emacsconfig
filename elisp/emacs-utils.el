@@ -16,7 +16,7 @@
     (define-key keymap (cl-first pair) (cl-second pair))))
 
 (defun util/save-buffer-if-dirty ()
-  (when (and buffer-file-name (buffer-modified-p))
+  (when (and buffer-file-name (buffer-modified-p) (verify-visited-file-modtime))
     (save-buffer)))
 
 (defun util/without-confirmation (fn &rest args)
