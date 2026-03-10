@@ -39,7 +39,22 @@
   (kbd "TAB") 'org-cycle
   (kbd "RET") 'org-open-at-point)
 
-(use-package org-mac-link :defer t)
+(use-package org-mac-link :defer t
+  :config
+  ;; The default implementation is slow: it spawns a shell, queries the
+  ;; frontmost app, and does an `activate application` focus switch after
+  ;; grabbing the URL.  This override uses `call-process` directly with a
+  ;; minimal AppleScript that skips the focus-switch dance.
+  (defun org-mac-link-applescript-chrome-get-frontmost-url ()
+    "Get Chrome's frontmost URL and title via a fast osascript call."
+    (org-trim
+     (with-output-to-string
+       (call-process
+        "osascript" nil standard-output nil
+        "-e" (concat "tell application \"Google Chrome\" to "
+                     "get URL of active tab of first window"
+                     " & \"::split::\" & "
+                     "name of active tab of first window"))))))
 
 (evil-leader/set-key-for-mode 'org-mode
   "li" 'org-insert-link
