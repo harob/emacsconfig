@@ -1024,10 +1024,11 @@
   ;; Note that `gofmt-before-save' triggers this save-hook for some reason, so we lock on gofmt-in-progress to
   ;; to protect from infinite recurision.
   (unless gofmt-in-progress
-    (setq gofmt-in-progress 't)
-    (cl-letf (((symbol-function #'gofmt--process-errors) (lambda (&rest args) t)))
-      (gofmt-before-save))
-    (setq gofmt-in-progress nil)))
+    (setq gofmt-in-progress t)
+    (unwind-protect
+        (cl-letf (((symbol-function #'gofmt--process-errors) (lambda (&rest args) t)))
+          (gofmt-before-save))
+      (setq gofmt-in-progress nil))))
 
 (defun init-go-buffer-settings ()
   ;; I have Emacs configured to save when switching buffers, so popping up errors when I switch buffers is

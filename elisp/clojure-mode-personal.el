@@ -134,9 +134,10 @@ but doesn't treat single semicolons as right-hand-side comments."
  (when (and cljfmt-accessible
             (eq major-mode 'clojure-mode)
             (not cljfmt-in-progress))
-   (setq cljfmt-in-progress 't)
-   (cljfmt)
-   (setq cljfmt-in-progress nil)))
+   (setq cljfmt-in-progress t)
+   (unwind-protect
+       (cljfmt)
+     (setq cljfmt-in-progress nil))))
 
 (setq cljfmt-show-errors nil)
 
