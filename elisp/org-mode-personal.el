@@ -131,6 +131,10 @@
 
 (setq org-timer-display 'both)
 
+;; Put export output in /tmp instead of cluttering the org file's directory:
+(define-advice org-export-output-file-name (:filter-return (f) redirect-to-tmp)
+  (expand-file-name (file-name-nondirectory f) temporary-file-directory))
+
 ;; Minimalistic export settings:
 (setq org-export-with-title nil
       org-export-with-toc nil
