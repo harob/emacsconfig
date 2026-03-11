@@ -146,8 +146,25 @@
       org-export-time-stamp-file nil
       org-html-validation-link nil)
 
-;; Use Gmail's default styling, so I can copy exported HTML into the Compose window with no reformatting:
-(setq org-html-head "<style type=\"text/css\">body {font-size: small; font-family: arial, helvetica, sans-serif; line-height: 1.5;}</style>")
+;; Style HTML export to match Google Docs defaults:
+(setq org-html-head
+      (concat
+       "<style type=\"text/css\">"
+       "body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt;"
+       " line-height: 1.15; color: #000; }"
+       "p, ul, ol, dl { margin-top: 0; margin-bottom: 0; }"
+       "li { margin-top: 0; margin-bottom: 0; }"
+       "h1, h2, h3, h4, h5, h6 { font-weight: normal; }"
+       "h1, .title { font-size: 26pt;"
+       " margin-top: 20pt; margin-bottom: 6pt; }"
+       "h2 { font-size: 16pt;"
+       " margin-top: 18pt; margin-bottom: 6pt; }"
+       "h3 { font-size: 14pt; color: #434343;"
+       " margin-top: 16pt; margin-bottom: 4pt; }"
+       "h4 { font-size: 12pt; color: #666666;"
+       " margin-top: 14pt; margin-bottom: 4pt; }"
+       "a { color: #1155cc; }"
+       "</style>"))
 
 ;; Workaround for global-auto-revert-mode apparently not working for org buffers when it's called upfront on
 ;; startup:
