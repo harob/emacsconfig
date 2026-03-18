@@ -119,7 +119,9 @@
                                ("WAIT" . (:foreground "MediumOrchid3" :weight bold)))
       org-log-done 'time
       org-agenda-files '("~/Dropbox/notes/tasks.org" "~/Dropbox/notes/inbox.org")
-      org-link-search-must-match-exact-headline nil)
+      org-link-search-must-match-exact-headline nil
+      ;; Inline images can be created with `yank-media'
+      org-startup-with-inline-images t)
 
 (custom-set-variables
  '(org-confirm-babel-evaluate nil)
