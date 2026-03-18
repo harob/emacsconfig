@@ -127,13 +127,6 @@
                               (emacs-lisp . t)
                               (R . t))))
 
-(use-package org-download :defer t
-  :custom
-  (org-download-method 'directory)
-  (org-download-image-dir "images")
-  :config
-  (setq org-image-actual-width '(400)))
-
 (setq org-timer-display 'both)
 
 ;; Minimalistic export settings:
