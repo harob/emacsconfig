@@ -163,6 +163,11 @@
        "h4 { font-size: 12pt; color: #666666;"
        " margin-top: 14pt; margin-bottom: 4pt; }"
        "a { color: #1155cc; }"
+       ".todo, .done { font-family: inherit; font-size: 0.75em;"
+       " font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;"
+       " padding: 1px 5px; border-radius: 3px; vertical-align: middle; }"
+       ".todo { color: #9a3b00; background: #fef0e6; }"
+       ".done { color: #1a7a2e; background: #e8f5e9; }"
        "</style>"))
 
 ;; Workaround for global-auto-revert-mode apparently not working for org buffers when it's called upfront on
