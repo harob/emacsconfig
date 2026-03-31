@@ -977,6 +977,8 @@
 ;;;; Go
 
 (use-package go-mode :defer t
+  :hook
+  (((go-mode go-ts-mode) . eglot-ensure))
   :config
   (evil-define-key 'normal go-mode-map "K" #'godef-describe))
 
@@ -1067,6 +1069,13 @@
 
 (setq js-indent-level 2)
 
+(use-package eglot
+  :hook ((js-mode js-ts-mode typescript-mode typescript-ts-mode tsx-ts-mode)
+         . eglot-ensure)
+  :config
+  (add-to-list 'eglot-server-programs
+               '((js-mode js-ts-mode typescript-mode typescript-ts-mode tsx-ts-mode)
+                 . ("typescript-language-server" "--stdio"))))
 
 ;;;; Lua
 
