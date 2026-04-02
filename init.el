@@ -655,6 +655,12 @@
 (use-package corfu
   :init
   (global-corfu-mode)
+  :bind
+  (:map corfu-map
+        ("TAB" . corfu-complete)
+        ("<tab>" . corfu-complete)
+        ("C-n" . corfu-next)
+        ("C-p" . corfu-previous))
   :custom
   (corfu-cycle t)
   ;; (corfu-preselect 'prompt) ;; Preselect the prompt
