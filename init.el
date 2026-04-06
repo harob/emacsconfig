@@ -1137,6 +1137,17 @@
     (kill-new filename)
     (message "Copied buffer file name '%s' to the clipboard." filename)))
 
+(defun copy-liftoff-path-to-clipboard ()
+  "Copy the current buffer file path with $REPOS replacing everything before /liftoff/."
+  (interactive)
+  (when-let* ((filename (if (equal major-mode 'dired-mode)
+                            default-directory
+                          (buffer-file-name)))
+              (match (string-match "/liftoff/" filename)))
+    (let ((result (concat "$REPOS" (substring filename match))))
+      (kill-new result)
+      (message "Copied '%s' to the clipboard." result))))
+
 (defun copy-file-name-to-clipboard ()
   "Copy the current buffer file name to the clipboard."
   (interactive)
