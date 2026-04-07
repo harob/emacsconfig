@@ -1244,6 +1244,8 @@
 
 ;; First run `pip install -U jedi-language-server`
 (use-package eglot
+  :custom
+  (eglot-code-action-indicator "*")
   :config
   (add-to-list 'eglot-server-programs '(python-mode . ("jedi-language-server")))
   ;; (add-to-list 'eglot-stay-out-of 'flymake)
