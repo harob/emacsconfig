@@ -187,9 +187,8 @@
 (advice-add 'windmove-left :before (lambda (&rest _) (util/save-buffer-if-dirty)))
 (advice-add 'windmove-right :before (lambda (&rest _) (util/save-buffer-if-dirty)))
 
-; This is fired whenever the buffer list is updated, which is a reasonably robust way to detect that the
-; window config has changed and the current buffer should be saved.
-(add-hook 'buffer-list-update-hook #'util/save-buffer-if-dirty)
+; Save the previous buffer when switching to a different buffer in any window.
+(add-hook 'window-buffer-change-functions (lambda (_frame) (util/save-buffer-if-dirty)))
 
 (setq create-lockfiles nil)
 (setq eldoc-echo-area-use-multiline-p nil)
