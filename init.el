@@ -840,6 +840,21 @@
     " --include-in-header $HOME/.emacs.d/resources/gmail.css"))
   (markdown-fontify-code-blocks-natively t))
 
+(defun my-markdown-render-and-open ()
+  "Export the current Markdown buffer to HTML in /tmp and open it in a browser."
+  (interactive)
+  (let ((output-file (expand-file-name
+                      (concat (file-name-base (or (buffer-file-name) "markdown"))
+                              ".html")
+                      temporary-file-directory)))
+    (shell-command
+     (concat markdown-command " " (shell-quote-argument (buffer-file-name))
+             " > " (shell-quote-argument output-file)))
+    (browse-url (concat "file://" output-file))))
+
+(evil-leader/set-key-for-mode 'markdown-mode
+  "rr" 'my-markdown-render-and-open)
+
 
 ;;;; CSS
 
