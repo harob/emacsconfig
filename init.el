@@ -403,12 +403,13 @@
 (defcmd split-right-and-focus (split-window-horizontally) (other-window 1) (balance-windows))
 (defcmd split-below-and-focus (split-window-vertically) (other-window 1) (balance-windows))
 (defcmd magit-status-after-save (util/save-buffer-if-dirty) (magit-status))
-(defcmd edit-init-el (find-file "~/.emacs.d/init.el"))
-(defcmd edit-haggler-handler (find-file "~/workspace/src/liftoff/haggler/src/haggler/handler.clj"))
-(defcmd edit-inbox-org (find-file "~/Dropbox/notes/inbox.org"))
-(defcmd edit-scratch-org (find-file "~/Dropbox/notes/scratch.org"))
-(defcmd edit-tasks-org (find-file "~/Dropbox/notes/tasks.org"))
-(defcmd edit-zshrc (find-file "~/dotfiles/.zshrc"))
+(defcmd view-init-el (find-file "~/.emacs.d/init.el"))
+(defcmd view-haggler-handler (find-file "~/workspace/src/liftoff/haggler/src/haggler/handler.clj"))
+(defcmd view-liftoff-repo (let ((default-directory "~/workspace/src/liftoff/")) (change-worktree)))
+(defcmd view-inbox-org (find-file "~/Dropbox/notes/inbox.org"))
+(defcmd view-scratch-org (find-file "~/Dropbox/notes/scratch.org"))
+(defcmd view-tasks-org (find-file "~/Dropbox/notes/tasks.org"))
+(defcmd view-zshrc (find-file "~/dotfiles/.zshrc"))
 
 (evil-leader/set-key
   "SPC" #'execute-extended-command
@@ -426,12 +427,13 @@
   "gs" #'magit-status-after-save
   "gl" #'magit-log-current
   "gw" #'change-worktree
-  "ve" #'edit-init-el
-  "vh" #'edit-haggler-handler
-  "vi" #'edit-inbox-org
-  "vs" #'edit-scratch-org
-  "vt" #'edit-tasks-org
-  "vz" #'edit-zshrc)
+  "ve" #'view-init-el
+  "vh" #'view-haggler-handler
+  "vl" #'view-liftoff-repo
+  "vi" #'view-inbox-org
+  "vs" #'view-scratch-org
+  "vt" #'view-tasks-org
+  "vz" #'view-zshrc)
 
 (my-which-key-with-evil-leader
   "c" "Comment"
