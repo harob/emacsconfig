@@ -355,7 +355,7 @@
   "-" #'split-below-and-focus
   "gs" #'magit-status-after-save
   "gl" #'magit-log-current
-  ;; "v" is a mnemonic prefix for "view X".
+  "gw" #'change-worktree
   "ve" #'edit-init-el
   "vh" #'edit-haggler-handler
   "vi" #'edit-inbox-org
@@ -728,6 +728,17 @@
 (defun affe-orderless-regexp-compiler (input _type _ignorecase)
   (setq input (cdr (orderless-compile input)))
   (cons input (apply-partially #'orderless--highlight input t)))
+
+(defun change-worktree ()
+  "Select a git worktree and run `affe-find' in it."
+  (interactive)
+  (let* ((output (shell-command-to-string "git worktree list --porcelain"))
+         (paths (mapcar (lambda (s) (string-remove-prefix "worktree " s))
+                        (seq-filter (lambda (s) (string-prefix-p "worktree " s))
+                                    (split-string output "\n"))))
+         (selected (completing-read "Worktree: " paths nil t))
+         (default-directory (file-name-as-directory selected)))
+    (affe-find)))
 
 ;; Allows batch find-and-replace with
 ;; `consult-ripgreg' -> `embark-export' -> `wgrep-change-to-wgrep-mode' -> ZZ or ZQ
