@@ -1215,7 +1215,11 @@
 
 (use-package doom-modeline :after (evil-anzu)
   :config
-  (doom-modeline-mode 1))
+  (setq doom-modeline-vcs-max-length 100)
+  (doom-modeline-mode 1)
+  (doom-modeline-def-modeline 'main
+    '(eldoc bar workspace-name window-number modals matches follow buffer-info remote-host buffer-position word-count parrot selection-info)
+    '(compilation objed-state misc-info persp-name battery grip irc mu4e gnus github debug repl lsp minor-modes input-method process vcs check time)))
 
 
 ;;;; Generic insertion of TODO et al
