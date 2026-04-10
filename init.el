@@ -32,6 +32,75 @@
 (add-to-list 'load-path "~/.emacs.d/elisp")
 (require 'emacs-utils)
 
+;; Silence "might not be defined at runtime" byte-compile warnings for
+;; packages that are always loaded before their functions are called.
+(defvar evil-ex-completion-map)
+(declare-function evil-set-undo-system "evil-common")
+(declare-function evil-visual-state-p "evil-states")
+(declare-function evil-visual-range "evil-states")
+(declare-function evil-type "evil-common")
+(declare-function evil-get-command-property "evil-common")
+(declare-function evil-range-p "evil-types")
+(declare-function evil-expand-range "evil-types")
+(declare-function evil-set-type "evil-types")
+(declare-function evil-contract-range "evil-types")
+(declare-function evil-range-beginning "evil-types")
+(declare-function evil-range-end "evil-types")
+(declare-function evil-text-object-make-linewise "evil-types")
+(declare-function evil-visual-make-selection "evil-states")
+(declare-function evil-range "evil-types")
+(declare-function evil-range-union "evil-types")
+(declare-function evil-set-range-properties "evil-types")
+(declare-function evil-set-command-properties "evil-common")
+(declare-function evil-next-visual-line "evil-commands")
+(declare-function evil-previous-visual-line "evil-commands")
+(declare-function evil-jump-backward "evil-jumps")
+(declare-function evil-jump-forward "evil-jumps")
+(declare-function evil-select-an-object "evil-commands")
+(declare-function evil-a-paragraph "evil-commands")
+(declare-function evil-exit-emacs-state "evil-states")
+(declare-function evil-quit "evil-commands")
+(declare-function evil-window-left "evil-commands")
+(declare-function evil-window-down "evil-commands")
+(declare-function evil-window-up "evil-commands")
+(declare-function evil-window-right "evil-commands")
+(declare-function evil-first-non-blank "evil-commands")
+(declare-function evil-end-of-line "evil-commands")
+(declare-function evil-ex "evil-ex")
+(declare-function evil-scroll-line-to-center "evil-commands")
+(declare-function evil-yank "evil-commands")
+(declare-function evil-append-line "evil-commands")
+(declare-function evil-set-initial-state "evil-core")
+(declare-function evil-define-key* "evil-core")
+(declare-function evil-surround-region "evil-surround")
+(declare-function evil-Surround-region "evil-surround")
+(declare-function evilnc-comment-operator "evil-nerd-commenter")
+(declare-function sp-pair "smartparens")
+(declare-function sp-local-pair "smartparens")
+(declare-function sp-forward-sexp "smartparens")
+(declare-function sp-backward-sexp "smartparens")
+(declare-function sp--transpose-objects "smartparens")
+(declare-function orderless-compile "orderless")
+(declare-function orderless--highlight "orderless")
+(declare-function wgrep-abort-changes "wgrep")
+(declare-function wgrep-finish-edit "wgrep")
+(declare-function winner-undo "winner")
+(declare-function jinx--word-valid-p "jinx")
+(declare-function flymake-eldoc-function "flymake")
+(declare-function gptel-api-key-from-auth-source "gptel")
+(declare-function copilot-chat-add-current-buffer "copilot-chat")
+(declare-function reformatter--do-region "reformatter")
+(declare-function reformatter--make-temp-file "reformatter")
+;; From protobuf-mode's use of cc-mode internals:
+(declare-function c-fontify-recorded-types-and-refs "cc-fonts")
+(declare-function c-forward-keyword-clause "cc-engine")
+(declare-function c-beginning-of-decl-1 "cc-engine")
+(declare-function c-determine-limit "cc-engine")
+(declare-function c-literal-start "cc-engine")
+(declare-function c-font-lock-declarators "cc-fonts")
+(declare-function c-forward-sws "cc-engine")
+(declare-function c-skip-comments-and-strings "cc-engine")
+
 ;; Turn off graphical toolbars.
 (if (display-graphic-p) (menu-bar-mode 1) (menu-bar-mode -1))
 (when (and (fboundp 'tool-bar-mode) tool-bar-mode) (tool-bar-mode -1))
@@ -58,6 +127,7 @@
                 (val (match-string 2)))
             (setenv name val)
             (when (string-equal "PATH" name)
+              (defvar eshell-path-env)
               (setq eshell-path-env val
                     exec-path (append (parse-colon-path val) (list exec-directory))))))))))
 (sync-env)
@@ -316,7 +386,7 @@
 ;; Markdown mode, a single item in a bullet list consistutes a paragraph. Instead, I've defined a paragraph to
 ;; be hunks of text separated by newlines. That's typically what I would expect of a paragraph. You can still
 ;; use Evil's paragraph definition using the text object "P" instead of "p".
-(evil-define-text-object evil-paragraph-from-newlines (count &optional beg end type)
+(evil-define-text-object evil-paragraph-from-newlines (count &optional beg end _type)
   "Select a paragraph separated by newlines."
   :type line
   ;; These two vars are set by the current programming mode. Set them to their default text mode values
@@ -467,7 +537,7 @@
       (select-window original-window))))
 
 (defun split-window-sensibly-reverse (&optional window)
-  "Identical to the built-in function `split-window-sensibly', but prefers horizontal splits over vertical splits."
+  "Like `split-window-sensibly', but prefer horizontal splits."
   (let ((window (or window (selected-window))))
     (or (and (window-splittable-p window t)
              ;; Split window horizontally.
@@ -500,8 +570,9 @@
 ;; Note that when Emacs becomes unresponsive (e.g. because I accidentally grepped my home directory), I might
 ;; still need to hold C-g (the Emacs esc/cancel key) to bring it back.
 (defun minibuffer-keyboard-quit ()
-  "Abort recursive edit. In Delete Selection mode, if the mark is active, just deactivate it;
-   then it takes a second \\[keyboard-quit] to abort the minibuffer."
+  "Abort recursive edit.
+In Delete Selection mode, if the mark is active, just deactivate it;
+then it takes a second \\[keyboard-quit] to abort the minibuffer."
   (interactive)
   (if (and delete-selection-mode transient-mark-mode mark-active)
       (setq deactivate-mark  t)
@@ -534,8 +605,8 @@
 (define-key isearch-mode-map (kbd "C-w") #'isearch-del-word)
 
 (defun trim-last-word-of-string (string)
-  "Removes the last word from the given string. Word separators are -, _ and spaces. This is designed to
-  perform the same function as `kill-word', but on a string argument."
+  "Remove the last word from STRING.
+Word separators are -, _ and spaces.  Like `kill-word' for strings."
   (let ((i 0))
     (while (and (< i (length string))
                 (string-match "[-_ ]+" string i))
@@ -544,9 +615,10 @@
       ""
       (substring string 0 (1- i)))))
 
-(defun isearch-del-word (&optional arg)
-  "Delete word from end of search string and search again. If search string is empty, just beep.
-  This function definition is based on `isearch-del-char', from isearch.el."
+(defun isearch-del-word (&optional _arg)
+  "Delete word from end of search string and search again.
+If search string is empty, just beep.
+Based on `isearch-del-char', from isearch.el."
   (interactive "p")
   (if (= 0 (length isearch-string))
     (ding)
@@ -590,6 +662,7 @@
   "A minor-mode for emulating osx keyboard shortcuts."
   :global t
   :lighter " osx"
+  :group 'convenience
   :keymap osx-keys-minor-mode-map)
 
 (osx-keys-minor-mode t)
@@ -700,8 +773,8 @@
   (("M-x" . execute-extended-command)))
 
 (recentf-mode 1)
-(setq recentf-max-saved-items 100) ;; Increase the number of saved items
-(setq recentf-auto-cleanup 'never) ;; Disable automatic cleanup
+(setq-foreign recentf-max-saved-items 100)
+(setq-foreign recentf-auto-cleanup 'never)
 
 (use-package orderless
   :custom
@@ -1014,8 +1087,7 @@
   (evil-define-key 'normal go-mode-map "K" #'godef-describe))
 
 (defun go-save-and-compile-fn (command)
-  "Returns a function for the purpose of binding to a key which saves the current buffer and then
-   runs the given command in the root of the go project."
+  "Return a function that saves the buffer and runs COMMAND."
   (lambda ()
     (interactive)
     (go-save-and-compile command)))
@@ -1049,7 +1121,7 @@
 ;; goimports needs to be on your path. See https://godoc.org/code.google.com/p/go.tools/cmd/goimports
 (setq gofmt-command "goimports")
 
-(setq gofmt-in-progress nil)
+(defvar gofmt-in-progress nil)
 
 (defun gofmt-before-save-ignoring-errors ()
   "Don't pop up syntax errors in a new window when running gofmt-before-save."
@@ -1059,7 +1131,7 @@
   (unless gofmt-in-progress
     (setq gofmt-in-progress t)
     (unwind-protect
-        (cl-letf (((symbol-function #'gofmt--process-errors) (lambda (&rest args) t)))
+        (cl-letf (((symbol-function #'gofmt--process-errors) (lambda (&rest _args) t)))
           (gofmt-before-save))
       (setq gofmt-in-progress nil))))
 
@@ -1074,7 +1146,7 @@
 (add-hook 'go-mode-hook #'init-go-buffer-settings)
 
 (defun go-package-of-current-buffer ()
-  "Returns the go package name defined in the current buffer. Returns nil if no package has been defined."
+  "Return the go package name defined in the current buffer."
   (let ((file-contents (buffer-string)))
     (when (string-match "^package \\(.+\\)" file-contents)
       (match-string 1 file-contents))))
@@ -1098,7 +1170,7 @@
 
 ;;;; Javascript
 
-(setq js-indent-level 2)
+(setq-foreign js-indent-level 2)
 
 (use-package eglot
   :hook ((js-mode js-ts-mode typescript-mode typescript-ts-mode tsx-ts-mode)
@@ -1163,7 +1235,7 @@
     (message "Copied buffer file name '%s' to the clipboard." filename)))
 
 (defun copy-liftoff-path-to-clipboard ()
-  "Copy the current buffer file path with $REPOS replacing everything before /liftoff/."
+  "Copy the buffer file path with $REPOS prefix."
   (interactive)
   (when-let* ((filename (if (equal major-mode 'dired-mode)
                             default-directory
@@ -1299,20 +1371,23 @@
             ;; Show all eldoc feedback.
             (setq eldoc-documentation-strategy #'eldoc-documentation-compose)))
 
-(use-package reformatter :defer t
-  :hook
-  (python-mode . ruff-format-on-save-mode)
-  (python-ts-mode . ruff-format-on-save-mode)
-  :config
-  (reformatter-define ruff-format
-    :program "ruff"
-    :args `("format" "--stdin-filename" ,buffer-file-name "-")))
+(use-package reformatter)
+
+(reformatter-define ruff-format
+  :program "ruff"
+  :args `("format" "--stdin-filename" ,buffer-file-name "-")
+  :group 'reformatter)
+
+(add-hook 'python-mode-hook #'ruff-format-on-save-mode)
+(add-hook 'python-ts-mode-hook #'ruff-format-on-save-mode)
 
 (add-hook 'python-mode-hook (lambda () (set-fill-column 88)))
 
 (defun my-patch-python-pytest-executable ()
   "My work git repo has many projects inside it, so pytest needs to know to use
    the nested project rather than the parent repo as its working directory."
+  (defvar python-pytest-executable)
+  (defvar project-compilation-dir)
   (when-let* ((dir (locate-dominating-file default-directory "build.toml")))
     (setq python-pytest-executable (concat "cd " (shell-quote-argument dir) " && kirin test")
           project-compilation-dir dir)))

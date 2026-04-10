@@ -1,7 +1,7 @@
 ;;; ox-md-personal.el --- Personal ox-md customizations -*- lexical-binding: t; -*-
 (require 'ox-md)
 
-(defun org-md-separate-elements (tree backend info)
+(defun org-md-separate-elements (tree _backend info)
   "Fix blank lines between elements.
 
 TREE is the parse tree being exported.  BACKEND is the export

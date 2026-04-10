@@ -5,13 +5,18 @@
 
 (require 'lisp-helpers-personal)
 
+(defmacro setq-foreign (var val)
+  "Set VAR to VAL, declaring it first to silence byte-compile warnings.
+Use for variables defined by other packages."
+  `(progn (defvar ,var) (setq ,var ,val)))
+
 (defmacro defcmd (name &rest body)
   "Define an interactive command NAME with BODY. Useful for one-line definitions."
   (declare (indent defun))
   `(defun ,name () (interactive) ,@body))
 
 (defun util/define-keys (keymap &rest key-and-fn-pairs)
-  "Like define-key, but takes a variable number of arguments -- two per key binding pair."
+  "Like define-key, but takes a variable number of arguments."
   (dolist (pair (partition key-and-fn-pairs 2))
     (define-key keymap (cl-first pair) (cl-second pair))))
 
@@ -27,8 +32,7 @@
     (apply fn args)))
 
 (defun util/preserve-selected-window (f)
-  "Runs the given function and then restores focus to the original window. Useful when you want to invoke
-   a function (like showing documentation) but don't want to keep editing your current buffer."
+  "Run F and then restore focus to the original window."
   (let ((original-window (selected-window)))
     (funcall f)
     (select-window original-window)))

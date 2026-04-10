@@ -129,6 +129,7 @@
                               (emacs-lisp . t)
                               (R . t))))
 
+(defvar org-timer-display)
 (setq org-timer-display 'both)
 
 ;; Put export output in /tmp instead of cluttering the org file's directory:

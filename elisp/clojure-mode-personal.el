@@ -6,6 +6,23 @@
 ;; https://github.com/clojure-emacs/cider
 ;; http://clojure-doc.org/articles/tutorials/emacs.html
 
+(defvar clojure-mode-syntax-table)
+(defvar clojure-mode-map)
+(defvar cider-buffer-ns)
+(defvar company-idle-delay)
+(defvar company-active-map)
+(defvar cljfmt-show-errors)
+(declare-function evil-define-key "evil-core")
+(declare-function util/preserve-selected-window "emacs-utils")
+(declare-function current-sexp "lisp-helpers-personal")
+(declare-function cider-current-ns "cider-client")
+(declare-function cider-current-repl "cider-connection")
+(declare-function cider-repl-set-ns "cider-repl")
+(declare-function cider-repl-return "cider-repl")
+(declare-function put-clojure-indent "clojure-mode")
+(declare-function company-mode "company")
+(declare-function cljfmt "cljfmt")
+
 (defun setup-clojure-buffer ()
   ;; Count hyphens, etc. as word characters in lisps
   (modify-syntax-entry ?- "w" clojure-mode-syntax-table)
@@ -25,6 +42,7 @@
     (kbd "M-l") 'shift-sexp-forward))
 
 ;; Hide the uninteresting nrepl-connection and nrepl-server buffers from the buffer list.
+(defvar nrepl-hide-special-buffers)
 (setq nrepl-hide-special-buffers t)
 
 ;; From http://timothypratley.blogspot.com/2015/07/seven-specialty-emacs-settings-with-big.html
@@ -75,11 +93,11 @@
      (url-of-form 1) (when-let* 1)                                     ; Personal
      ))
 
-(defun lisp-indent-line-single-semicolon-fix (&optional whole-exp)
+(defun lisp-indent-line-single-semicolon-fix (&optional _whole-exp)
   "Identical to the built-in function lisp-indent-line,
 but doesn't treat single semicolons as right-hand-side comments."
   (interactive "P")
-  (let ((indent (calculate-lisp-indent)) shift-amt end
+  (let ((indent (calculate-lisp-indent)) shift-amt
         (pos (- (point-max) (point)))
         (beg (progn (beginning-of-line) (point))))
     (skip-chars-forward " \t")
@@ -128,7 +146,7 @@ but doesn't treat single semicolons as right-hand-side comments."
 
 ;; `cljfmt-before-save` triggers this save-hook for some reason, so we lock on clj-in-progress to to protect
 ;; from infinite recurision:
-(setq cljfmt-in-progress nil)
+(defvar cljfmt-in-progress nil)
 (defun cljfmt-before-save-mutually-exclusive ()
  (interactive)
  (when (and cljfmt-accessible

@@ -11,7 +11,6 @@
          (symbol-name checkbox)) ""))
   (checkbox (concat (org-html-checkbox checkbox info)
         (and checkbox " ")))
-  (br (org-html-close-tag "br" nil info))
   (extra-newline (if (and (org-string-nw-p contents) headline) "\n" "")))
     (concat
      (pcase type

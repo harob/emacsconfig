@@ -8,8 +8,7 @@
 (require 'cl-lib)
 
 (defun when-compile-successful (f)
-  "Saves and loads the current buffer, and compiles it. Runs the given function if there are no compile
-  errors."
+  "Save, load, and compile the buffer.  Run F if no errors."
   (save-buffer)
   (cider-load-buffer)
   (sleep-for 0.1) ; cider-load-current-buffer is asynchronous, so we must work around that.
@@ -27,7 +26,7 @@
       (match-string 1 form))))
 
 (defun cider-test/buffer-has-compile-errors? ()
-  "Returns true if the current buffer has been evaled previously and has a compile error."
+  "Return non-nil if the current buffer has a compile error."
   (interactive)
   ;; cider doesn't expose compile errors directly. `cider-highlight-compilation-errors` will set an overlay on
   ;; the buffer if there is a compile error. This fn checks for that overlay.
@@ -36,14 +35,14 @@
     (> (length cider-notes) 0)))
 
 (defun cider-test/run-tests-in-ns ()
-  "Saves and evals the buffer, and then runs any clojure.test tests defined in the current namespace."
+  "Save, eval, and run clojure.test tests in the current ns."
   (interactive)
   (save-buffer)
   (when-compile-successful
    (lambda () (cider-interactive-eval "(clojure.test/run-tests)"))))
 
 (defun cider-test/run-test-at-point ()
-  "Runs the clojure.test under the cursor by invoking the function defined by the test in the cider repl."
+  "Run the clojure.test at point in the CIDER REPL."
   (interactive)
   ;; Note that prior to running the test, we eval the test's definition in case we've edited it source since
   ;; our last eval. We use cider-load-current-buffer instead of cider-eval-defun-at-point for this because
