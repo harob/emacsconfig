@@ -411,13 +411,21 @@
 (defcmd view-tasks-org (find-file "~/Dropbox/notes/tasks.org"))
 (defcmd view-zshrc (find-file "~/dotfiles/.zshrc"))
 
+(defun consult-ripgrep-with-selection ()
+  "Run `consult-ripgrep', pre-filling with the visual selection if active."
+  (interactive)
+  (let ((initial (when (use-region-p)
+                   (buffer-substring-no-properties (region-beginning) (region-end)))))
+    (deactivate-mark)
+    (consult-ripgrep nil initial)))
+
 (evil-leader/set-key
   "SPC" #'execute-extended-command
   "h" #'help
   ";" #'eval-expression
   "t" #'affe-find
   "b" #'consult-buffer ; Includes all buffers and recent files by default. Type p SPC to narrow to just the current project
-  "a" #'consult-ripgrep
+  "a" #'consult-ripgrep-with-selection
   "/" #'consult-line
   "s" #'jinx-correct
   "V" #'consult-yank-from-kill-ring
