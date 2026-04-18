@@ -87,8 +87,6 @@
 (declare-function winner-undo "winner")
 (declare-function jinx--word-valid-p "jinx")
 (declare-function flymake-eldoc-function "flymake")
-(declare-function gptel-api-key-from-auth-source "gptel")
-(declare-function copilot-chat-add-current-buffer "copilot-chat")
 (declare-function reformatter--do-region "reformatter")
 (declare-function reformatter--make-temp-file "reformatter")
 ;; From protobuf-mode's use of cc-mode internals:
@@ -450,8 +448,7 @@
   "i" "Insert"
   "r" "Render"
   "v" "View"
-  "w" "Window"
-  "C" "Copilot chat")
+  "w" "Window")
 
 ;; Enable the typical Bash/readline keybindings when in insert mode.
 (util/define-keys evil-insert-state-map
@@ -951,7 +948,6 @@ Based on `isearch-del-char', from isearch.el."
   (set-face-attribute 'tab-bar-tab-inactive nil :height 1.0))
 
 
-
 ;;;; Diminish - hide or shorten the names of minor modes in your modeline.
 
 ;; To see which minor modes you have loaded and what their modeline strings are run `(message minor-mode-alist)`
@@ -1079,9 +1075,7 @@ Based on `isearch-del-char', from isearch.el."
   "SPC e t" "EvaluateTests")
 
 
-
 ;;;; HTML
-
 
 (defun preview-html ()
   "Pipes the buffer's contents into a script which opens the HTML in a browser."
@@ -1232,6 +1226,7 @@ Based on `isearch-del-char', from isearch.el."
   (add-to-list 'eglot-server-programs
                '((js-mode js-ts-mode typescript-mode typescript-ts-mode tsx-ts-mode)
                  . ("typescript-language-server" "--stdio"))))
+
 
 ;;;; Lua
 
@@ -1391,7 +1386,6 @@ Based on `isearch-del-char', from isearch.el."
   "if" #'insert-fixme)
 
 
-
 ;;;; Python
 
 ;; Configuration inspired by https://www.naiquev.in/understanding-emacs-packages-for-python.html
@@ -1460,59 +1454,6 @@ Based on `isearch-del-char', from isearch.el."
       (let ((command (format "ruff check %s --select I --fix" (shell-quote-argument buffer-file-name))))
         (shell-command command))
     (message "No file is associated with the current buffer.")))
-
-
-;;;; AI
-
-;; To set up gptel, add these lines to ~/.authinfo:
-;; machine api.openai.com login apikey password <openai dev token>
-;; machine api.anthropic.com login apikey password <anthropic API key>
-;;
-;; Main commands: gptel-send, gptel-rewrite, gptel-menu
-(use-package gptel :defer t
-  :custom
-  (gptel-org-branching-context t)
-  (gptel-model 'claude-3-7-sonnet-20250219)
-  :config
-  (setq gptel-backend (gptel-make-anthropic "Claude"
-                        :key (gptel-api-key-from-auth-source "api.anthropic.com")
-                        :stream t)))
-
-(use-package copilot-chat :after (magit) :defer t
-  :config
-  (evil-leader/set-key
-    "CC" #'copilot-chat-transient           ; Show menu
-    "Ca" #'copilot-chat-add-current-buffer  ; Add the current buffer to the Copilot chat list
-    "Cc" #'copilot-chat-display             ; Display the Copilot chat window
-    "Ce" #'copilot-chat-explain             ; Explain the selected region using Copilot chat
-    "Cp" #'copilot-chat-custom-prompt-selection))  ; Send a custom prompt followed by
-                                               ; the selected region to Copilot chat
-
-;; Github Copilot autocomplete support
-;; Run M-x `copilot-install-server' then M-x `copilot-login' first.
-;; Check M-x `copilot-diagnose' if there's an issue.
-;; (use-package editorconfig)
-;; (use-package jsonrpc)
-;; (use-package copilot :after (editorconfig jsonrpc)
-;;   :vc (:url "https://github.com/copilot-emacs/copilot.el"
-;;             :rev :newest
-;;             :branch "main")
-;;   :init
-;;   ;; copilot is broken for me by default because the Github Copilot Server requires
-;;   ;; node 18, but my work repo forces node 16. I'm hacking it by hardcoding the
-;;   ;; path here:
-;;   (setq copilot-node-executable "/opt/homebrew/Cellar/node/23.9.0/bin/node")
-;;   :bind
-;;   (:map copilot-completion-map
-;;         ("A-<tab>" . 'copilot-accept-completion)
-;;         ("A-TAB" . 'copilot-accept-completion)
-;;         ("A-S-<tab>" . 'copilot-accept-completion-by-word)
-;;         ("A-S-TAB" . 'copilot-accept-completion-by-word))
-
-;;   :config
-;;   (add-hook 'prog-mode-hook 'copilot-mode)
-;;   (setq copilot-indent-offset-warning-disable t
-;;         copilot-max-char-warning-disable t))
 
 
 ;;; protobuf
