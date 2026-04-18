@@ -816,12 +816,35 @@ Based on `isearch-del-char', from isearch.el."
   "Select a git worktree and run `affe-find' in it."
   (interactive)
   (let* ((output (shell-command-to-string "git worktree list --porcelain"))
-         (paths (mapcar (lambda (s) (string-remove-prefix "worktree " s))
-                        (seq-filter (lambda (s) (string-prefix-p "worktree " s))
-                                    (split-string output "\n"))))
-         (selected (completing-read "Worktree: " paths nil t))
-         (default-directory (file-name-as-directory selected)))
-    (affe-find)))
+         (lines (split-string output "\n"))
+         (paths nil)
+         (primary t)
+         path branch)
+    (dolist (line lines)
+      (cond
+       ((string-prefix-p "worktree " line)
+        (setq path (string-remove-prefix "worktree " line)))
+       ((string-prefix-p "branch " line)
+        (setq branch (file-name-nondirectory
+                      (string-remove-prefix "branch " line))))
+       ((string-empty-p line)
+        (when path
+          (push (if (and primary branch)
+                    (cons (format "%s (branch: %s)" path branch) path)
+                  (cons path path))
+                paths)
+          (setq primary nil path nil branch nil)))))
+    (when path
+      (push (if (and primary branch)
+                (cons (format "%s (branch: %s)" path branch) path)
+              (cons path path))
+            paths))
+    (let* ((candidates (nreverse paths))
+           (selected (completing-read "Worktree: "
+                                      (mapcar #'car candidates) nil t))
+           (default-directory (file-name-as-directory
+                               (cdr (assoc selected candidates)))))
+      (affe-find))))
 
 ;; Allows batch find-and-replace with
 ;; `consult-ripgreg' -> `embark-export' -> `wgrep-change-to-wgrep-mode' -> ZZ or ZQ
