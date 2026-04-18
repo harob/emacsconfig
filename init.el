@@ -894,18 +894,38 @@ Based on `isearch-del-char', from isearch.el."
 
 ;;;; tab-bar-mode (tabs on the window).
 
+(defun my-tab-bar-tab-name ()
+  "Return a tab name with the git branch prefix and buffer name."
+  (let* ((buf (window-buffer (minibuffer-selected-window)))
+         (branch (with-current-buffer buf
+                   (when-let* ((_ (locate-dominating-file default-directory ".git"))
+                               (raw (vc-git--run-command-string
+                                     nil "rev-parse" "--abbrev-ref" "HEAD")))
+                     (string-trim raw)))))
+    (concat (when (and branch (not (string-empty-p branch))
+                       (not (string= branch "master")))
+              (concat (if (string-match "\\.[^.]+\\'" branch)
+                          (substring branch (1+ (match-beginning 0)))
+                        branch)
+                      ": "))
+            (buffer-name buf))))
+
 (use-package tab-bar :ensure nil
   :custom
   (tab-bar-select-tab-modifiers '(meta))
   (tab-bar-tab-hints t)
   (tab-bar-show 1) ; hide bar if <= 1 tabs open
   (tab-bar-close-button-show nil)
+  (tab-bar-tab-name-function #'my-tab-bar-tab-name)
   :bind (:map evil-normal-state-map
               ("M-t" . #'tab-new)
               ("M-}" . #'tab-next)
               ("M-{" . #'tab-previous))
   :config
-  (tab-bar-mode 1))
+  (tab-bar-mode 1)
+  (set-face-attribute 'tab-bar nil :height 1.0)
+  (set-face-attribute 'tab-bar-tab nil :height 1.0)
+  (set-face-attribute 'tab-bar-tab-inactive nil :height 1.0))
 
 
 
