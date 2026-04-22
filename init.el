@@ -84,7 +84,6 @@
 (declare-function orderless--highlight "orderless")
 (declare-function wgrep-abort-changes "wgrep")
 (declare-function wgrep-finish-edit "wgrep")
-(declare-function winner-undo "winner")
 (declare-function jinx--word-valid-p "jinx")
 (declare-function flymake-eldoc-function "flymake")
 (declare-function reformatter--do-region "reformatter")
@@ -243,9 +242,9 @@
 ;; when we want to restart the nrepl process.
 (setq kill-buffer-query-functions (remq #'process-kill-buffer-query-function kill-buffer-query-functions))
 
-;; The poorly-named winner mode saves the history of your window splits, so you can undo and redo changes to
-;; your window configuration with `winner-undo'
-(winner-mode t)
+;; Track window configuration history per tab, so you can undo and redo changes with
+;; `tab-bar-history-back'. Supersedes winner-mode with per-tab scoping.
+(tab-bar-history-mode t)
 
 ;; Save buffers whenever they lose focus.
 ;; This obviates the need to hit the Save key thousands of times a day. Inspired by http://goo.gl/2z0g5O
@@ -568,9 +567,9 @@
 ;; Evil's window map is the set of keys which control window functions. All of its keys are prefixed with
 ;; <C-w>.
 ;; Undo the last change you made to your window configuration. Very handy as a method for temporarily
-;; maximizing a window: first invoke delete-other-windows, and then invoke winner-undo..
+;; maximizing a window: first invoke delete-other-windows, and then invoke tab-bar-history-back.
 (define-key evil-window-map (kbd "m") #'delete-other-windows)
-(define-key evil-window-map (kbd "b") #'winner-undo)
+(define-key evil-window-map (kbd "b") #'tab-bar-history-back)
 (define-key evil-window-map (kbd "q") #'dismiss-ephemeral-windows)
 
 ;; Make it so Esc means quit, no matter the context.
