@@ -914,21 +914,106 @@ Based on `isearch-del-char', from isearch.el."
 
 ;;;; tab-bar-mode (tabs on the window).
 
+(defface my-tab-bar-group-face
+  '((t :inherit tab-bar :weight bold))
+  "Face for inactive tab group headers in the tab bar.")
+
+(defface my-tab-bar-group-current-face
+  '((t :inherit tab-bar-tab :weight bold))
+  "Face for the current tab group header in the tab bar.")
+
 (defun my-tab-bar-tab-name ()
-  "Return a tab name with the git branch prefix and buffer name."
-  (let* ((buf (window-buffer (minibuffer-selected-window)))
-         (branch (with-current-buffer buf
-                   (when-let* ((_ (locate-dominating-file default-directory ".git"))
-                               (raw (vc-git--run-command-string
-                                     nil "rev-parse" "--abbrev-ref" "HEAD")))
-                     (string-trim raw)))))
-    (concat (when (and branch (not (string-empty-p branch))
-                       (not (string= branch "master")))
-              (concat (if (string-match "\\.[^.]+\\'" branch)
-                          (substring branch (1+ (match-beginning 0)))
-                        branch)
-                      ": "))
-            (buffer-name buf))))
+  "Return the buffer name of the top-left window."
+  (buffer-name (window-buffer (frame-first-window))))
+
+(defun my-tab-bar-repo-name ()
+  "Return \"<repo>:<branch>\" for the top-left window's git repo.
+Returns \"(no repo)\" for buffers not in a git repository."
+  (let* ((buf (window-buffer (frame-first-window)))
+         (dir (buffer-local-value 'default-directory buf)))
+    (if (file-remote-p dir)
+        "(no repo)"
+      (let ((git-dir (locate-dominating-file dir ".git")))
+        (if git-dir
+            (let* ((repo (file-name-nondirectory (directory-file-name git-dir)))
+                   (branch (with-current-buffer buf
+                             (string-trim
+                              (or (vc-git--run-command-string
+                                   nil "rev-parse" "--abbrev-ref" "HEAD")
+                                  "")))))
+              (if (string-empty-p branch)
+                  repo
+                (format "%s:%s" repo
+                        (if (string-match "\\.[^.]+\\'" branch)
+                            (substring branch (1+ (match-beginning 0)))
+                          branch))))
+          "(no repo)")))))
+
+(defun my-tab-bar-sort-tabs-by-group ()
+  "Sort tabs so tabs in the same group are adjacent.
+Preserves relative order of tabs within the same group."
+  (let* ((tabs (funcall tab-bar-tabs-function))
+         (i 0)
+         (indexed (mapcar (lambda (tab)
+                            (prog1 (cons i tab) (setq i (1+ i))))
+                          tabs))
+         ;; Map each group to the lowest original index of any of its tabs.
+         (group-order (let ((tbl (make-hash-table :test #'equal)))
+                        (dolist (pair indexed tbl)
+                          (let* ((g (or (alist-get 'group (cdr pair)) "(no repo)"))
+                                 (cur (gethash g tbl)))
+                            (when (or (null cur) (< (car pair) cur))
+                              (puthash g (car pair) tbl))))))
+         (sorted (sort indexed
+                       (lambda (a b)
+                         (let ((ga (or (alist-get 'group (cdr a)) "(no repo)"))
+                               (gb (or (alist-get 'group (cdr b)) "(no repo)")))
+                           (if (string= ga gb)
+                               (< (car a) (car b))
+                             (< (gethash ga group-order)
+                                (gethash gb group-order))))))))
+    (set-frame-parameter nil 'tabs (mapcar #'cdr sorted))))
+
+(defun my-tab-bar-update-current-tab-group ()
+  "Update the current tab's group based on the top-left window's repo."
+  (when tab-bar-mode
+    (let* ((group (my-tab-bar-repo-name))
+           (tabs (funcall tab-bar-tabs-function))
+           (current (tab-bar--current-tab-find tabs)))
+      (when current
+        (let ((old-group (alist-get 'group current)))
+          (unless (equal old-group group)
+            (let ((cell (assq 'group current)))
+              (if cell
+                  (setcdr cell group)
+                (nconc current (list (cons 'group group)))))
+            (my-tab-bar-sort-tabs-by-group)))))))
+
+(defun my-tab-bar-format-grouped-tabs ()
+  "Format tab bar tabs grouped by repo with group headers."
+  (let* ((tabs (funcall tab-bar-tabs-function))
+         (current-group (alist-get 'group (tab-bar--current-tab-find tabs)))
+         (i 0)
+         (last-group nil)
+         (result nil))
+    (dolist (tab tabs)
+      (setq i (1+ i))
+      (let ((group (or (alist-get 'group tab) "(no repo)")))
+        (unless (equal group last-group)
+          (push `(,(intern (format "group-%s"
+                                   (replace-regexp-in-string
+                                    "[^a-zA-Z0-9-]" "_" group)))
+                  menu-item
+                  ,(propertize (format " [%s]" group)
+                               'face (if (equal group current-group)
+                                         'my-tab-bar-group-current-face
+                                       'my-tab-bar-group-face))
+                  ignore)
+                result)
+          (setq last-group group)))
+      (dolist (item (tab-bar--format-tab tab i))
+        (push item result)))
+    (nreverse result)))
 
 (use-package tab-bar :ensure nil
   :custom
@@ -936,13 +1021,21 @@ Based on `isearch-del-char', from isearch.el."
   (tab-bar-tab-hints t)
   (tab-bar-show 1) ; hide bar if <= 1 tabs open
   (tab-bar-close-button-show nil)
+  (tab-bar-auto-width nil)
   (tab-bar-tab-name-function #'my-tab-bar-tab-name)
+  (tab-bar-format '(tab-bar-format-history
+                    my-tab-bar-format-grouped-tabs
+                    tab-bar-separator
+                    tab-bar-format-add-tab))
   :bind (:map evil-normal-state-map
               ("M-t" . #'tab-new)
               ("M-}" . #'tab-next)
               ("M-{" . #'tab-previous))
   :config
   (tab-bar-mode 1)
+  (add-hook 'window-configuration-change-hook #'my-tab-bar-update-current-tab-group)
+  (add-hook 'window-buffer-change-functions
+            (lambda (_frame) (my-tab-bar-update-current-tab-group)))
   (set-face-attribute 'tab-bar nil :height 1.0)
   (set-face-attribute 'tab-bar-tab nil :height 1.0)
   (set-face-attribute 'tab-bar-tab-inactive nil :height 1.0))
