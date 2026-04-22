@@ -989,6 +989,18 @@ Preserves relative order of tabs within the same group."
                 (nconc current (list (cons 'group group)))))
             (my-tab-bar-sort-tabs-by-group)))))))
 
+(defvar my-tab-bar--group-update-timer nil
+  "Idle timer for debounced tab group updates.")
+
+(defun my-tab-bar-schedule-group-update (&rest _)
+  "Schedule a tab group update after a brief idle delay.
+Debounces rapid changes (e.g. consult previews) so the group only
+updates once the user settles on a buffer."
+  (when my-tab-bar--group-update-timer
+    (cancel-timer my-tab-bar--group-update-timer))
+  (setq my-tab-bar--group-update-timer
+        (run-with-idle-timer 0.2 nil #'my-tab-bar-update-current-tab-group)))
+
 (defun my-tab-bar-format-grouped-tabs ()
   "Format tab bar tabs grouped by repo with group headers."
   (let* ((tabs (funcall tab-bar-tabs-function))
@@ -1033,9 +1045,8 @@ Preserves relative order of tabs within the same group."
               ("M-{" . #'tab-previous))
   :config
   (tab-bar-mode 1)
-  (add-hook 'window-configuration-change-hook #'my-tab-bar-update-current-tab-group)
-  (add-hook 'window-buffer-change-functions
-            (lambda (_frame) (my-tab-bar-update-current-tab-group)))
+  (add-hook 'window-configuration-change-hook #'my-tab-bar-schedule-group-update)
+  (add-hook 'window-buffer-change-functions #'my-tab-bar-schedule-group-update)
   (set-face-attribute 'tab-bar nil :height 1.0)
   (set-face-attribute 'tab-bar-tab nil :height 1.0)
   (set-face-attribute 'tab-bar-tab-inactive nil :height 1.0))
