@@ -423,6 +423,7 @@
   ";" #'eval-expression
   "t" #'affe-find
   "b" #'consult-buffer ; Includes all buffers and recent files by default. Type p SPC to narrow to just the current project
+  "B" #'consult-project-buffer
   "a" #'consult-ripgrep-with-selection
   "/" #'consult-line
   "s" #'jinx-correct
