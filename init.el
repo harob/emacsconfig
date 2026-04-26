@@ -936,6 +936,7 @@ Returns \"(no repo)\" for buffers not in a git repository."
       (let ((git-dir (locate-dominating-file dir ".git")))
         (if git-dir
             (let* ((repo (file-name-nondirectory (directory-file-name git-dir)))
+                   (repo (if (string= repo "liftoff") "l" repo))
                    (branch (with-current-buffer buf
                              (string-trim
                               (or (vc-git--run-command-string
