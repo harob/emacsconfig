@@ -1076,7 +1076,11 @@ updates once the user settles on a buffer."
     ;; Use Gmail's default styling, so I can copy exported HTML into the Compose
     ;; window with no reformatting:
     " --include-in-header $HOME/.emacs.d/resources/gmail.css"))
-  (markdown-fontify-code-blocks-natively t))
+  (markdown-fontify-code-blocks-natively t)
+  ;; Defer fontification so typing isn't blocked by markdown-mode's slow
+  ;; `markdown-match-italic' (which re-scans surrounding text on every change
+  ;; to verify candidates aren't inside inline-code spans).
+  :hook (markdown-mode . (lambda () (setq-local jit-lock-defer-time 0.05))))
 
 (defun my-markdown-render-and-open ()
   "Export the current Markdown buffer to HTML in /tmp and open it in a browser."
