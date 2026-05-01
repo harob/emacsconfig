@@ -7,6 +7,7 @@
 (require 'org)
 (require 'ox-html-personal)
 (require 'ox-md-personal)
+(require 'org-fold-count)
 
 (define-minor-mode evil-org-mode
   "Buffer local minor mode for evil-org"
@@ -122,6 +123,8 @@
       org-link-search-must-match-exact-headline nil
       ;; Inline images can be created with `yank-media'
       org-startup-with-inline-images t)
+
+(add-hook 'org-mode-hook #'my-org-fold-count-mode)
 
 (custom-set-variables
  '(org-confirm-babel-evaluate nil)
