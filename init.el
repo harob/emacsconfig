@@ -1314,6 +1314,13 @@ updates once the user settles on a buffer."
 ;; and looking at the times in *Messages*. Then disable the slowest sections
 ;; by filling in /path/to/repo/.dir-locals.el similarly to
 ;; ./.dir-locals.el.example_for_big_repos (or just directly symlink it).
+
+;; Magit's precompiled magit-base.elc aliases `magit--any' to `member-if',
+;; which is only built-in from Emacs 31.1. Provide it for older Emacsen.
+(unless (fboundp 'member-if)
+  (require 'cl-lib)
+  (defalias 'member-if 'cl-member-if))
+
 (use-package magit :defer t
   :config
   (setq magit-commit-show-diff nil)
