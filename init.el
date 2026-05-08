@@ -1093,7 +1093,17 @@ updates once the user settles on a buffer."
   ;; Defer fontification so typing isn't blocked by markdown-mode's slow
   ;; `markdown-match-italic' (which re-scans surrounding text on every change
   ;; to verify candidates aren't inside inline-code spans).
-  :hook (markdown-mode . (lambda () (setq-local jit-lock-defer-time 0.05))))
+  ;;
+  ;; Setting `jit-lock-defer-time' in any buffer creates a *global* idle
+  ;; timer that, once present, makes `jit-lock-function' defer fontification
+  ;; in every buffer where `jit-lock-defer-time' is nil (because the
+  ;; `(not (eq nil 0))' branch of its defer test is t). Bumping the default
+  ;; to 0 keeps that test off in those buffers — they fontify immediately
+  ;; unless input is pending — so e.g. text pulled in by auto-revert in an
+  ;; org buffer is highlighted on the next redisplay rather than sitting
+  ;; un-fontified until a scroll forces it.
+  :hook (markdown-mode . (lambda () (setq-local jit-lock-defer-time 0.05)))
+  :init (setq-default jit-lock-defer-time 0))
 
 (defun my-markdown-render-and-open ()
   "Export the current Markdown buffer to HTML in /tmp and open it in a browser."
