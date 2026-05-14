@@ -1361,7 +1361,13 @@ updates once the user settles on a buffer."
 (use-package eglot
   :hook ((js-mode js-ts-mode typescript-mode typescript-ts-mode tsx-ts-mode)
          . eglot-ensure)
+  :custom
+  ;; Default jsonrpc timeout is 10s, which is too short for gopls in large Go
+  ;; monorepos — definition lookups and imenu refreshes time out while gopls
+  ;; is still indexing.
+  (eglot-connect-timeout 60)
   :config
+  (setq jsonrpc-default-request-timeout 30)
   (add-to-list 'eglot-server-programs
                '((js-mode js-ts-mode typescript-mode typescript-ts-mode tsx-ts-mode)
                  . ("typescript-language-server" "--stdio"))))
