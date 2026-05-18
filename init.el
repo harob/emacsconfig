@@ -1077,6 +1077,27 @@ updates once the user settles on a buffer."
   (diminish 'osx-keys-minor-mode ""))
 
 
+;;;; Lintoff format-on-save
+
+(use-package reformatter)
+
+;; Run the same formatters as liftoff/tools/lintoff on save (Go and Python
+;; everywhere; other tools gated to files under $REPOS/liftoff). The module
+;; lives in the liftoff repo at exp/harry/emacs/. While the feature branch is
+;; unmerged it's only present in the worktree, so check both candidate paths.
+(let* ((repos (getenv "REPOS"))
+       (candidates (when repos
+                     (list (expand-file-name "liftoff/exp/harry/emacs" repos)
+                           (expand-file-name
+                            "worktrees/harry.exp.lintoff-for-emacs/liftoff/exp/harry/emacs"
+                            repos))))
+       (dir (cl-find-if #'file-directory-p candidates)))
+  (when dir
+    (add-to-list 'load-path dir)
+    (require 'lintoff-format)
+    (lintoff-format-setup)))
+
+
 ;;;; Markdown
 
 (use-package markdown-mode
@@ -1296,28 +1317,10 @@ updates once the user settles on a buffer."
   ;; "ai" 'go-import-add
   )
 
-;; goimports formats your code and also adds or removes imports as needed.
-;; goimports needs to be on your path. See https://godoc.org/code.google.com/p/go.tools/cmd/goimports
-(setq gofmt-command "goimports")
-
-(defvar gofmt-in-progress nil)
-
-(defun gofmt-before-save-ignoring-errors ()
-  "Don't pop up syntax errors in a new window when running gofmt-before-save."
-  (interactive)
-  ;; Note that `gofmt-before-save' triggers this save-hook for some reason, so we lock on gofmt-in-progress to
-  ;; to protect from infinite recurision.
-  (unless gofmt-in-progress
-    (setq gofmt-in-progress t)
-    (unwind-protect
-        (cl-letf (((symbol-function #'gofmt--process-errors) (lambda (&rest _args) t)))
-          (gofmt-before-save))
-      (setq gofmt-in-progress nil))))
+;; Go formatting on save (goimports + gofumpt) is handled by lintoff-format
+;; below, matching liftoff/tools/lintoff/lintfix.
 
 (defun init-go-buffer-settings ()
-  ;; I have Emacs configured to save when switching buffers, so popping up errors when I switch buffers is
-  ;; really jarring.
-  (add-hook 'before-save-hook #'gofmt-before-save-ignoring-errors nil t)
   ;; Make it so comments are line-wrapped properly when filling. It's an oversight that this is missing from
   ;; go-mode.
   (setq-local fill-prefix "// "))
@@ -1562,16 +1565,6 @@ updates once the user settles on a buffer."
                         (remove #'flymake-eldoc-function eldoc-documentation-functions)))
             ;; Show all eldoc feedback.
             (setq eldoc-documentation-strategy #'eldoc-documentation-compose)))
-
-(use-package reformatter)
-
-(reformatter-define ruff-format
-  :program "ruff"
-  :args `("format" "--stdin-filename" ,buffer-file-name "-")
-  :group 'reformatter)
-
-(add-hook 'python-mode-hook #'ruff-format-on-save-mode)
-(add-hook 'python-ts-mode-hook #'ruff-format-on-save-mode)
 
 (add-hook 'python-mode-hook (lambda () (set-fill-column 88)))
 

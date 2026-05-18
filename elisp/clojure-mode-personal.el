@@ -11,7 +11,6 @@
 (defvar cider-buffer-ns)
 (defvar company-idle-delay)
 (defvar company-active-map)
-(defvar cljfmt-show-errors)
 (declare-function evil-define-key "evil-core")
 (declare-function util/preserve-selected-window "emacs-utils")
 (declare-function current-sexp "lisp-helpers-personal")
@@ -21,7 +20,6 @@
 (declare-function cider-repl-return "cider-repl")
 (declare-function put-clojure-indent "clojure-mode")
 (declare-function company-mode "company")
-(declare-function cljfmt "cljfmt")
 
 (defun setup-clojure-buffer ()
   ;; Count hyphens, etc. as word characters in lisps
@@ -135,36 +133,8 @@ but doesn't treat single semicolons as right-hand-side comments."
      (define-key company-active-map (kbd "<tab>") 'company-complete-common-or-cycle)))
 
 
-;;
-;; cljfmt -- automatic formatting of Clojure code. This configuration is Liftoff-specific.
-;;
-
-(defconst cljfmt-accessible (getenv "REPOS"))
-(if cljfmt-accessible
-  (load "$REPOS/liftoff/exp/emacs/cljfmt.el")
-  (message "REPOS environment variable is not defined. Not loading cljfmt."))
-
-;; `cljfmt-before-save` triggers this save-hook for some reason, so we lock on clj-in-progress to to protect
-;; from infinite recurision:
-(defvar cljfmt-in-progress nil)
-(defun cljfmt-before-save-mutually-exclusive ()
- (interactive)
- (when (and cljfmt-accessible
-            (eq major-mode 'clojure-mode)
-            (not cljfmt-in-progress))
-   (setq cljfmt-in-progress t)
-   (unwind-protect
-       (cljfmt)
-     (setq cljfmt-in-progress nil))))
-
-(setq cljfmt-show-errors nil)
-
-;; TODO(harry) The before-save-hook fires every time cider looks up the docstring for a variable, which is
-;; all the time in normal mode. As as short term fix I'm only running cljfmt when I explicitly save with M-s:
-(add-hook 'before-explicit-save-hook 'cljfmt-before-save-mutually-exclusive nil)
-;; Run this again after save so we see any formatting error messages in the Emacs echo area,
-;; because they get cloberred by Emacs's "Wrote [file]" message.
-(add-hook 'after-explicit-save-hook 'cljfmt-before-save-mutually-exclusive nil)
+;; cljfmt-on-save is wired up in lintoff-format (loaded from init.el),
+;; matching what liftoff/tools/lintoff runs in CI.
 
 (custom-set-variables
   '(cider-clojure-cli-global-options "-A:liftoff:dev:nrepl"))
