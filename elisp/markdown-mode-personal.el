@@ -3,6 +3,7 @@
 (require 'evil)
 (require 'evil-leader)
 (require 'markdown-mode)
+(require 'reformatter)
 
 (use-package markdown-mode
   :custom
@@ -15,6 +16,8 @@
     ;; window with no reformatting:
     " --include-in-header $HOME/.emacs.d/resources/gmail.css"))
   (markdown-fontify-code-blocks-natively t)
+  ;; Match dprint, which re-indents nested list items by 2 on every save.
+  (markdown-list-indent-width 2)
   ;; Defer fontification so typing isn't blocked by markdown-mode's slow
   ;; `markdown-match-italic' (which re-scans surrounding text on every change
   ;; to verify candidates aren't inside inline-code spans).
@@ -133,5 +136,16 @@ Elsewhere (e.g. tables) fall back to `markdown-promote'/`markdown-demote'."
 (evil-define-key 'normal markdown-mode-map
   (kbd "M-H") #'my-markdown-promote-subtree
   (kbd "M-L") #'my-markdown-demote-subtree)
+
+;; Format with dprint on save. Outside projects with their own dprint.json this
+;; uses the global ~/.config/dprint/dprint.jsonc (from ~/dotfiles). Passing the
+;; file's path makes dprint apply a project config's include/exclude rules.
+(reformatter-define dprint-markdown
+  :program "dprint"
+  :args (list "fmt" "--stdin" (or buffer-file-name "md"))
+  :lighter " dprint")
+
+(when (executable-find "dprint")
+  (add-hook 'markdown-mode-hook #'dprint-markdown-on-save-mode))
 
 (provide 'markdown-mode-personal)
