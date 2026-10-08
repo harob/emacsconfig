@@ -38,7 +38,29 @@
   "gu" 'outline-up-heading
   "-" 'org-cycle-list-bullet
   (kbd "TAB") 'org-cycle
+  (kbd "<backtab>") 'my-org-global-cycle
   (kbd "RET") 'org-open-at-point)
+
+(defun my-org-global-cycle ()
+  "Cycle the whole buffer like `org-cycle' does a single subtree.
+Repeated invocations go: top-level headings -> top two levels -> everything.
+In a table, defer to `org-shifttab' (move to previous field)."
+  (interactive)
+  (if (org-at-table-p)
+      (call-interactively #'org-shifttab)
+    (let ((next (if (eq last-command this-command)
+                    (pcase org-cycle-global-status
+                      ('overview 'contents)
+                      ('contents 'all)
+                      (_ 'overview))
+                  'overview)))
+      (pcase next
+        ('overview (org-overview) (org-unlogged-message "OVERVIEW"))
+        ('contents (org-content 2) (org-unlogged-message "CONTENTS (2 levels)"))
+        ('all (org-fold-show-all '(headings blocks))
+              (org-unlogged-message "SHOW ALL")))
+      (setq org-cycle-global-status next)
+      (run-hook-with-args 'org-cycle-hook next))))
 
 (use-package org-mac-link :defer t
   :config
