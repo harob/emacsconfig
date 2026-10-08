@@ -138,6 +138,50 @@ Elsewhere (e.g. tables) fall back to `markdown-promote'/`markdown-demote'."
   (kbd "M-H") #'my-markdown-promote-subtree
   (kbd "M-L") #'my-markdown-demote-subtree)
 
+;; Org-style o/O: on any line of a list item, open a sibling item below the
+;; item (after its nested items) or above it. Elsewhere, open a plain line.
+(defun my-markdown--open-item (above)
+  "Open a new list item as a sibling of the one at point, ABOVE it if non-nil.
+Return nil, doing nothing, if point isn't in a list item."
+  (syntax-propertize (line-end-position))
+  (let ((bounds (and (not (markdown-code-block-at-point-p))
+                     (markdown-cur-list-item-bounds))))
+    (when bounds
+      (let* ((marker (nth 4 bounds))
+             (marker (if (string-match "\\`\\([0-9]+\\)\\(.*\\)" marker)
+                         (concat (number-to-string
+                                  (+ (string-to-number (match-string 1 marker))
+                                     (if above 0 1)))
+                                 (match-string 2 marker))
+                       marker))
+             (item (concat (make-string (nth 2 bounds) ?\s)
+                           marker
+                           (and (nth 5 bounds) "[ ] "))))
+        (if above
+            (progn (goto-char (nth 0 bounds))
+                   (insert item "\n")
+                   (backward-char))
+          (goto-char (nth 1 bounds))
+          (insert "\n" item))
+        (evil-insert-state 1)
+        t))))
+
+(defun my-markdown-open-below ()
+  "Open a list item below the one at point, or a line like `evil-open-below'."
+  (interactive)
+  (unless (my-markdown--open-item nil)
+    (call-interactively #'evil-open-below)))
+
+(defun my-markdown-open-above ()
+  "Open a list item above the one at point, or a line like `evil-open-above'."
+  (interactive)
+  (unless (my-markdown--open-item t)
+    (call-interactively #'evil-open-above)))
+
+(evil-define-key 'normal markdown-mode-map
+  "o" #'my-markdown-open-below
+  "O" #'my-markdown-open-above)
+
 ;; Org-style folding. TAB on a heading or list item cycles it through
 ;; FOLDED -> CHILDREN -> SUBTREE, and S-TAB cycles the whole buffer through
 ;; OVERVIEW -> CONTENTS -> SHOW ALL. Headings and list items form one tree: a
