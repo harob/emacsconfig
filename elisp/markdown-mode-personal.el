@@ -31,7 +31,8 @@
   ;; unless input is pending — so e.g. text pulled in by auto-revert in an
   ;; org buffer is highlighted on the next redisplay rather than sitting
   ;; un-fontified until a scroll forces it.
-  :hook (markdown-mode . (lambda () (setq-local jit-lock-defer-time 0.05)))
+  :hook ((markdown-mode . (lambda () (setq-local jit-lock-defer-time 0.05)))
+         (markdown-mode . (lambda () (display-line-numbers-mode -1))))
   :init (setq-default jit-lock-defer-time 0))
 
 (defun my-markdown-render-and-open ()
