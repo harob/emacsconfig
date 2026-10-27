@@ -1441,12 +1441,6 @@ updates once the user settles on a buffer."
 
 (use-package browse-at-remote :defer t)
 
-;; Treemacs file browser pane -- start with M-x treemacs-projectile
-(use-package treemacs :defer t)
-(use-package treemacs-evil :after (treemacs evil))
-;; (use-package treemacs-projectile :after (treemacs projectile) :defer t)
-
-
 ;; Custom modeline -- run M-x nerd-icons-install-fonts to install the fonts
 (use-package evil-anzu
   :config
