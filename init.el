@@ -807,7 +807,30 @@ Based on `isearch-del-char', from isearch.el."
   :bind
   (;; Pops up a giant menu of options. Press C-h to search within it
    ("C-." . embark-act)
-   ("M-." . embark-dwim)))
+   ("M-." . embark-dwim))
+  :config
+  (keymap-set embark-buffer-map "g" #'jump-to-buffer-window)
+  ;; Make M-. (`embark-dwim') jump to buffers from consult's buffer pickers.
+  (dolist (cmd '(consult-buffer consult-project-buffer))
+    (add-to-list 'embark-default-action-overrides
+                 (cons (cons 'buffer cmd) #'jump-to-buffer-window))))
+
+(defun jump-to-buffer-window (buffer)
+  "Select the tab and window already showing BUFFER, else switch to it here."
+  (interactive "bJump to buffer: ")
+  (let* ((buffer (get-buffer buffer))
+         (index (unless (get-buffer-window buffer)
+                  (seq-position (funcall tab-bar-tabs-function)
+                                buffer
+                                (lambda (tab buf)
+                                  (member (buffer-name buf)
+                                          (window-state-buffers
+                                           (alist-get 'ws tab))))))))
+    (when index
+      (tab-bar-select-tab (1+ index)))
+    (if-let* ((window (get-buffer-window buffer)))
+        (select-window window)
+      (switch-to-buffer buffer))))
 
 (use-package embark-consult)
 
@@ -1015,6 +1038,15 @@ updates once the user settles on a buffer."
   (setq my-tab-bar--group-update-timer
         (run-with-idle-timer 0.2 nil #'my-tab-bar-update-current-tab-group)))
 
+(defun my-tab-bar-update-group-before-select (&rest _)
+  "Update the current tab's group now, before switching away from it.
+Otherwise a pending (or preview-stale) update would be lost, or would
+land on the newly selected tab instead."
+  (when my-tab-bar--group-update-timer
+    (cancel-timer my-tab-bar--group-update-timer)
+    (setq my-tab-bar--group-update-timer nil))
+  (my-tab-bar-update-current-tab-group))
+
 (defun my-tab-bar-format-grouped-tabs ()
   "Format tab bar tabs grouped by repo with group headers."
   (let* ((tabs (funcall tab-bar-tabs-function))
@@ -1061,6 +1093,7 @@ updates once the user settles on a buffer."
   (tab-bar-mode 1)
   (add-hook 'window-configuration-change-hook #'my-tab-bar-schedule-group-update)
   (add-hook 'window-buffer-change-functions #'my-tab-bar-schedule-group-update)
+  (advice-add 'tab-bar-select-tab :before #'my-tab-bar-update-group-before-select)
   (set-face-attribute 'tab-bar nil :height 1.0)
   (set-face-attribute 'tab-bar-tab nil :height 1.0)
   (set-face-attribute 'tab-bar-tab-inactive nil :height 1.0))
