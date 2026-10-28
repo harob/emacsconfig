@@ -14,3 +14,6 @@ projects
 projectile-bookmarks.eld
 recentf
 *.elc
+recentf.eld
+projects.eld
+.claude/settings.local.json
