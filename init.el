@@ -1549,12 +1549,23 @@ updates once the user settles on a buffer."
     (message "No file is associated with the current buffer.")))
 
 
-;;; protobuf
+;;;; protobuf
 
 ;; CP'ed from https://github.com/protocolbuffers/protobuf/blob/main/editors/protobuf-mode.el
 ;; since I can't find it on melpa:
 (require 'protobuf-mode)
 (add-to-list 'auto-mode-alist '("\\.proto$" . protobuf-mode))
+
+
+;;;; Swift
+
+(use-package swift-mode :defer t)
+
+
+;;;; Terminal
+
+(use-package ghostel :defer t)
+
 
 (provide 'init)
 ;;; init.el ends here
