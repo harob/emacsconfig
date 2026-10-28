@@ -19,6 +19,16 @@
 (require 'use-package)
 (setq use-package-always-ensure t)
 
+;; use-package declarations are the source of truth for installed packages, so
+;; keep `package-selected-packages' in memory rather than letting package.el
+;; rewrite it into custom.el (and churn git diffs) on every install.
+(defun my-package--save-selected-packages (&optional value)
+  "Set `package-selected-packages' to VALUE without saving it to `custom-file'."
+  (when value
+    (setq package-selected-packages value)))
+(advice-add 'package--save-selected-packages :override
+            #'my-package--save-selected-packages)
+
 
 ;;;; General settings
 
